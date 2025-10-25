@@ -22,17 +22,16 @@ CREATE TABLE IF NOT EXISTS personal_budgets (
   created_at TIMESTAMPTZ DEFAULT NOW() NOT NULL,
   updated_at TIMESTAMPTZ DEFAULT NOW() NOT NULL,
   is_active BOOLEAN DEFAULT true NOT NULL,
-  notes TEXT,
-  
-  -- Ensure only one active personal budget per user
-  CONSTRAINT one_active_personal_budget_per_user 
-    UNIQUE(user_id) 
-    WHERE (is_active = true)
+  notes TEXT
 );
+
+-- Create unique partial index to ensure only one active personal budget per user
+CREATE UNIQUE INDEX IF NOT EXISTS idx_personal_budgets_one_active_per_user 
+  ON personal_budgets(user_id) 
+  WHERE (is_active = true);
 
 -- Create indexes for performance
 CREATE INDEX IF NOT EXISTS idx_personal_budgets_user_id ON personal_budgets(user_id);
-CREATE INDEX IF NOT EXISTS idx_personal_budgets_active ON personal_budgets(user_id, is_active) WHERE (is_active = true);
 CREATE INDEX IF NOT EXISTS idx_personal_budgets_created_at ON personal_budgets(created_at DESC);
 CREATE INDEX IF NOT EXISTS idx_personal_budgets_categories ON personal_budgets USING GIN (categories jsonb_path_ops);
 
@@ -128,18 +127,17 @@ CREATE TABLE IF NOT EXISTS budget_adjustments (
   is_applied BOOLEAN DEFAULT false NOT NULL,
   created_at TIMESTAMPTZ DEFAULT NOW() NOT NULL,
   applied_at TIMESTAMPTZ,
-  created_by_user_id UUID REFERENCES auth.users(id) ON DELETE SET NULL,
-  
-  -- Ensure only one pending adjustment per category per month
-  CONSTRAINT unique_pending_adjustment_per_category 
-    UNIQUE(user_id, category_name, effective_year, effective_month) 
-    WHERE (is_applied = false)
+  created_by_user_id UUID REFERENCES auth.users(id) ON DELETE SET NULL
 );
+
+-- Create unique partial index to ensure only one pending adjustment per category per month
+CREATE UNIQUE INDEX IF NOT EXISTS idx_budget_adjustments_one_pending_per_category
+  ON budget_adjustments(user_id, category_name, effective_year, effective_month)
+  WHERE (is_applied = false);
 
 -- Create indexes for performance
 CREATE INDEX IF NOT EXISTS idx_budget_adjustments_user_id ON budget_adjustments(user_id);
 CREATE INDEX IF NOT EXISTS idx_budget_adjustments_effective_date ON budget_adjustments(effective_year, effective_month);
-CREATE INDEX IF NOT EXISTS idx_budget_adjustments_pending ON budget_adjustments(user_id, is_applied) WHERE (is_applied = false);
 CREATE INDEX IF NOT EXISTS idx_budget_adjustments_category ON budget_adjustments(user_id, category_name);
 
 -- Enable Row Level Security
