@@ -139,3 +139,174 @@ export interface BudgetUtils {
 
 // Import the original Budget interface from existing types
 import type { Budget } from './index';
+
+// ============================================================================
+// BUDGET ADJUSTMENT SYSTEM TYPES (v2.0)
+// ============================================================================
+
+/**
+ * Personal Budget - User's baseline/ideal budget configuration
+ * This serves as the reference point for all monthly budgets
+ */
+export interface PersonalBudget {
+  id: string;
+  user_id: string;
+  version: number;
+  name: string;
+  categories: Record<string, CategoryConfig>;
+  global_settings: GlobalBudgetSettings;
+  created_at: string;
+  updated_at: string;
+  is_active: boolean;
+  notes?: string;
+}
+
+/**
+ * Monthly Budget - Active budget for a specific month
+ * Inherits from Personal Budget but can be adjusted
+ */
+export interface MonthlyBudget {
+  id: string;
+  user_id: string;
+  personal_budget_id: string | null;
+  year: number;
+  month: number; // 1-12
+  categories: Record<string, CategoryConfig>;
+  global_settings: GlobalBudgetSettings;
+  adjustment_count: number;
+  is_locked: boolean;
+  created_at: string;
+  updated_at: string;
+  notes?: string;
+}
+
+/**
+ * Budget Adjustment - Scheduled changes for next month
+ * When applied, updates the Personal Budget
+ */
+export interface BudgetAdjustment {
+  id: string;
+  user_id: string;
+  category_name: string;
+  current_limit: number;
+  adjustment_type: 'increase' | 'decrease';
+  adjustment_amount: number;
+  new_limit: number;
+  effective_year: number;
+  effective_month: number;
+  reason?: string;
+  is_applied: boolean;
+  created_at: string;
+  applied_at?: string;
+  created_by_user_id?: string;
+}
+
+/**
+ * Category Adjustment History - Tracks how often categories are adjusted
+ * Used for insights and gamification
+ */
+export interface CategoryAdjustmentHistory {
+  id: string;
+  user_id: string;
+  category_name: string;
+  adjustment_count: number;
+  last_adjusted_at?: string;
+  total_increased_amount: number;
+  total_decreased_amount: number;
+  first_adjustment_at?: string;
+  created_at: string;
+  updated_at: string;
+}
+
+/**
+ * Category Configuration - Detailed category budget settings
+ */
+export interface CategoryConfig {
+  monthlyLimit: number;
+  warningThreshold: number; // Percentage (0-100)
+  isActive: boolean;
+  color?: string;
+  description?: string;
+  priority?: 'critical' | 'high' | 'medium' | 'low';
+}
+
+/**
+ * Global Budget Settings - Application-wide budget preferences
+ */
+export interface GlobalBudgetSettings {
+  currency: string;
+  warningNotifications: boolean;
+  emailAlerts: boolean;
+  familyMembers: Array<{
+    id: string;
+    name: string;
+    color: string;
+  }>;
+  activeExpenseCategories: string[];
+}
+
+/**
+ * Budget Comparison Result - Comparison between two budgets
+ */
+export interface BudgetComparisonResult {
+  category: string;
+  personalLimit: number;
+  monthlyLimit: number;
+  difference: number;
+  differencePercentage: number;
+  status: 'increased' | 'decreased' | 'unchanged';
+}
+
+/**
+ * Budget Comparison Summary - Full comparison between Personal and Monthly
+ */
+export interface BudgetComparisonSummary {
+  personalBudgetName: string;
+  monthlyBudgetDate: string; // "October 2025"
+  totalCategories: number;
+  adjustedCategories: number;
+  comparisons: BudgetComparisonResult[];
+  totalPersonalLimit: number;
+  totalMonthlyLimit: number;
+  totalDifference: number;
+}
+
+/**
+ * Pending Adjustments Summary - Overview of scheduled adjustments
+ */
+export interface PendingAdjustmentsSummary {
+  effectiveDate: string; // "November 2025"
+  adjustmentCount: number;
+  totalIncrease: number;
+  totalDecrease: number;
+  netChange: number;
+  adjustments: BudgetAdjustment[];
+}
+
+/**
+ * Category Insights - Analytics for a specific category
+ */
+export interface CategoryInsights {
+  categoryName: string;
+  currentLimit: number;
+  adjustmentCount: number;
+  averageAdjustment: number;
+  trend: 'increasing' | 'decreasing' | 'stable';
+  lastAdjusted?: string;
+  totalIncreased: number;
+  totalDecreased: number;
+  recommendation?: string;
+}
+
+/**
+ * Budget Discipline Score - Gamification metric
+ */
+export interface BudgetDisciplineScore {
+  score: number; // 0-100
+  level: 'beginner' | 'intermediate' | 'advanced' | 'expert';
+  monthsTracked: number;
+  adjustmentFrequency: number;
+  adherenceRate: number; // Percentage of months staying within budget
+  achievements: string[];
+  nextMilestone: string;
+}
