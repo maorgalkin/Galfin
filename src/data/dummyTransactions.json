@@ -1,0 +1,272 @@
+[
+  {
+    "id": "t1",
+    "type": "income",
+    "description": "Salary - August 2025",
+    "amount": 12000,
+    "category": "Salary",
+    "familyMember": "Maor",
+    "date": "2025-08-24"
+  },
+  {
+    "id": "t2",
+    "type": "expense",
+    "description": "Groceries",
+    "amount": 800,
+    "category": "Groceries",
+    "familyMember": "Michal",
+    "date": "2025-08-24"
+  },
+  {
+    "id": "t3",
+    "type": "income",
+    "description": "Gift from Grandma",
+    "amount": 500,
+    "category": "Gift",
+    "familyMember": "Alma",
+    "date": "2025-08-24"
+  },
+  {
+    "id": "t4",
+    "type": "expense",
+    "description": "Electricity Bill",
+    "amount": 350,
+    "category": "Bills & Utilities",
+    "familyMember": "Maor",
+    "date": "2025-08-24"
+  },
+  {
+    "id": "t5",
+    "type": "expense",
+    "description": "Weekly Shopping",
+    "amount": 450,
+    "category": "Groceries",
+    "familyMember": "Michal",
+    "date": "2025-08-20"
+  },
+  {
+    "id": "t6",
+    "type": "expense",
+    "description": "Gas Station",
+    "amount": 180,
+    "category": "Transportation",
+    "familyMember": "Maor",
+    "date": "2025-08-19"
+  },
+  {
+    "id": "t7",
+    "type": "expense",
+    "description": "Restaurant Dinner",
+    "amount": 320,
+    "category": "Food & Dining",
+    "familyMember": "Maor",
+    "date": "2025-08-18"
+  },
+  {
+    "id": "t8",
+    "type": "expense",
+    "description": "Kids School Supplies",
+    "amount": 150,
+    "category": "Kids",
+    "familyMember": "Michal",
+    "date": "2025-08-17"
+  },
+  {
+    "id": "t9",
+    "type": "expense",
+    "description": "Internet Bill",
+    "amount": 120,
+    "category": "Bills & Utilities",
+    "familyMember": "Maor",
+    "date": "2025-08-15"
+  },
+  {
+    "id": "t10",
+    "type": "expense",
+    "description": "Pharmacy",
+    "amount": 85,
+    "category": "Health & Medical",
+    "familyMember": "Alma",
+    "date": "2025-08-14"
+  },
+  {
+    "id": "t11",
+    "type": "income",
+    "description": "Freelance Project",
+    "amount": 2500,
+    "category": "Other Income",
+    "familyMember": "Michal",
+    "date": "2025-08-12"
+  },
+  {
+    "id": "t12",
+    "type": "expense",
+    "description": "Movie Night",
+    "amount": 140,
+    "category": "Entertainment",
+    "familyMember": "Maor",
+    "date": "2025-08-10"
+  },
+  {
+    "id": "t13",
+    "type": "expense",
+    "description": "Coffee & Pastries",
+    "amount": 45,
+    "category": "Food & Dining",
+    "familyMember": "Michal",
+    "date": "2025-08-08"
+  },
+  {
+    "id": "t14",
+    "type": "expense",
+    "description": "Water Bill",
+    "amount": 95,
+    "category": "Bills & Utilities",
+    "familyMember": "Maor",
+    "date": "2025-08-05"
+  },
+  {
+    "id": "t15",
+    "type": "expense",
+    "description": "Birthday Present",
+    "amount": 250,
+    "category": "Gift",
+    "familyMember": "Alma",
+    "date": "2025-08-03"
+  },
+  {
+    "id": "t16",
+    "type": "income",
+    "description": "Salary - July 2025",
+    "amount": 12000,
+    "category": "Salary",
+    "familyMember": "Maor",
+    "date": "2025-07-25"
+  },
+  {
+    "id": "t17",
+    "type": "expense",
+    "description": "Summer Camp",
+    "amount": 1200,
+    "category": "Kids",
+    "familyMember": "Michal",
+    "date": "2025-07-20"
+  },
+  {
+    "id": "t18",
+    "type": "expense",
+    "description": "AC Repair",
+    "amount": 450,
+    "category": "Home & Maintenance",
+    "familyMember": "Maor",
+    "date": "2025-07-18"
+  },
+  {
+    "id": "t19",
+    "type": "expense",
+    "description": "Grocery Shopping",
+    "amount": 650,
+    "category": "Groceries",
+    "familyMember": "Michal",
+    "date": "2025-07-15"
+  },
+  {
+    "id": "t20",
+    "type": "expense",
+    "description": "Family Vacation",
+    "amount": 3500,
+    "category": "Entertainment",
+    "familyMember": "Maor",
+    "date": "2025-07-10"
+  },
+  {
+    "id": "t21",
+    "type": "income",
+    "description": "Investment Returns",
+    "amount": 800,
+    "category": "Other Income",
+    "familyMember": "Maor",
+    "date": "2025-07-08"
+  },
+  {
+    "id": "t22",
+    "type": "expense",
+    "description": "Electricity Bill",
+    "amount": 380,
+    "category": "Bills & Utilities",
+    "familyMember": "Maor",
+    "date": "2025-07-05"
+  },
+  {
+    "id": "t23",
+    "type": "expense",
+    "description": "School Books",
+    "amount": 280,
+    "category": "Kids",
+    "familyMember": "Alma",
+    "date": "2025-07-02"
+  },
+  {
+    "id": "t24",
+    "type": "income",
+    "description": "Salary - June 2025",
+    "amount": 12000,
+    "category": "Salary",
+    "familyMember": "Maor",
+    "date": "2025-06-25"
+  },
+  {
+    "id": "t25",
+    "type": "expense",
+    "description": "Car Insurance",
+    "amount": 650,
+    "category": "Transportation",
+    "familyMember": "Maor",
+    "date": "2025-06-20"
+  },
+  {
+    "id": "t26",
+    "type": "expense",
+    "description": "Doctor Visit",
+    "amount": 300,
+    "category": "Health & Medical",
+    "familyMember": "Michal",
+    "date": "2025-06-18"
+  },
+  {
+    "id": "t27",
+    "type": "expense",
+    "description": "Furniture Shopping",
+    "amount": 1800,
+    "category": "Home & Maintenance",
+    "familyMember": "Michal",
+    "date": "2025-06-15"
+  },
+  {
+    "id": "t28",
+    "type": "expense",
+    "description": "Weekly Groceries",
+    "amount": 520,
+    "category": "Groceries",
+    "familyMember": "Michal",
+    "date": "2025-06-12"
+  },
+  {
+    "id": "t29",
+    "type": "expense",
+    "description": "Concert Tickets",
+    "amount": 420,
+    "category": "Entertainment",
+    "familyMember": "Alma",
+    "date": "2025-06-08"
+  },
+  {
+    "id": "t30",
+    "type": "expense",
+    "description": "Gas Bill",
+    "amount": 180,
+    "category": "Bills & Utilities",
+    "familyMember": "Maor",
+    "date": "2025-06-05"
+  }
+]

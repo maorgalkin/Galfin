@@ -1,0 +1,30 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>Test Auto-loading</title>
+</head>
+<body>
+    <h1>Test Auto-loading</h1>
+    <button onclick="clearAndReload()">Clear localStorage and reload</button>
+    <button onclick="checkLocalStorage()">Check localStorage</button>
+    <div id="output"></div>
+
+    <script>
+        function clearAndReload() {
+            localStorage.clear();
+            window.location.reload();
+        }
+
+        function checkLocalStorage() {
+            const data = localStorage.getItem('galfin-transactions');
+            document.getElementById('output').innerHTML = 
+                '<h3>localStorage data:</h3><pre>' + (data ? data.substring(0, 500) + '...' : 'No data') + '</pre>';
+        }
+
+        // Check on load
+        window.onload = function() {
+            checkLocalStorage();
+        }
+    </script>
+</body>
+</html>
