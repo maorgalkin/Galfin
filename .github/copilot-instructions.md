@@ -1,18 +1,28 @@
 <!-- Use this file to provide workspace-specific custom instructions to Copilot. For more details, visit https://code.visualstudio.com/docs/copilot/copilot-customization#_use-a-githubcopilotinstructionsmd-file -->
-- [x] Verify that the copilot-instructions.md file in the .github directory is created.
 
-- [x] Clarify Project Requirements - React TypeScript family finance app
+# Galfin - Family Finance Tracker
 
-- [x] Scaffold the Project - Created React TypeScript project with Vite
+This is a React TypeScript family finance tracking application built with Vite, Tailwind CSS, and Supabase.
 
-- [x] Customize the Project - Created family finance app components and setup
+## Key Information
 
-- [x] Install Required Extensions - No additional extensions needed
+- **Framework**: React 19.1.1 with TypeScript 5.8.3
+- **Backend**: Supabase (PostgreSQL + Auth)
+- **Styling**: Tailwind CSS 4.1.12
+- **Testing**: Vitest 3.2.4 + React Testing Library
+- **Build Tool**: Vite 7.1.2
 
-- [x] Compile the Project - Project builds successfully
+## Documentation
 
-- [x] Create and Run Task - Development server running on http://localhost:5173
+For complete project information, refer to:
+- `/docs/COMPLETE_FEATURE_SUMMARY.md` - All features and capabilities
+- `/docs/SUPABASE_BRINGUP.md` - Backend setup guide
+- `/docs/TEST_DOCUMENTATION.md` - Testing guide
 
-- [x] Launch the Project - Project is running and accessible
+## Important Notes
 
-- [x] Ensure Documentation is Complete - README.md updated with project information
+- All data is stored in Supabase (no localStorage)
+- User authentication required
+- Budget configuration includes family members and active categories in globalSettings
+- Row Level Security (RLS) enabled on all database tables
+

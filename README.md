@@ -1,26 +1,25 @@
-# React + TypeScript + Vite
-
-This template provides a minimal setup to get React working in Vite with HMR and some ESLint rules.
-
-Currently, two official plugins are available:
-
-- [@vitejs/plugin-react](https://github.com/vitejs/vite-plugin-react/blob/main/packages/plugin-react) uses [Babel](https://babeljs.io/) for Fast Refresh
-- [@vitejs/plugin-react-swc](https://github.com/vitejs/vite-plugin-react/blob/main/packages/plugin-react-swc) uses [SWC](https://swc.rs/) for Fast Refresh
-
 # Galfin - Family Finance Tracker
 
 A modern, intuitive family finance tracking application built with React and TypeScript. Track expenses, manage budgets, and gain insights into your family's financial health.
 
+## 📚 Documentation
+
+For comprehensive documentation, please refer to:
+
+- **[Complete Feature Summary](docs/COMPLETE_FEATURE_SUMMARY.md)** - Detailed overview of all Galfin features, technology stack, and capabilities
+- **[Supabase Setup Guide](docs/SUPABASE_BRINGUP.md)** - Step-by-step guide for setting up the Supabase backend
+- **[Test Documentation](docs/TEST_DOCUMENTATION.md)** - Complete testing guide, test suites, and best practices
+
 ## 🌟 Features
 
 - **Transaction Management**: Add, view, and categorize income and expenses
-- **Family-Friendly**: Track transactions by family member
-- **Visual Dashboard**: Interactive charts and summaries
-- **Advanced Budget System**: Comprehensive budget planning with spending limits, alerts, and variance tracking
+- **Family-Friendly**: Track transactions by family member with color-coded attribution
+- **Visual Dashboard**: Interactive charts and financial summaries
+- **Advanced Budget System**: Comprehensive budget planning with spending limits and alerts
 - **Smart Alerts**: Real-time notifications when approaching or exceeding budget limits
-- **Savings Goals**: Track progress toward financial objectives
-- **Data Persistence**: Local storage keeps your data safe
-- **Responsive Design**: Works on desktop and mobile devices
+- **Cloud Storage**: Secure Supabase backend with authentication
+- **Responsive Design**: Works seamlessly on desktop and mobile devices
+- **Real-time Sync**: Cross-device synchronization via Supabase
 
 ## 🚀 Getting Started
 
@@ -31,12 +30,25 @@ A modern, intuitive family finance tracking application built with React and Typ
 
 ### Installation
 
-1. Clone or download this repository
-2. Navigate to the project directory
-3. Install dependencies:
+1. Clone the repository:
+   ```bash
+   git clone https://github.com/maorgalkin/Galfin.git
+   cd Galfin
+   ```
+
+2. Install dependencies:
    ```bash
    npm install
    ```
+
+3. Set up environment variables:
+   - Copy `.env.example` to `.env` (if available)
+   - Add your Supabase credentials:
+     ```env
+     VITE_SUPABASE_URL=your_supabase_url
+     VITE_SUPABASE_ANON_KEY=your_supabase_anon_key
+     ```
+   - See [Supabase Setup Guide](docs/SUPABASE_BRINGUP.md) for detailed instructions
 
 ### Running the Application
 
@@ -53,6 +65,22 @@ Create a production build:
 ```bash
 npm run build
 ```
+
+Preview the production build:
+```bash
+npm run preview
+```
+
+### Running Tests
+
+Run the test suite:
+```bash
+npm test          # Watch mode
+npm run test:run  # Run once
+npm run test:ui   # Interactive UI
+```
+
+For detailed testing information, see [Test Documentation](docs/TEST_DOCUMENTATION.md).
 
 ## 💡 How to Use
 
@@ -72,79 +100,91 @@ npm run build
 
 The dashboard provides two main views:
 
-#### Transaction Overview
+#### Budget Analysis Tab
 - **Summary Cards**: Total income, expenses, balance, family member count, and budget status
 - **Month Navigation**: Switch between current and previous months
-- **Transaction Filtering**: Filter by income/expense types
+- **Transaction Filtering**: Filter by income/expense types or hover summary cards
 - **Expense Categories Chart**: Visual breakdown of spending by category
-- **Transaction List**: Detailed view of all transactions
+- **Budget vs Actual Chart**: Compare budgeted amounts with actual spending
 
-#### Budget Analysis
-- **Budget Overview**: Comprehensive budget tracking with spending limits
-- **Category Budgets**: Individual budget limits for each expense category
-- **Real-time Alerts**: Notifications when approaching or exceeding budget limits
-- **Progress Tracking**: Visual progress bars showing budget utilization
-- **Variance Analysis**: Compare actual spending vs. budgeted amounts
-- **Savings Rate**: Track your savings percentage and financial health
+#### Transactions Tab
+- **Transaction History**: Detailed view of all transactions
+- **Filter Controls**: Advanced filtering by date, category, member, and amount
+- **Quick Actions**: Add, edit, or delete transactions
+- **Search**: Find transactions by description, category, or family member
 
-### Budget Configuration
+### Budget Management
 
-Customize your budget by editing `src/config/budget-template.json`:
-- Set monthly spending limits for each category
-- Configure alert thresholds (when to warn about overspending)
-- Define family member allowances
-- Set income targets and savings goals
+Access budget settings through the Budget Settings modal:
 
-### Data Storage
+#### Visual Tab
+- **Global Settings**: Currency, warning notifications, email alerts
+- **Category Management**: Set monthly limits and warning thresholds
+- **Active/Inactive Categories**: Toggle categories on/off
+- **Family Members**: View and manage family members with color codes
+- **Category Colors**: Customize category appearance
 
-All data is stored locally in your browser's localStorage, ensuring:
-- Privacy: Your financial data never leaves your device
-- Persistence: Data is saved between sessions
-- No account required: Start using immediately
+#### JSON Tab
+- **Direct Editing**: Edit budget configuration as JSON
+- **Import/Export**: Share or backup budget templates
+- **Validation**: Real-time JSON syntax validation
+
+For detailed budget configuration, see [Complete Feature Summary](docs/COMPLETE_FEATURE_SUMMARY.md).
+
+### Data Storage & Security
+
+**Supabase Backend:**
+- **Authentication**: Secure email/password authentication with email verification
+- **Cloud Storage**: All data stored in PostgreSQL database
+- **Row Level Security (RLS)**: User data automatically isolated
+- **Real-time Sync**: Changes sync across devices in real-time
+- **Backup**: Automatic cloud backups
+
+For setup instructions, see [Supabase Setup Guide](docs/SUPABASE_BRINGUP.md).
 
 ## 🛠 Technology Stack
 
-- **Frontend Framework**: React 18 with TypeScript
-- **Build Tool**: Vite
-- **Styling**: Tailwind CSS
-- **Charts**: Recharts
-- **Icons**: Lucide React
-- **State Management**: React Context API
-- **Data Persistence**: Local Storage
+- **Frontend Framework**: React 19.1.1 with TypeScript 5.8.3
+- **Build Tool**: Vite 7.1.2
+- **Styling**: Tailwind CSS 4.1.12
+- **Charts**: Recharts 3.1.2
+- **Icons**: Lucide React 0.539.0
+- **Animation**: Framer Motion 12.23.24
+- **Backend**: Supabase 2.75.0 (PostgreSQL + Auth)
+- **Testing**: Vitest 3.2.4 + React Testing Library 16.3.0
+- **Routing**: React Router DOM 6.30.1
 
-## 📱 Mobile App Potential
-
-This web application is designed with mobile development in mind:
-
-- **Component-based architecture** makes it easy to adapt to React Native
-- **TypeScript** ensures type safety across platforms
-- **Modular design** allows for easy feature migration
-- **Responsive UI** already works well on mobile browsers
-
-### Path to iOS App
-
-To convert this to a React Native iOS app:
-
-1. **React Native Setup**: Install React Native CLI and Xcode
-2. **Component Migration**: Most components can be adapted with minor changes
-3. **Navigation**: Add React Navigation for native navigation
-4. **Data Storage**: Replace localStorage with AsyncStorage or SQLite
-5. **Native Features**: Add iOS-specific features like Face ID, notifications
+For complete technology details, see [Complete Feature Summary](docs/COMPLETE_FEATURE_SUMMARY.md).
 
 ## 🎯 Future Enhancements
 
-- [ ] Budget alerts and notifications
-- [ ] Data export/import functionality  
-- [ ] Multiple currency support
-- [ ] Advanced reporting and analytics
-- [ ] Goal setting and tracking
-- [ ] Bill reminders
-- [ ] Photo attachments for receipts
-- [ ] Cloud sync and backup
+- [ ] Recurring transactions
+- [ ] Bill reminders with notifications
+- [ ] Receipt photo attachments
+- [ ] Advanced reporting and PDF export
+- [ ] Multi-currency support with exchange rates
+- [ ] Savings goals with progress tracking
+- [ ] CSV import/export
+- [ ] Bank account integration
+- [ ] Mobile app (React Native for iOS/Android)
+- [ ] AI-powered spending insights
+- [ ] Budget templates library
+- [ ] Collaborative family budgets
+
+## 🧪 Testing
+
+Galfin includes a comprehensive test suite with 50+ tests covering:
+- Basic functionality and startup
+- Dashboard features and filtering
+- Transaction management (add, edit, delete)
+- Accessibility and keyboard navigation
+- Performance benchmarks
+
+See [Test Documentation](docs/TEST_DOCUMENTATION.md) for complete testing information.
 
 ## 🤝 Contributing
 
-This is a personal project, but suggestions and improvements are welcome!
+Contributions, issues, and feature requests are welcome!
 
 ## 📄 License
 
@@ -153,32 +193,3 @@ This project is open source and available under the MIT License.
 ---
 
 **Happy budgeting! 💰**
-
-You can also install [eslint-plugin-react-x](https://github.com/Rel1cx/eslint-react/tree/main/packages/plugins/eslint-plugin-react-x) and [eslint-plugin-react-dom](https://github.com/Rel1cx/eslint-react/tree/main/packages/plugins/eslint-plugin-react-dom) for React-specific lint rules:
-
-```js
-// eslint.config.js
-import reactX from 'eslint-plugin-react-x'
-import reactDom from 'eslint-plugin-react-dom'
-
-export default tseslint.config([
-  globalIgnores(['dist']),
-  {
-    files: ['**/*.{ts,tsx}'],
-    extends: [
-      // Other configs...
-      // Enable lint rules for React
-      reactX.configs['recommended-typescript'],
-      // Enable lint rules for React DOM
-      reactDom.configs.recommended,
-    ],
-    languageOptions: {
-      parserOptions: {
-        project: ['./tsconfig.node.json', './tsconfig.app.json'],
-        tsconfigRootDir: import.meta.dirname,
-      },
-      // other options...
-    },
-  },
-])
-```
