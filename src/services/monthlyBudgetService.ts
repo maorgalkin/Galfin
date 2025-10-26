@@ -221,6 +221,11 @@ export class MonthlyBudgetService {
         throw new Error('Cannot modify locked monthly budget');
       }
 
+      // Validate category exists
+      if (!currentBudget.categories[categoryName]) {
+        throw new Error(`Category "${categoryName}" not found`);
+      }
+
       // Update the category limit
       const updatedCategories = {
         ...currentBudget.categories,

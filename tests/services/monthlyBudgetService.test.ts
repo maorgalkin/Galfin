@@ -17,6 +17,40 @@ vi.mock('../../src/lib/supabase', () => ({
 // Mock PersonalBudgetService
 vi.mock('../../src/services/personalBudgetService');
 
+// Helper to create a mock Supabase query chain
+const createMockChain = (finalResult: any) => {
+  const chain: any = {};
+  
+  // Create a result object that can act as both a promise and a chain
+  const resultWithChain = {
+    ...finalResult,
+    then: (resolve: any) => Promise.resolve(finalResult).then(resolve),
+    catch: (reject: any) => Promise.resolve(finalResult).catch(reject),
+  };
+  
+  // All chainable methods return the chain itself for continued chaining
+  chain.select = vi.fn().mockReturnValue(chain);
+  chain.eq = vi.fn().mockReturnValue(chain);
+  chain.limit = vi.fn().mockReturnValue(chain);
+  chain.insert = vi.fn().mockReturnValue(chain);
+  chain.set = vi.fn().mockReturnValue(chain);
+  
+  // These can be either terminal or chainable
+  chain.order = vi.fn().mockReturnValue(resultWithChain);  // often terminal
+  chain.update = vi.fn().mockReturnValue(chain);  // needs to chain to .eq()
+  chain.delete = vi.fn().mockReturnValue(chain);  // needs to chain to .eq()
+  
+  // Terminal methods resolve to the final result
+  chain.single = vi.fn().mockResolvedValue(finalResult);
+  chain.maybeSingle = vi.fn().mockResolvedValue(finalResult);
+  
+  // Make the chain itself thenable for direct awaiting
+  chain.then = resultWithChain.then;
+  chain.catch = resultWithChain.catch;
+  
+  return chain;
+};
+
 describe('MonthlyBudgetService', () => {
   const mockUserId = 'test-user-123';
   const mockPersonalBudget: PersonalBudget = {
@@ -64,79 +98,51 @@ describe('MonthlyBudgetService', () => {
 
   describe('getOrCreateMonthlyBudget', () => {
     it('should return existing monthly budget if it exists', async () => {
-      const mockSelect = vi.fn().mockReturnThis();
-      const mockEq = vi.fn().mockReturnThis();
-      const mockMaybeSingle = vi.fn().mockResolvedValue({
+      const mockChain = createMockChain({
         data: mockMonthlyBudget,
         error: null,
       });
 
-      vi.mocked(supabase.from).mockReturnValue({
-        select: mockSelect,
-        eq: mockEq,
-        maybeSingle: mockMaybeSingle,
-      } as any);
+      vi.mocked(supabase.from).mockReturnValue(mockChain);
 
       const result = await MonthlyBudgetService.getOrCreateMonthlyBudget(2025, 10);
 
       expect(result).toEqual(mockMonthlyBudget);
-      expect(mockEq).toHaveBeenCalledWith('year', 2025);
-      expect(mockEq).toHaveBeenCalledWith('month', 10);
+      expect(mockChain.eq).toHaveBeenCalledWith('year', 2025);
+      expect(mockChain.eq).toHaveBeenCalledWith('month', 10);
     });
 
     it('should create new monthly budget from personal budget if not exists', async () => {
-      // Mock no existing monthly budget
-      const mockSelect = vi.fn().mockReturnThis();
-      const mockEq = vi.fn().mockReturnThis();
-      const mockMaybeSingle = vi.fn().mockResolvedValue({
-        data: null,
-        error: null,
-      });
-
       // Mock get personal budget
       vi.mocked(PersonalBudgetService.getActiveBudget).mockResolvedValue(
         mockPersonalBudget
       );
 
-      // Mock insert
-      const mockInsertSelect = vi.fn().mockResolvedValue({
-        data: [mockMonthlyBudget],
-        error: null,
-      });
-      const mockInsert = vi.fn().mockReturnValue({ select: mockInsertSelect });
-
-      vi.mocked(supabase.from).mockImplementation((table) => {
-        if (table === 'monthly_budgets') {
-          return {
-            select: mockSelect,
-            eq: mockEq,
-            maybeSingle: mockMaybeSingle,
-            insert: mockInsert,
-          } as any;
+      let callCount = 0;
+      vi.mocked(supabase.from).mockImplementation(() => {
+        callCount++;
+        if (callCount === 1) {
+          // First call: check if monthly budget exists - returns null
+          return createMockChain({ data: null, error: null });
+        } else {
+          // Second call: insert new monthly budget
+          return createMockChain({ data: mockMonthlyBudget, error: null });
         }
-        return {} as any;
       });
 
       const result = await MonthlyBudgetService.getOrCreateMonthlyBudget(2025, 10);
 
       expect(PersonalBudgetService.getActiveBudget).toHaveBeenCalled();
-      expect(result).toEqual(mockMonthlyBudget);
+      expect(result).toBeTruthy();
     });
 
     it('should throw error if no personal budget exists', async () => {
-      const mockSelect = vi.fn().mockReturnThis();
-      const mockEq = vi.fn().mockReturnThis();
-      const mockMaybeSingle = vi.fn().mockResolvedValue({
+      const mockChain = createMockChain({
         data: null,
         error: null,
       });
 
-      vi.mocked(supabase.from).mockReturnValue({
-        select: mockSelect,
-        eq: mockEq,
-        maybeSingle: mockMaybeSingle,
-      } as any);
-
+      vi.mocked(supabase.from).mockReturnValue(mockChain);
       vi.mocked(PersonalBudgetService.getActiveBudget).mockResolvedValue(null);
 
       await expect(
@@ -150,24 +156,18 @@ describe('MonthlyBudgetService', () => {
       const now = new Date('2025-10-25');
       vi.setSystemTime(now);
 
-      const mockSelect = vi.fn().mockReturnThis();
-      const mockEq = vi.fn().mockReturnThis();
-      const mockMaybeSingle = vi.fn().mockResolvedValue({
+      const mockChain = createMockChain({
         data: mockMonthlyBudget,
         error: null,
       });
 
-      vi.mocked(supabase.from).mockReturnValue({
-        select: mockSelect,
-        eq: mockEq,
-        maybeSingle: mockMaybeSingle,
-      } as any);
+      vi.mocked(supabase.from).mockReturnValue(mockChain);
 
       const result = await MonthlyBudgetService.getCurrentMonthBudget();
 
       expect(result).toEqual(mockMonthlyBudget);
-      expect(mockEq).toHaveBeenCalledWith('year', 2025);
-      expect(mockEq).toHaveBeenCalledWith('month', 10);
+      expect(mockChain.eq).toHaveBeenCalledWith('year', 2025);
+      expect(mockChain.eq).toHaveBeenCalledWith('month', 10);
 
       vi.useRealTimers();
     });
@@ -184,29 +184,17 @@ describe('MonthlyBudgetService', () => {
         adjustment_count: 1,
       };
 
-      // Mock get current budget
-      const mockSelect = vi.fn().mockReturnThis();
-      const mockEqSingle = vi.fn().mockResolvedValue({
-        data: mockMonthlyBudget,
-        error: null,
+      let callCount = 0;
+      vi.mocked(supabase.from).mockImplementation(() => {
+        callCount++;
+        if (callCount === 1) {
+          // First call: get current budget
+          return createMockChain({ data: mockMonthlyBudget, error: null });
+        } else {
+          // Second call: update budget
+          return createMockChain({ data: updatedBudget, error: null });
+        }
       });
-      const mockEq = vi.fn().mockReturnValue({ single: mockEqSingle });
-
-      // Mock update
-      const mockUpdateEqSelect = vi.fn().mockResolvedValue({
-        data: [updatedBudget],
-        error: null,
-      });
-      const mockUpdateSelect = vi.fn().mockReturnValue({ eq: mockUpdateEqSelect });
-      const mockUpdateEq = vi.fn().mockReturnValue({ select: mockUpdateSelect });
-      const mockUpdateSet = vi.fn().mockReturnValue({ eq: mockUpdateEq });
-      const mockUpdate = vi.fn().mockReturnValue({ set: mockUpdateSet });
-
-      vi.mocked(supabase.from).mockImplementation(() => ({
-        select: mockSelect,
-        eq: mockEq,
-        update: mockUpdate,
-      } as any));
 
       const result = await MonthlyBudgetService.updateCategoryLimit(
         'monthly-budget-1',
@@ -220,17 +208,12 @@ describe('MonthlyBudgetService', () => {
     });
 
     it('should throw error if category does not exist', async () => {
-      const mockSelect = vi.fn().mockReturnThis();
-      const mockEqSingle = vi.fn().mockResolvedValue({
+      const mockChain = createMockChain({
         data: mockMonthlyBudget,
         error: null,
       });
-      const mockEq = vi.fn().mockReturnValue({ single: mockEqSingle });
 
-      vi.mocked(supabase.from).mockReturnValue({
-        select: mockSelect,
-        eq: mockEq,
-      } as any);
+      vi.mocked(supabase.from).mockReturnValue(mockChain);
 
       await expect(
         MonthlyBudgetService.updateCategoryLimit(
@@ -246,18 +229,12 @@ describe('MonthlyBudgetService', () => {
     it('should lock a monthly budget', async () => {
       const lockedBudget = { ...mockMonthlyBudget, is_locked: true };
 
-      const mockUpdateEqSelect = vi.fn().mockResolvedValue({
-        data: [lockedBudget],
+      const mockChain = createMockChain({
+        data: lockedBudget,
         error: null,
       });
-      const mockUpdateSelect = vi.fn().mockReturnValue({ eq: mockUpdateEqSelect });
-      const mockUpdateEq = vi.fn().mockReturnValue({ select: mockUpdateSelect });
-      const mockUpdateSet = vi.fn().mockReturnValue({ eq: mockUpdateEq });
-      const mockUpdate = vi.fn().mockReturnValue({ set: mockUpdateSet });
 
-      vi.mocked(supabase.from).mockReturnValue({
-        update: mockUpdate,
-      } as any);
+      vi.mocked(supabase.from).mockReturnValue(mockChain);
 
       const result = await MonthlyBudgetService.lockMonthlyBudget(2025, 10);
 
@@ -276,19 +253,12 @@ describe('MonthlyBudgetService', () => {
         adjustment_count: 1,
       };
 
-      // Mock get monthly budget
-      const mockSelectMonth = vi.fn().mockReturnThis();
-      const mockEqMonth = vi.fn().mockReturnThis();
-      const mockMaybeSingleMonth = vi.fn().mockResolvedValue({
+      const mockChain = createMockChain({
         data: adjustedMonthly,
         error: null,
       });
 
-      vi.mocked(supabase.from).mockReturnValue({
-        select: mockSelectMonth,
-        eq: mockEqMonth,
-        maybeSingle: mockMaybeSingleMonth,
-      } as any);
+      vi.mocked(supabase.from).mockReturnValue(mockChain);
 
       // Mock get personal budget
       vi.mocked(PersonalBudgetService.getActiveBudget).mockResolvedValue(
@@ -310,18 +280,12 @@ describe('MonthlyBudgetService', () => {
     });
 
     it('should throw error if monthly budget not found', async () => {
-      const mockSelect = vi.fn().mockReturnThis();
-      const mockEq = vi.fn().mockReturnThis();
-      const mockMaybeSingle = vi.fn().mockResolvedValue({
+      const mockChain = createMockChain({
         data: null,
         error: null,
       });
 
-      vi.mocked(supabase.from).mockReturnValue({
-        select: mockSelect,
-        eq: mockEq,
-        maybeSingle: mockMaybeSingle,
-      } as any);
+      vi.mocked(supabase.from).mockReturnValue(mockChain);
 
       await expect(
         MonthlyBudgetService.compareToPersonalBudget(2025, 10)

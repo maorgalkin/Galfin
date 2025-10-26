@@ -18,6 +18,31 @@ vi.mock('../../src/lib/supabase', () => ({
 vi.mock('../../src/services/personalBudgetService');
 vi.mock('../../src/services/monthlyBudgetService');
 
+// Helper to create a complete mock chain for Supabase queries
+const createMockChain = (finalResult: any) => {
+  const chain: any = {};
+  const resultWithChain = {
+    ...finalResult,
+    then: (resolve: any) => Promise.resolve(finalResult).then(resolve),
+    catch: (reject: any) => Promise.resolve(finalResult).catch(reject),
+  };
+
+  chain.select = vi.fn().mockReturnValue(chain);
+  chain.eq = vi.fn().mockReturnValue(chain);
+  chain.order = vi.fn().mockReturnValue(chain);
+  chain.limit = vi.fn().mockResolvedValue(finalResult);
+  chain.update = vi.fn().mockReturnValue(chain);
+  chain.delete = vi.fn().mockReturnValue(chain);
+  chain.insert = vi.fn().mockReturnValue(chain);
+  chain.upsert = vi.fn().mockReturnValue(chain);
+  chain.single = vi.fn().mockResolvedValue(finalResult);
+  chain.maybeSingle = vi.fn().mockResolvedValue(finalResult);
+  chain.then = resultWithChain.then;
+  chain.catch = resultWithChain.catch;
+
+  return chain;
+};
+
 describe('BudgetAdjustmentService', () => {
   const mockUserId = 'test-user-123';
 
@@ -61,15 +86,12 @@ describe('BudgetAdjustmentService', () => {
       const now = new Date('2025-10-25');
       vi.setSystemTime(now);
 
-      const mockInsertSelect = vi.fn().mockResolvedValue({
-        data: [mockAdjustment],
+      const mockChain = createMockChain({
+        data: mockAdjustment,
         error: null,
       });
-      const mockInsert = vi.fn().mockReturnValue({ select: mockInsertSelect });
 
-      vi.mocked(supabase.from).mockReturnValue({
-        insert: mockInsert,
-      } as any);
+      vi.mocked(supabase.from).mockReturnValue(mockChain);
 
       const result = await BudgetAdjustmentService.scheduleAdjustment(
         'Groceries',
@@ -97,15 +119,12 @@ describe('BudgetAdjustmentService', () => {
         effective_month: 1,
       };
 
-      const mockInsertSelect = vi.fn().mockResolvedValue({
-        data: [nextYearAdjustment],
+      const mockChain = createMockChain({
+        data: nextYearAdjustment,
         error: null,
       });
-      const mockInsert = vi.fn().mockReturnValue({ select: mockInsertSelect });
 
-      vi.mocked(supabase.from).mockReturnValue({
-        insert: mockInsert,
-      } as any);
+      vi.mocked(supabase.from).mockReturnValue(mockChain);
 
       const result = await BudgetAdjustmentService.scheduleAdjustment(
         'Groceries',
@@ -131,15 +150,12 @@ describe('BudgetAdjustmentService', () => {
         adjustment_amount: 100,
       };
 
-      const mockInsertSelect = vi.fn().mockResolvedValue({
-        data: [decreaseAdjustment],
+      const mockChain = createMockChain({
+        data: decreaseAdjustment,
         error: null,
       });
-      const mockInsert = vi.fn().mockReturnValue({ select: mockInsertSelect });
 
-      vi.mocked(supabase.from).mockReturnValue({
-        insert: mockInsert,
-      } as any);
+      vi.mocked(supabase.from).mockReturnValue(mockChain);
 
       const result = await BudgetAdjustmentService.scheduleAdjustment(
         'Groceries',
@@ -157,25 +173,19 @@ describe('BudgetAdjustmentService', () => {
 
   describe('getPendingAdjustments', () => {
     it('should get all pending adjustments for a specific month', async () => {
-      const mockSelect = vi.fn().mockReturnThis();
-      const mockEq = vi.fn().mockReturnThis();
-      const mockOrder = vi.fn().mockResolvedValue({
+      const mockChain = createMockChain({
         data: [mockAdjustment],
         error: null,
       });
 
-      vi.mocked(supabase.from).mockReturnValue({
-        select: mockSelect,
-        eq: mockEq,
-        order: mockOrder,
-      } as any);
+      vi.mocked(supabase.from).mockReturnValue(mockChain);
 
       const result = await BudgetAdjustmentService.getPendingAdjustments(2025, 11);
 
       expect(result).toEqual([mockAdjustment]);
-      expect(mockEq).toHaveBeenCalledWith('effective_year', 2025);
-      expect(mockEq).toHaveBeenCalledWith('effective_month', 11);
-      expect(mockEq).toHaveBeenCalledWith('is_applied', false);
+      expect(mockChain.eq).toHaveBeenCalledWith('effective_year', 2025);
+      expect(mockChain.eq).toHaveBeenCalledWith('effective_month', 11);
+      expect(mockChain.eq).toHaveBeenCalledWith('is_applied', false);
     });
   });
 
@@ -195,18 +205,13 @@ describe('BudgetAdjustmentService', () => {
         },
       ];
 
-      const mockSelect = vi.fn().mockReturnThis();
-      const mockEq = vi.fn().mockReturnThis();
-      const mockOrder = vi.fn().mockResolvedValue({
+      const mockChain = createMockChain({
         data: adjustments,
         error: null,
       });
 
-      vi.mocked(supabase.from).mockReturnValue({
-        select: mockSelect,
-        eq: mockEq,
-        order: mockOrder,
-      } as any);
+      vi.mocked(supabase.from).mockReturnValue(mockChain);
+      vi.mocked(MonthlyBudgetService.formatMonthYear).mockReturnValue('November 2025');
 
       const result = await BudgetAdjustmentService.getNextMonthAdjustments();
 
@@ -222,16 +227,13 @@ describe('BudgetAdjustmentService', () => {
 
   describe('cancelAdjustment', () => {
     it('should cancel a pending adjustment', async () => {
-      const mockDeleteEq = vi.fn().mockResolvedValue({ error: null });
-      const mockDelete = vi.fn().mockReturnValue({ eq: mockDeleteEq });
+      const mockChain = createMockChain({ error: null });
 
-      vi.mocked(supabase.from).mockReturnValue({
-        delete: mockDelete,
-      } as any);
+      vi.mocked(supabase.from).mockReturnValue(mockChain);
 
       await BudgetAdjustmentService.cancelAdjustment('adjustment-1');
 
-      expect(mockDeleteEq).toHaveBeenCalledWith('id', 'adjustment-1');
+      expect(mockChain.eq).toHaveBeenCalledWith('id', 'adjustment-1');
     });
   });
 
@@ -275,12 +277,22 @@ describe('BudgetAdjustmentService', () => {
       const adjustments = [mockAdjustment];
 
       // Mock get pending adjustments
-      const mockSelectAdj = vi.fn().mockReturnThis();
-      const mockEqAdj = vi.fn().mockReturnThis();
-      const mockOrderAdj = vi.fn().mockResolvedValue({
+      const mockChainAdj = createMockChain({
         data: adjustments,
         error: null,
       });
+
+      // Mock update adjustment (mark as applied)
+      const mockChainUpdateAdj = createMockChain({ error: null });
+
+      // Mock category history select (existing history)
+      const mockChainHistory = createMockChain({
+        data: mockHistory,
+        error: null,
+      });
+
+      // Mock category history upsert
+      const mockChainUpsert = createMockChain({ error: null });
 
       // Mock get/create monthly budget
       vi.mocked(MonthlyBudgetService.getOrCreateMonthlyBudget).mockResolvedValue(
@@ -315,20 +327,31 @@ describe('BudgetAdjustmentService', () => {
         updatedPersonalBudget
       );
 
-      // Mock mark adjustment as applied
-      const mockUpdateAdjEq = vi.fn().mockResolvedValue({ error: null });
-      const mockUpdateAdjSet = vi.fn().mockReturnValue({ eq: mockUpdateAdjEq });
-      const mockUpdateAdj = vi.fn().mockReturnValue({ set: mockUpdateAdjSet });
+      // Track which call we're on for each table
+      const tableCallCounts: Record<string, number> = {};
 
       vi.mocked(supabase.from).mockImplementation((table: string) => {
+        if (!tableCallCounts[table]) tableCallCounts[table] = 0;
+        tableCallCounts[table]++;
+
         if (table === 'budget_adjustments') {
-          return {
-            select: mockSelectAdj,
-            eq: mockEqAdj,
-            order: mockOrderAdj,
-            update: mockUpdateAdj,
-          } as any;
+          // First call: get pending adjustments
+          if (tableCallCounts[table] === 1) {
+            return mockChainAdj;
+          }
+          // Later calls: update adjustment (mark as applied)
+          return mockChainUpdateAdj;
         }
+        
+        if (table === 'category_adjustment_history') {
+          // First call: select existing history
+          if (tableCallCounts[table] === 1) {
+            return mockChainHistory;
+          }
+          // Second call: upsert updated history
+          return mockChainUpsert;
+        }
+
         return {} as any;
       });
 
@@ -346,18 +369,12 @@ describe('BudgetAdjustmentService', () => {
     });
 
     it('should return 0 when no adjustments to apply', async () => {
-      const mockSelect = vi.fn().mockReturnThis();
-      const mockEq = vi.fn().mockReturnThis();
-      const mockOrder = vi.fn().mockResolvedValue({
+      const mockChain = createMockChain({
         data: [],
         error: null,
       });
 
-      vi.mocked(supabase.from).mockReturnValue({
-        select: mockSelect,
-        eq: mockEq,
-        order: mockOrder,
-      } as any);
+      vi.mocked(supabase.from).mockReturnValue(mockChain);
 
       const result = await BudgetAdjustmentService.applyScheduledAdjustments(
         2025,
@@ -371,38 +388,26 @@ describe('BudgetAdjustmentService', () => {
 
   describe('getCategoryHistory', () => {
     it('should get adjustment history for a category', async () => {
-      const mockSelect = vi.fn().mockReturnThis();
-      const mockEq = vi.fn().mockReturnThis();
-      const mockMaybeSingle = vi.fn().mockResolvedValue({
+      const mockChain = createMockChain({
         data: mockHistory,
         error: null,
       });
 
-      vi.mocked(supabase.from).mockReturnValue({
-        select: mockSelect,
-        eq: mockEq,
-        maybeSingle: mockMaybeSingle,
-      } as any);
+      vi.mocked(supabase.from).mockReturnValue(mockChain);
 
       const result = await BudgetAdjustmentService.getCategoryHistory('Groceries');
 
       expect(result).toEqual(mockHistory);
-      expect(mockEq).toHaveBeenCalledWith('category_name', 'Groceries');
+      expect(mockChain.eq).toHaveBeenCalledWith('category_name', 'Groceries');
     });
 
     it('should return null if no history exists', async () => {
-      const mockSelect = vi.fn().mockReturnThis();
-      const mockEq = vi.fn().mockReturnThis();
-      const mockMaybeSingle = vi.fn().mockResolvedValue({
+      const mockChain = createMockChain({
         data: null,
         error: null,
       });
 
-      vi.mocked(supabase.from).mockReturnValue({
-        select: mockSelect,
-        eq: mockEq,
-        maybeSingle: mockMaybeSingle,
-      } as any);
+      vi.mocked(supabase.from).mockReturnValue(mockChain);
 
       const result = await BudgetAdjustmentService.getCategoryHistory('NewCategory');
 
@@ -418,18 +423,12 @@ describe('BudgetAdjustmentService', () => {
         { ...mockHistory, category_name: 'Entertainment', adjustment_count: 2 },
       ];
 
-      const mockSelect = vi.fn().mockReturnThis();
-      const mockOrder = vi.fn().mockReturnThis();
-      const mockLimit = vi.fn().mockResolvedValue({
+      const mockChain = createMockChain({
         data: histories.slice(0, 2),
         error: null,
       });
 
-      vi.mocked(supabase.from).mockReturnValue({
-        select: mockSelect,
-        order: mockOrder,
-        limit: mockLimit,
-      } as any);
+      vi.mocked(supabase.from).mockReturnValue(mockChain);
 
       const result = await BudgetAdjustmentService.getMostAdjustedCategories(2);
 
@@ -462,8 +461,8 @@ describe('BudgetAdjustmentService', () => {
     it('getAverageAdjustment should calculate average', () => {
       const avg = BudgetAdjustmentService.getAverageAdjustment(mockHistory);
       
-      // Net: 250, Count: 3 => 250/3 ≈ 83.33
-      expect(avg).toBeCloseTo(83.33, 2);
+      // Total: 300 (increased) + 50 (decreased) = 350, Count: 3 => 350/3 ≈ 116.67
+      expect(avg).toBeCloseTo(116.67, 2);
     });
 
     it('getAverageAdjustment should return 0 when count is 0', () => {
@@ -478,18 +477,14 @@ describe('BudgetAdjustmentService', () => {
       const now = new Date('2025-10-25');
       vi.setSystemTime(now);
 
-      const mockSelect = vi.fn().mockReturnThis();
-      const mockEq = vi.fn().mockReturnThis();
-      const mockMaybeSingle = vi.fn().mockResolvedValue({
-        data: { count: 2 },
+      const adjustments = [mockAdjustment, { ...mockAdjustment, id: 'adjustment-2' }];
+
+      const mockChain = createMockChain({
+        data: adjustments,
         error: null,
       });
 
-      vi.mocked(supabase.from).mockReturnValue({
-        select: mockSelect,
-        eq: mockEq,
-        maybeSingle: mockMaybeSingle,
-      } as any);
+      vi.mocked(supabase.from).mockReturnValue(mockChain);
 
       const result = await BudgetAdjustmentService.hasPendingNextMonthAdjustments();
 
