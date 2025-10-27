@@ -1,5 +1,6 @@
 import { useState } from 'react';
-import { BrowserRouter, Routes, Route, Navigate } from 'react-router-dom';
+import { BrowserRouter, Routes, Route, Navigate, useNavigate } from 'react-router-dom';
+import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
 import { FinanceProvider, useFinance } from './context/FinanceContext';
 import { AuthProvider, useAuth } from './contexts/AuthContext';
 import Dashboard from './components/Dashboard';
@@ -8,9 +9,21 @@ import BudgetSettings from './components/BudgetSettings';
 import FamilyMembersModal from './components/FamilyMembersModal';
 import Login from './pages/auth/Login';
 import Register from './pages/auth/Register';
+import { BudgetManagement } from './pages/BudgetManagement';
 import { Plus, Settings, LogOut, Loader2 } from 'lucide-react';
 import './App.css';
 import OlderTransactions from './pages/OlderTransactions';
+
+// Create a React Query client
+const queryClient = new QueryClient({
+  defaultOptions: {
+    queries: {
+      refetchOnWindowFocus: false,
+      retry: 1,
+      staleTime: 5 * 60 * 1000, // 5 minutes
+    },
+  },
+});
 
 // Protected Route Component - requires authentication
 function ProtectedRoute({ children }: { children: React.ReactNode }) {
@@ -40,6 +53,7 @@ function AppContent() {
   const [isFamilyMembersOpen, setIsFamilyMembersOpen] = useState(false);
   const { setBudgetConfig, familyMembers } = useFinance();
   const { signOut, user } = useAuth();
+  const navigate = useNavigate();
 
   return (
     <div className="min-h-screen bg-gray-100">
@@ -59,6 +73,14 @@ function AppContent() {
             
             {/* Desktop & Mobile Buttons - Always visible */}
             <div className="flex items-center space-x-2 sm:space-x-3">
+              <button
+                onClick={() => navigate('/budget-management')}
+                className="flex items-center justify-center px-3 py-2 bg-purple-600 text-white rounded-md hover:bg-purple-700 transition-colors text-sm font-medium min-h-[38px]"
+                title="Budget Management"
+              >
+                <Settings className="h-4 w-4 flex-shrink-0" />
+                <span className="ml-2 max-md:hidden">Budget</span>
+              </button>
               <button
                 onClick={() => setIsAddTransactionOpen(true)}
                 className="flex items-center justify-center px-3 py-2 bg-blue-600 text-white rounded-md hover:bg-blue-700 transition-colors text-sm font-medium min-h-[38px]"
@@ -88,6 +110,7 @@ function AppContent() {
       <main className="px-4 sm:px-6 lg:px-8">
         <Routes>
           <Route path="/" element={<Dashboard />} />
+          <Route path="/budget-management" element={<BudgetManagement />} />
           <Route path="/older-transactions" element={<OlderTransactions />} />
         </Routes>
       </main>
@@ -115,27 +138,29 @@ function AppContent() {
 
 function App() {
   return (
-    <AuthProvider>
-      <BrowserRouter>
-        <FinanceProvider>
-          <Routes>
-            {/* Public routes */}
-            <Route path="/login" element={<Login />} />
-            <Route path="/register" element={<Register />} />
-            
-            {/* Protected routes */}
-            <Route
-              path="/*"
-              element={
-                <ProtectedRoute>
-                  <AppContent />
-                </ProtectedRoute>
-              }
-            />
-          </Routes>
-        </FinanceProvider>
-      </BrowserRouter>
-    </AuthProvider>
+    <QueryClientProvider client={queryClient}>
+      <AuthProvider>
+        <BrowserRouter>
+          <FinanceProvider>
+            <Routes>
+              {/* Public routes */}
+              <Route path="/login" element={<Login />} />
+              <Route path="/register" element={<Register />} />
+              
+              {/* Protected routes */}
+              <Route
+                path="/*"
+                element={
+                  <ProtectedRoute>
+                    <AppContent />
+                  </ProtectedRoute>
+                }
+              />
+            </Routes>
+          </FinanceProvider>
+        </BrowserRouter>
+      </AuthProvider>
+    </QueryClientProvider>
   );
 }
 

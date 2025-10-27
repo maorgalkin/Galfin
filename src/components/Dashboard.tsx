@@ -8,6 +8,7 @@ import { motion, AnimatePresence } from 'framer-motion';
 import BudgetOverview from './BudgetOverview';
 import EditTransactionModal from './EditTransactionModal';
 import FamilyMembersModal from './FamilyMembersModal';
+import { BudgetQuickView } from './BudgetQuickView';
 import { budgetService } from '../services/budgetService';
 import { getCategoryColor } from '../utils/categoryColors';
 import { generateDummyTransactions, countDummyTransactions, isDummyTransaction } from '../utils/dummyData';
@@ -226,6 +227,11 @@ const Dashboard: React.FC = () => {
                 🗑️ Remove All Dummy
               </button>
             </div>
+          </div>
+
+          {/* Budget Quick View Widget */}
+          <div className="mb-8">
+            <BudgetQuickView />
           </div>
           
           {/* Budget Month Navigation - Carousel Style */}

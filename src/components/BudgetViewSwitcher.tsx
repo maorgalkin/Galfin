@@ -1,4 +1,5 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState } from 'react';
+import { useAllMonthlyBudgets, useCurrentMonthBudget, useMonthlyBudget } from '../hooks/useBudgets';
 import { MonthlyBudgetService } from '../services/monthlyBudgetService';
 import type { MonthlyBudget } from '../types/budget';
 
@@ -23,25 +24,11 @@ export const BudgetViewSwitcher: React.FC<BudgetViewSwitcherProps> = ({
   onViewChange,
   className = '',
 }) => {
-  const [availableMonths, setAvailableMonths] = useState<MonthlyBudget[]>([]);
-  const [loading, setLoading] = useState(false);
   const [isOpen, setIsOpen] = useState(false);
-
-  useEffect(() => {
-    loadAvailableMonths();
-  }, []);
-
-  const loadAvailableMonths = async () => {
-    try {
-      setLoading(true);
-      const months = await MonthlyBudgetService.getAllMonthlyBudgets(12);
-      setAvailableMonths(months);
-    } catch (error) {
-      console.error('Error loading monthly budgets:', error);
-    } finally {
-      setLoading(false);
-    }
-  };
+  
+  // Use React Query hooks
+  const { data: availableMonths = [], isLoading: loading } = useAllMonthlyBudgets(12);
+  const { data: currentMonthBudget } = useCurrentMonthBudget();
 
   const getDisplayLabel = (): string => {
     if (currentView === 'personal') {
@@ -71,11 +58,8 @@ export const BudgetViewSwitcher: React.FC<BudgetViewSwitcherProps> = ({
     }
 
     if (view === 'current-month') {
-      try {
-        const currentBudget = await MonthlyBudgetService.getCurrentMonthBudget();
-        onViewChange('current-month', currentBudget);
-      } catch (error) {
-        console.error('Error loading current month budget:', error);
+      if (currentMonthBudget) {
+        onViewChange('current-month', currentMonthBudget);
       }
       return;
     }
