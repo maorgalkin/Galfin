@@ -109,9 +109,7 @@ export class PersonalBudgetService {
    * This is typically done during onboarding or when creating a new baseline
    */
   static async createBudget(
-    config: BudgetConfiguration,
-    name: string = 'Personal Budget',
-    notes?: string
+    budget: Omit<PersonalBudget, 'id' | 'user_id' | 'version' | 'created_at' | 'updated_at' | 'is_active'>
   ): Promise<PersonalBudget> {
     try {
       const { data: { user } } = await supabase.auth.getUser();
@@ -129,11 +127,11 @@ export class PersonalBudgetService {
       const newBudget: Omit<PersonalBudget, 'id' | 'created_at' | 'updated_at'> = {
         user_id: user.id,
         version: nextVersion,
-        name,
-        categories: config.categories as Record<string, CategoryConfig>,
-        global_settings: config.globalSettings as GlobalBudgetSettings,
+        name: budget.name,
+        categories: budget.categories,
+        global_settings: budget.global_settings,
         is_active: true,
-        notes
+        notes: budget.notes
       };
 
       const { data, error } = await supabase
@@ -156,23 +154,49 @@ export class PersonalBudgetService {
    * This is called when scheduled adjustments are applied
    */
   static async updateBudget(
-    config: BudgetConfiguration,
-    notes?: string
+    budgetId: string,
+    updates: Partial<PersonalBudget>
   ): Promise<PersonalBudget> {
     try {
-      const activeBudget = await this.getActiveBudget();
+      const { data: { user } } = await supabase.auth.getUser();
       
-      if (!activeBudget) {
-        // No active budget, create one
-        return await this.createBudget(config, 'Personal Budget', notes);
+      if (!user) {
+        throw new Error('User not authenticated');
       }
 
-      // Create new version based on existing
-      return await this.createBudget(
-        config,
-        activeBudget.name,
-        notes || 'Updated from scheduled adjustments'
-      );
+      // Get the existing budget
+      const existingBudget = await this.getBudgetById(budgetId);
+      
+      if (!existingBudget) {
+        throw new Error('Budget not found');
+      }
+
+      // Deactivate all budgets
+      await this.deactivateAllBudgets();
+
+      // Get next version number
+      const nextVersion = await this.getNextVersion();
+
+      // Create new version with updates
+      const newBudget: Omit<PersonalBudget, 'id' | 'created_at' | 'updated_at'> = {
+        user_id: user.id,
+        version: nextVersion,
+        name: updates.name ?? existingBudget.name,
+        categories: updates.categories ?? existingBudget.categories,
+        global_settings: updates.global_settings ?? existingBudget.global_settings,
+        is_active: true,
+        notes: updates.notes ?? existingBudget.notes
+      };
+
+      const { data, error } = await supabase
+        .from('personal_budgets')
+        .insert([newBudget])
+        .select()
+        .single();
+
+      if (error) throw error;
+
+      return data;
     } catch (error) {
       console.error('Error updating personal budget:', error);
       throw error;
@@ -302,11 +326,12 @@ export class PersonalBudgetService {
         return existing;
       }
 
-      return await this.createBudget(
-        legacyConfig,
-        'Personal Budget',
-        'Migrated from legacy configuration'
-      );
+      return await this.createBudget({
+        name: 'Personal Budget',
+        categories: legacyConfig.categories as Record<string, CategoryConfig>,
+        global_settings: legacyConfig.globalSettings as GlobalBudgetSettings,
+        notes: 'Migrated from legacy configuration'
+      });
     } catch (error) {
       console.error('Error migrating from legacy config:', error);
       throw error;

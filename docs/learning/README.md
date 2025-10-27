@@ -33,6 +33,18 @@ Real-world debugging of Tailwind responsive grid utilities not working, and the 
 - Media queries vs Tailwind utilities
 - When to use each approach
 
+### 🎨 [Category Color System](./CATEGORY_COLOR_SYSTEM.md)
+Comprehensive guide to the intelligent color palette system that ensures budget categories are always visually distinct and readable.
+
+**Topics Covered:**
+- Automatic distinct color assignment
+- 20-color predefined palette
+- HSL color space for color analysis
+- Color distinction algorithm (30° minimum hue difference)
+- Visual color picker with used/available indicators
+- Generating new colors when palette exhausted
+- User experience and developer benefits
+
 ## When to Read These
 
 - **New to the project?** Start with Database Modification Flow to understand the architecture

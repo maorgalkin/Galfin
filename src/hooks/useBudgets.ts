@@ -56,6 +56,8 @@ export function useCreatePersonalBudget() {
       PersonalBudgetService.createBudget(budget),
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['personalBudget'] });
+      // Invalidate monthly budgets since new personal budget created
+      queryClient.invalidateQueries({ queryKey: ['monthlyBudget'] });
     },
   });
 }
@@ -73,6 +75,8 @@ export function useUpdatePersonalBudget() {
     }) => PersonalBudgetService.updateBudget(budgetId, updates),
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['personalBudget'] });
+      // Invalidate monthly budgets since categories might have changed
+      queryClient.invalidateQueries({ queryKey: ['monthlyBudget'] });
     },
   });
 }
@@ -87,6 +91,8 @@ export function useSetActiveBudget() {
     mutationFn: (budgetId: string) => PersonalBudgetService.setActiveBudget(budgetId),
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['personalBudget'] });
+      // Invalidate monthly budgets since active budget changed
+      queryClient.invalidateQueries({ queryKey: ['monthlyBudget'] });
     },
   });
 }
@@ -101,6 +107,8 @@ export function useDeletePersonalBudget() {
     mutationFn: (budgetId: string) => PersonalBudgetService.deleteBudget(budgetId),
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['personalBudget'] });
+      // Invalidate monthly budgets since personal budget deleted
+      queryClient.invalidateQueries({ queryKey: ['monthlyBudget'] });
     },
   });
 }

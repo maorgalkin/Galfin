@@ -36,10 +36,9 @@ export const PersonalBudgetDisplay: React.FC<PersonalBudgetDisplayProps> = ({
     return null;
   }
 
-  const totalBudget = Object.values(activeBudget.categories).reduce(
-    (sum, cat: CategoryConfig) => sum + cat.monthlyLimit,
-    0
-  );
+  const totalBudget = Object.values(activeBudget.categories)
+    .filter(cat => cat.isActive)
+    .reduce((sum, cat: CategoryConfig) => sum + cat.monthlyLimit, 0);
 
   const activeCategories = Object.entries(activeBudget.categories).filter(
     ([_, cat]) => cat.isActive
@@ -87,37 +86,41 @@ export const PersonalBudgetDisplay: React.FC<PersonalBudgetDisplayProps> = ({
 
       {/* Categories Grid */}
       <div className="px-6 py-4">
-        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+        <div className="budget-category-grid">
           {activeCategories.map(([name, config]) => (
             <div
               key={name}
-              className="p-4 rounded-lg border border-gray-200 dark:border-gray-700 bg-gray-50 dark:bg-gray-700/50 hover:shadow-md transition-shadow"
+              className="p-4 bg-white dark:bg-gray-700 rounded-lg border-2 border-gray-200 dark:border-gray-600 hover:shadow-md transition-all"
             >
               <div className="flex items-start justify-between mb-2">
-                <div className="flex items-center gap-2">
+                <div className="flex items-center gap-2 flex-1">
+                  {/* Color Badge */}
                   {config.color && (
                     <div
-                      className="w-3 h-3 rounded-full"
+                      className="w-4 h-4 rounded-full flex-shrink-0"
                       style={{ backgroundColor: config.color }}
                     />
                   )}
-                  <h4 className="font-semibold text-gray-900 dark:text-gray-100 text-sm">
+                  <h4 className="font-semibold text-gray-900 dark:text-gray-100 text-sm truncate">
                     {name}
                   </h4>
                 </div>
+                {!config.isActive && (
+                  <span className="text-xs text-gray-400 dark:text-gray-500">Inactive</span>
+                )}
               </div>
               
               <div className="space-y-1">
-                <div className="flex items-baseline justify-between">
-                  <span className="text-xs text-gray-500 dark:text-gray-400">Monthly Limit</span>
+                <div className="flex justify-between items-baseline">
+                  <span className="text-xs text-gray-500 dark:text-gray-400">Limit</span>
                   <span className="text-lg font-bold text-gray-900 dark:text-gray-100">
                     {formatCurrency(config.monthlyLimit)}
                   </span>
                 </div>
                 
                 {config.warningThreshold && (
-                  <div className="flex items-baseline justify-between">
-                    <span className="text-xs text-gray-500 dark:text-gray-400">Warning at</span>
+                  <div className="flex justify-between items-baseline">
+                    <span className="text-xs text-gray-500 dark:text-gray-400">Warning</span>
                     <span className="text-xs font-medium text-yellow-600 dark:text-yellow-400">
                       {config.warningThreshold}%
                     </span>
@@ -125,7 +128,7 @@ export const PersonalBudgetDisplay: React.FC<PersonalBudgetDisplayProps> = ({
                 )}
                 
                 {config.description && (
-                  <p className="text-xs text-gray-500 dark:text-gray-400 mt-2 italic">
+                  <p className="text-xs text-gray-500 dark:text-gray-400 mt-2 line-clamp-2">
                     {config.description}
                   </p>
                 )}

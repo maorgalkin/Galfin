@@ -179,11 +179,10 @@ export const MonthlyBudgetView: React.FC<MonthlyBudgetViewProps> = ({
     comparison?.comparisons.map(c => [c.category, c]) || []
   );
 
-  // Calculate total budget from categories
-  const totalBudget = Object.values(budget.categories).reduce(
-    (sum, cat) => sum + cat.monthlyLimit,
-    0
-  );
+  // Calculate total budget from categories (only active)
+  const totalBudget = Object.values(budget.categories)
+    .filter(cat => cat.isActive)
+    .reduce((sum, cat) => sum + cat.monthlyLimit, 0);
 
   // Calculate percentage change if we have comparison
   const totalPercentChange = comparison && comparison.totalPersonalLimit > 0

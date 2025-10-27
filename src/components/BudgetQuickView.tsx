@@ -1,7 +1,7 @@
 import React from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useActiveBudget, useCurrentMonthBudget, useNextMonthAdjustments } from '../hooks/useBudgets';
-import { Calendar, FileText, Settings, TrendingUp, Loader2, ArrowRight, Sparkles } from 'lucide-react';
+import { Calendar, Settings, Loader2, ArrowRight, Sparkles } from 'lucide-react';
 
 export const BudgetQuickView: React.FC = () => {
   const navigate = useNavigate();
@@ -10,9 +10,11 @@ export const BudgetQuickView: React.FC = () => {
   const { data: adjustments } = useNextMonthAdjustments();
 
   const formatCurrency = (amount: number): string => {
-    return new Intl.NumberFormat('en-US', {
+    const currency = activeBudget?.global_settings?.currency || 'USD';
+    const locale = currency === 'ILS' ? 'he-IL' : 'en-US';
+    return new Intl.NumberFormat(locale, {
       style: 'currency',
-      currency: 'USD',
+      currency: currency,
     }).format(amount);
   };
 
@@ -28,14 +30,8 @@ export const BudgetQuickView: React.FC = () => {
   }
 
   const monthlyTotal = monthlyBudget
-    ? Object.values(monthlyBudget.categories).reduce((sum, cat) => sum + cat.monthlyLimit, 0)
+    ? Object.values(monthlyBudget.categories).filter(cat => cat.isActive).reduce((sum, cat) => sum + cat.monthlyLimit, 0)
     : 0;
-
-  const personalTotal = activeBudget
-    ? Object.values(activeBudget.categories).reduce((sum, cat) => sum + cat.monthlyLimit, 0)
-    : 0;
-
-  const difference = monthlyTotal - personalTotal;
 
   return (
     <div className="bg-white dark:bg-gray-800 rounded-lg shadow-md overflow-hidden">
@@ -59,7 +55,7 @@ export const BudgetQuickView: React.FC = () => {
               Get started by creating your first budget. Add your spending categories and set monthly limits.
             </p>
             <button
-              onClick={() => navigate('/budget-management?create=true')}
+              onClick={() => navigate('/?tab=budget')}
               className="px-6 py-3 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors font-medium shadow-md hover:shadow-lg flex items-center gap-2"
             >
               <Sparkles className="h-5 w-5" />
@@ -72,64 +68,25 @@ export const BudgetQuickView: React.FC = () => {
         ) : (
           <div className="space-y-4">
             {/* Stats Grid */}
-            <div className="grid grid-cols-2 gap-4">
-              <div className="bg-gray-50 dark:bg-gray-700/50 rounded-lg p-4">
-                <div className="flex items-center text-sm text-gray-600 dark:text-gray-400 mb-1">
-                  <Calendar className="h-4 w-4 mr-1" />
-                  Monthly Budget
-                </div>
-                <p className="text-2xl font-bold text-gray-900 dark:text-gray-100">
-                  {formatCurrency(monthlyTotal)}
-                </p>
-                {monthlyBudget?.is_locked && (
-                  <span className="inline-block text-xs bg-gray-200 dark:bg-gray-600 text-gray-700 dark:text-gray-300 px-2 py-1 rounded mt-2">
-                    Locked
-                  </span>
-                )}
+            <div className="bg-gray-50 dark:bg-gray-700/50 rounded-lg p-4">
+              <div className="flex items-center text-sm text-gray-600 dark:text-gray-400 mb-1">
+                <Calendar className="h-4 w-4 mr-1" />
+                Monthly Budget
               </div>
-
-              <div className="bg-gray-50 dark:bg-gray-700/50 rounded-lg p-4">
-                <div className="flex items-center text-sm text-gray-600 dark:text-gray-400 mb-1">
-                  <FileText className="h-4 w-4 mr-1" />
-                  Template
-                </div>
-                <p className="text-2xl font-bold text-gray-900 dark:text-gray-100">
-                  {formatCurrency(personalTotal)}
-                </p>
-                {activeBudget && (
-                  <span className="text-xs text-gray-500 dark:text-gray-400 mt-1 block truncate">
-                    {activeBudget.name}
-                  </span>
-                )}
-              </div>
-            </div>
-
-            {/* Difference Indicator */}
-            {monthlyBudget && activeBudget && difference !== 0 && (
-              <div className={`flex items-center justify-between p-3 rounded-lg ${
-                difference > 0
-                  ? 'bg-green-50 dark:bg-green-900/20'
-                  : 'bg-red-50 dark:bg-red-900/20'
-              }`}>
-                <div className="flex items-center">
-                  <TrendingUp className={`h-5 w-5 mr-2 ${
-                    difference > 0
-                      ? 'text-green-600 dark:text-green-400'
-                      : 'text-red-600 dark:text-red-400 transform rotate-180'
-                  }`} />
-                  <span className="text-sm font-medium text-gray-900 dark:text-gray-100">
-                    {difference > 0 ? 'Increased' : 'Decreased'} by
-                  </span>
-                </div>
-                <span className={`font-semibold ${
-                  difference > 0
-                    ? 'text-green-700 dark:text-green-300'
-                    : 'text-red-700 dark:text-red-300'
-                }`}>
-                  {difference > 0 && '+'}{formatCurrency(difference)}
+              <p className="text-2xl font-bold text-gray-900 dark:text-gray-100">
+                {formatCurrency(monthlyTotal)}
+              </p>
+              {monthlyBudget?.is_locked && (
+                <span className="inline-block text-xs bg-gray-200 dark:bg-gray-600 text-gray-700 dark:text-gray-300 px-2 py-1 rounded mt-2">
+                  Locked
                 </span>
-              </div>
-            )}
+              )}
+              {activeBudget && (
+                <span className="text-xs text-gray-500 dark:text-gray-400 mt-1 block truncate">
+                  {activeBudget.name}
+                </span>
+              )}
+            </div>
 
             {/* Pending Adjustments */}
             {adjustments && adjustments.adjustmentCount > 0 && (
@@ -149,14 +106,14 @@ export const BudgetQuickView: React.FC = () => {
             {/* Quick Actions */}
             <div className="grid grid-cols-2 gap-2 pt-2">
               <button
-                onClick={() => navigate('/budget-management')}
+                onClick={() => navigate('/?tab=budget')}
                 className="flex items-center justify-center px-4 py-2 bg-blue-600 text-white rounded-md hover:bg-blue-700 transition-colors text-sm font-medium"
               >
                 Manage
                 <ArrowRight className="h-4 w-4 ml-1" />
               </button>
               <button
-                onClick={() => navigate('/budget-management')}
+                onClick={() => navigate('/?tab=budget')}
                 className="flex items-center justify-center px-4 py-2 bg-gray-100 dark:bg-gray-700 text-gray-700 dark:text-gray-300 rounded-md hover:bg-gray-200 dark:hover:bg-gray-600 transition-colors text-sm font-medium"
               >
                 View Details

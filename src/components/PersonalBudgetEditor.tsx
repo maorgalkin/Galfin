@@ -22,6 +22,7 @@ import {
   Settings as SettingsIcon
 } from 'lucide-react';
 import type { PersonalBudget, CategoryConfig } from '../types/budget';
+import { getNextAvailableColor, CATEGORY_COLOR_PALETTE } from '../utils/categoryColors';
 
 interface PersonalBudgetEditorProps {
   className?: string;
@@ -45,6 +46,7 @@ export const PersonalBudgetEditor: React.FC<PersonalBudgetEditorProps> = ({
   const [categories, setCategories] = useState<Record<string, CategoryConfig>>({});
   const [newCategoryName, setNewCategoryName] = useState('');
   const [newCategoryLimit, setNewCategoryLimit] = useState('');
+  const [newCategoryColor, setNewCategoryColor] = useState('');
   
   // Global settings state
   const [currency, setCurrency] = useState('USD');
@@ -80,7 +82,7 @@ export const PersonalBudgetEditor: React.FC<PersonalBudgetEditorProps> = ({
   const formatCurrency = (amount: number): string => {
     return new Intl.NumberFormat('en-US', {
       style: 'currency',
-      currency: 'USD',
+      currency: currency || 'USD',
     }).format(amount);
   };
 
@@ -224,6 +226,13 @@ export const PersonalBudgetEditor: React.FC<PersonalBudgetEditorProps> = ({
   };
 
   const handleAddCategory = () => {
+    // Get list of colors already in use
+    const usedColors = Object.values(categories)
+      .map(cat => cat.color)
+      .filter((color): color is string => color !== undefined);
+    // Get next available distinct color
+    const nextColor = getNextAvailableColor(usedColors);
+    setNewCategoryColor(nextColor);
     setIsAddingCategory(true);
   };
 
@@ -262,10 +271,9 @@ export const PersonalBudgetEditor: React.FC<PersonalBudgetEditorProps> = ({
     }
   };
 
-  const totalBudget = Object.values(categories).reduce(
-    (sum, cat) => sum + cat.monthlyLimit,
-    0
-  );
+  const totalBudget = Object.values(categories)
+    .filter(cat => cat.isActive)
+    .reduce((sum, cat) => sum + cat.monthlyLimit, 0);
 
   if (loadingActive || loadingHistory) {
     return (
@@ -321,20 +329,71 @@ export const PersonalBudgetEditor: React.FC<PersonalBudgetEditorProps> = ({
               />
             </div>
 
-            {/* Categories Grid */}
-            <div>
-              <div className="flex items-center justify-between mb-3">
+            {/* Global Settings - MOVED TO TOP */}
+            <div className="pt-2">
+              <div className="flex items-center gap-2 mb-3">
+                <SettingsIcon className="h-5 w-5 text-gray-600 dark:text-gray-400" />
                 <label className="block text-sm font-medium text-gray-700 dark:text-gray-300">
-                  Budget Categories
+                  Global Settings
                 </label>
-                <button
-                  onClick={handleAddCategory}
-                  className="flex items-center px-3 py-1.5 bg-green-600 text-white rounded-md hover:bg-green-700 text-sm font-medium transition-colors"
-                >
-                  <Plus className="h-4 w-4 mr-1" />
-                  Add Category
-                </button>
               </div>
+              
+              <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+                {/* Currency */}
+                <div>
+                  <label className="block text-xs font-medium text-gray-600 dark:text-gray-400 mb-1">
+                    Currency
+                  </label>
+                  <select
+                    value={currency}
+                    onChange={(e) => setCurrency(e.target.value)}
+                    className="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-md bg-white dark:bg-gray-700 text-gray-900 dark:text-gray-100 text-sm"
+                  >
+                    <option value="USD">USD ($)</option>
+                    <option value="EUR">EUR (€)</option>
+                    <option value="GBP">GBP (£)</option>
+                    <option value="ILS">ILS (₪)</option>
+                    <option value="JPY">JPY (¥)</option>
+                  </select>
+                </div>
+                
+                {/* Warning Notifications */}
+                <div>
+                  <label className="flex items-center h-full cursor-pointer">
+                    <input
+                      type="checkbox"
+                      checked={warningNotifications}
+                      onChange={(e) => setWarningNotifications(e.target.checked)}
+                      className="mr-2 h-4 w-4"
+                    />
+                    <span className="text-sm text-gray-700 dark:text-gray-300">
+                      Warning Notifications
+                    </span>
+                  </label>
+                </div>
+                
+                {/* Email Alerts */}
+                <div>
+                  <label className="flex items-center h-full cursor-pointer">
+                    <input
+                      type="checkbox"
+                      checked={emailAlerts}
+                      onChange={(e) => setEmailAlerts(e.target.checked)}
+                      className="mr-2 h-4 w-4"
+                    />
+                    <span className="text-sm text-gray-700 dark:text-gray-300">
+                      Email Alerts
+                    </span>
+                  </label>
+                </div>
+              </div>
+            </div>
+
+            {/* Categories Grid */}
+            <div className="pt-4 border-t border-gray-300 dark:border-gray-600">
+              <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-3">
+                Budget Categories
+              </label>
               
               {/* Categories Grid - v3.0 CUSTOM CSS */}
               <div 
@@ -396,16 +455,19 @@ export const PersonalBudgetEditor: React.FC<PersonalBudgetEditorProps> = ({
                   </div>
                 ))}
                 
-                {/* Empty State */}
-                {Object.keys(categories).length === 0 && (
-                  <div className="col-span-full text-center py-8 border-2 border-dashed border-gray-300 dark:border-gray-600 rounded-lg">
-                    <AlertCircle className="h-12 w-12 text-gray-400 mx-auto mb-2" />
-                    <p className="text-gray-600 dark:text-gray-400 mb-2">No categories yet</p>
-                    <p className="text-sm text-gray-500 dark:text-gray-500">
-                      Click "Add Category" to create your first budget category
-                    </p>
-                  </div>
-                )}
+                {/* Add Category Tile - Last in Grid */}
+                <button
+                  onClick={handleAddCategory}
+                  className="p-4 bg-white dark:bg-gray-700 rounded-lg border-2 border-dashed border-gray-300 dark:border-gray-600 hover:border-green-500 dark:hover:border-green-400 cursor-pointer transition-all hover:shadow-md flex flex-col items-center justify-center min-h-[140px]"
+                >
+                  <Plus className="h-8 w-8 text-green-600 dark:text-green-400 mb-2" />
+                  <span className="text-sm font-medium text-gray-700 dark:text-gray-300">
+                    Add Category
+                  </span>
+                  <span className="text-xs text-gray-500 dark:text-gray-400 mt-1">
+                    Click to create new
+                  </span>
+                </button>
               </div>
 
               {/* Total */}
@@ -417,66 +479,6 @@ export const PersonalBudgetEditor: React.FC<PersonalBudgetEditorProps> = ({
                   <span className="text-xl font-bold text-blue-600 dark:text-blue-400">
                     {formatCurrency(totalBudget)}
                   </span>
-                </div>
-              </div>
-            </div>
-
-            {/* Global Settings */}
-            <div className="pt-4 border-t border-gray-300 dark:border-gray-600">
-              <div className="flex items-center gap-2 mb-3">
-                <SettingsIcon className="h-5 w-5 text-gray-600 dark:text-gray-400" />
-                <label className="block text-sm font-medium text-gray-700 dark:text-gray-300">
-                  Global Settings
-                </label>
-              </div>
-              
-              <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-                {/* Currency */}
-                <div>
-                  <label className="block text-xs font-medium text-gray-600 dark:text-gray-400 mb-1">
-                    Currency
-                  </label>
-                  <select
-                    value={currency}
-                    onChange={(e) => setCurrency(e.target.value)}
-                    className="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-md bg-white dark:bg-gray-700 text-gray-900 dark:text-gray-100 text-sm"
-                  >
-                    <option value="USD">USD ($)</option>
-                    <option value="EUR">EUR (€)</option>
-                    <option value="GBP">GBP (£)</option>
-                    <option value="ILS">ILS (₪)</option>
-                    <option value="JPY">JPY (¥)</option>
-                  </select>
-                </div>
-                
-                {/* Warning Notifications */}
-                <div>
-                  <label className="flex items-center h-full cursor-pointer">
-                    <input
-                      type="checkbox"
-                      checked={warningNotifications}
-                      onChange={(e) => setWarningNotifications(e.target.checked)}
-                      className="mr-2 h-4 w-4"
-                    />
-                    <span className="text-sm text-gray-700 dark:text-gray-300">
-                      Warning Notifications
-                    </span>
-                  </label>
-                </div>
-                
-                {/* Email Alerts */}
-                <div>
-                  <label className="flex items-center h-full cursor-pointer">
-                    <input
-                      type="checkbox"
-                      checked={emailAlerts}
-                      onChange={(e) => setEmailAlerts(e.target.checked)}
-                      className="mr-2 h-4 w-4"
-                    />
-                    <span className="text-sm text-gray-700 dark:text-gray-300">
-                      Email Alerts
-                    </span>
-                  </label>
                 </div>
               </div>
             </div>
@@ -566,7 +568,7 @@ export const PersonalBudgetEditor: React.FC<PersonalBudgetEditorProps> = ({
                       </div>
                       <p className="text-sm text-gray-600 dark:text-gray-400 mt-1">
                         {Object.keys(budget.categories).length} categories • {formatCurrency(
-                          Object.values(budget.categories).reduce((sum, cat) => sum + cat.monthlyLimit, 0)
+                          Object.values(budget.categories).filter(cat => cat.isActive).reduce((sum, cat) => sum + cat.monthlyLimit, 0)
                         )} total
                       </p>
                       {budget.notes && (
@@ -620,8 +622,20 @@ export const PersonalBudgetEditor: React.FC<PersonalBudgetEditorProps> = ({
       
       {/* Category Edit/Add Modal */}
       {(editingCategory || isAddingCategory) && (
-        <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 p-4">
-          <div className="bg-white dark:bg-gray-800 rounded-lg shadow-xl max-w-md w-full max-h-[90vh] overflow-y-auto">
+        <div 
+          className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 p-4"
+          onClick={() => {
+            setEditingCategory(null);
+            setIsAddingCategory(false);
+            setNewCategoryName('');
+            setNewCategoryLimit('');
+            setNewCategoryColor('');
+          }}
+        >
+          <div 
+            className="bg-white dark:bg-gray-800 rounded-lg shadow-xl max-w-md w-full max-h-[90vh] overflow-y-auto"
+            onClick={(e) => e.stopPropagation()}
+          >
             {/* Modal Header */}
             <div className="px-6 py-4 border-b border-gray-200 dark:border-gray-700 flex items-center justify-between sticky top-0 bg-white dark:bg-gray-800">
               <h3 className="text-lg font-semibold text-gray-900 dark:text-gray-100">
@@ -633,6 +647,7 @@ export const PersonalBudgetEditor: React.FC<PersonalBudgetEditorProps> = ({
                   setIsAddingCategory(false);
                   setNewCategoryName('');
                   setNewCategoryLimit('');
+                  setNewCategoryColor('');
                 }}
                 className="p-2 hover:bg-gray-100 dark:hover:bg-gray-700 rounded-md transition-colors"
               >
@@ -679,13 +694,51 @@ export const PersonalBudgetEditor: React.FC<PersonalBudgetEditorProps> = ({
                   {/* Color */}
                   <div>
                     <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
-                      Color
+                      Color <span className="text-xs text-gray-500">(auto-selected for distinction)</span>
                     </label>
-                    <input
-                      type="color"
-                      defaultValue="#3B82F6"
-                      className="w-full h-12 rounded-md cursor-pointer border border-gray-300 dark:border-gray-600"
-                    />
+                    <div className="flex items-center gap-3 mb-3">
+                      <input
+                        type="color"
+                        value={newCategoryColor}
+                        onChange={(e) => setNewCategoryColor(e.target.value)}
+                        className="w-20 h-12 rounded-md cursor-pointer border border-gray-300 dark:border-gray-600"
+                      />
+                      <div className="flex-1">
+                        <div 
+                          className="h-12 rounded-md border border-gray-300 dark:border-gray-600 flex items-center justify-center text-sm font-medium shadow-sm"
+                          style={{ backgroundColor: newCategoryColor, color: '#fff', textShadow: '0 1px 2px rgba(0,0,0,0.3)' }}
+                        >
+                          Preview
+                        </div>
+                      </div>
+                    </div>
+                    
+                    {/* Quick color palette selector */}
+                    <div className="flex flex-wrap gap-2">
+                      {CATEGORY_COLOR_PALETTE.map((color) => {
+                        const usedColors = Object.values(categories)
+                          .map(cat => cat.color)
+                          .filter((color): color is string => color !== undefined);
+                        const isUsed = usedColors.some(used => used.toLowerCase() === color.toLowerCase());
+                        return (
+                          <button
+                            key={color}
+                            type="button"
+                            onClick={() => setNewCategoryColor(color)}
+                            disabled={isUsed}
+                            className={`w-8 h-8 rounded-md border-2 transition-all ${
+                              newCategoryColor.toLowerCase() === color.toLowerCase()
+                                ? 'border-gray-900 dark:border-white scale-110 shadow-md'
+                                : isUsed 
+                                  ? 'border-gray-300 dark:border-gray-600 opacity-30 cursor-not-allowed'
+                                  : 'border-gray-300 dark:border-gray-600 hover:scale-110 hover:shadow-md cursor-pointer'
+                            }`}
+                            style={{ backgroundColor: color }}
+                            title={isUsed ? 'Color already in use' : 'Select this color'}
+                          />
+                        );
+                      })}
+                    </div>
                   </div>
                   
                   {/* Buttons */}
@@ -712,12 +765,13 @@ export const PersonalBudgetEditor: React.FC<PersonalBudgetEditorProps> = ({
                             monthlyLimit: limit,
                             warningThreshold: 80,
                             isActive: true,
-                            color: '#3B82F6',
+                            color: newCategoryColor,
                           },
                         });
                         setIsAddingCategory(false);
                         setNewCategoryName('');
                         setNewCategoryLimit('');
+                        setNewCategoryColor('');
                       }}
                       className="flex-1 px-4 py-2 bg-blue-600 text-white rounded-md hover:bg-blue-700 transition-colors font-medium"
                     >
@@ -729,6 +783,7 @@ export const PersonalBudgetEditor: React.FC<PersonalBudgetEditorProps> = ({
                         setIsAddingCategory(false);
                         setNewCategoryName('');
                         setNewCategoryLimit('');
+                        setNewCategoryColor('');
                       }}
                       className="px-4 py-2 bg-gray-200 dark:bg-gray-700 text-gray-700 dark:text-gray-300 rounded-md hover:bg-gray-300 dark:hover:bg-gray-600 transition-colors"
                     >
@@ -739,34 +794,37 @@ export const PersonalBudgetEditor: React.FC<PersonalBudgetEditorProps> = ({
               ) : editingCategory ? (
                 // EDIT MODE
                 <>
-                  {/* Color Picker */}
-                  <div>
-                    <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
-                      Color
-                    </label>
-                    <input
-                      type="color"
-                      value={categories[editingCategory]?.color || '#3B82F6'}
-                      onChange={(e) => handleUpdateCategory(editingCategory, 'color', e.target.value)}
-                      className="w-full h-12 rounded-md cursor-pointer border border-gray-300 dark:border-gray-600"
-                    />
-                  </div>
-                  
-                  {/* Monthly Limit */}
-                  <div>
-                    <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
-                      Monthly Limit ($)
-                    </label>
-                    <input
-                      type="number"
-                      value={categories[editingCategory]?.monthlyLimit || 0}
-                      onChange={(e) =>
-                        handleUpdateCategory(editingCategory, 'monthlyLimit', parseFloat(e.target.value) || 0)
-                      }
-                      className="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-md bg-white dark:bg-gray-700 text-gray-900 dark:text-gray-100"
-                      min="0"
-                      step="10"
-                    />
+                  {/* Color Picker and Monthly Limit - Side by Side */}
+                  <div className="grid grid-cols-2 gap-4">
+                    {/* Color Picker */}
+                    <div>
+                      <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
+                        Color
+                      </label>
+                      <input
+                        type="color"
+                        value={categories[editingCategory]?.color || '#3B82F6'}
+                        onChange={(e) => handleUpdateCategory(editingCategory, 'color', e.target.value)}
+                        className="w-full h-12 rounded-md cursor-pointer border border-gray-300 dark:border-gray-600"
+                      />
+                    </div>
+                    
+                    {/* Monthly Limit */}
+                    <div>
+                      <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
+                        Monthly Limit ({currency === 'USD' ? '$' : currency === 'ILS' ? '₪' : currency === 'EUR' ? '€' : currency === 'GBP' ? '£' : '¥'})
+                      </label>
+                      <input
+                        type="number"
+                        value={categories[editingCategory]?.monthlyLimit || 0}
+                        onChange={(e) =>
+                          handleUpdateCategory(editingCategory, 'monthlyLimit', parseFloat(e.target.value) || 0)
+                        }
+                        className="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-md bg-white dark:bg-gray-700 text-gray-900 dark:text-gray-100"
+                        min="0"
+                        step="10"
+                      />
+                    </div>
                   </div>
                   
                   {/* Warning Threshold */}
@@ -818,7 +876,7 @@ export const PersonalBudgetEditor: React.FC<PersonalBudgetEditorProps> = ({
                         onChange={(e) => handleUpdateCategory(editingCategory, 'isActive', e.target.checked)}
                         className="sr-only peer"
                       />
-                      <div className="w-11 h-6 bg-gray-200 peer-focus:outline-none peer-focus:ring-4 peer-focus:ring-blue-300 dark:peer-focus:ring-blue-800 rounded-full peer dark:bg-gray-700 peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-gray-300 after:border after:rounded-full after:h-5 after:w-5 after:transition-all dark:border-gray-600 peer-checked:bg-blue-600"></div>
+                      <div className="w-10 h-6 bg-gray-200 peer-focus:outline-none peer-focus:ring-4 peer-focus:ring-blue-300 dark:peer-focus:ring-blue-800 rounded-full peer dark:bg-gray-700 peer-checked:after:translate-x-4 rtl:peer-checked:after:-translate-x-4 peer-checked:after:border-white after:content-[''] after:absolute after:top-0.5 after:start-[2px] after:bg-white after:border-gray-300 after:border after:rounded-full after:h-5 after:w-5 after:transition-all dark:border-gray-600 peer-checked:bg-blue-600"></div>
                     </label>
                   </div>
                   

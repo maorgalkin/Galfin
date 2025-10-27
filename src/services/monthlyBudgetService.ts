@@ -76,13 +76,36 @@ export class MonthlyBudgetService {
 
   /**
    * Get current month's budget
+   * Syncs isActive status from personal budget to ensure consistency
    */
   static async getCurrentMonthBudget(): Promise<MonthlyBudget> {
     const now = new Date();
-    return await this.getOrCreateMonthlyBudget(
+    const monthlyBudget = await this.getOrCreateMonthlyBudget(
       now.getFullYear(),
       now.getMonth() + 1
     );
+
+    // Sync isActive status from personal budget
+    const personalBudget = await PersonalBudgetService.getActiveBudget();
+    if (personalBudget) {
+      // Update each category's isActive status from the personal budget
+      const syncedCategories = { ...monthlyBudget.categories };
+      Object.keys(syncedCategories).forEach(categoryName => {
+        if (personalBudget.categories[categoryName]) {
+          syncedCategories[categoryName] = {
+            ...syncedCategories[categoryName],
+            isActive: personalBudget.categories[categoryName].isActive
+          };
+        }
+      });
+
+      return {
+        ...monthlyBudget,
+        categories: syncedCategories
+      };
+    }
+
+    return monthlyBudget;
   }
 
   /**
