@@ -71,8 +71,21 @@ export class BudgetService {
     category: string, 
     actualSpent: number
   ): BudgetComparison {
-    const budgeted = this.getCategoryBudget(category);
-    const warningThreshold = this.getCategoryWarningThreshold(category);
+    const config = this.getCurrentBudgetConfig();
+    return this.calculateBudgetVarianceWithConfig(category, actualSpent, config);
+  }
+
+  /**
+   * Calculate budget variance for a category with provided config
+   */
+  calculateBudgetVarianceWithConfig(
+    category: string, 
+    actualSpent: number,
+    config: BudgetConfiguration
+  ): BudgetComparison {
+    const categoryConfig = config.categories[category];
+    const budgeted = categoryConfig?.monthlyLimit || 0;
+    const warningThreshold = categoryConfig?.warningThreshold || 80;
     const variance = actualSpent - budgeted;
     const variancePercentage = budgeted > 0 ? (variance / budgeted) * 100 : 0;
     
@@ -106,6 +119,20 @@ export class BudgetService {
     month: string, 
     year: number
   ): BudgetAnalysis {
+    // Get current budget configuration
+    const config = this.getCurrentBudgetConfig();
+    return this.analyzeBudgetPerformanceWithConfig(transactions, month, year, config);
+  }
+
+  /**
+   * Analyze budget performance for a specific month with provided config
+   */
+  analyzeBudgetPerformanceWithConfig(
+    transactions: Transaction[], 
+    month: string, 
+    year: number,
+    config: BudgetConfiguration
+  ): BudgetAnalysis {
     // Filter transactions for the specific month/year
     const monthTransactions = transactions.filter(t => {
       const date = new Date(t.date);
@@ -120,15 +147,12 @@ export class BudgetService {
       categorySpending[t.category] = (categorySpending[t.category] || 0) + t.amount;
     });
 
-    // Get current budget configuration
-    const config = this.getCurrentBudgetConfig();
-
     // Generate category comparisons (only for active categories)
     const categoryComparisons: BudgetComparison[] = [];
     for (const [category, categoryConfig] of Object.entries(config.categories)) {
       if (categoryConfig.isActive) {
         const spent = categorySpending[category] || 0;
-        const comparison = this.calculateBudgetVariance(category, spent);
+        const comparison = this.calculateBudgetVarianceWithConfig(category, spent, config);
         categoryComparisons.push(comparison);
       }
     }
@@ -137,7 +161,12 @@ export class BudgetService {
     const totalBudgeted = Object.entries(config.categories)
       .filter(([, categoryConfig]) => categoryConfig.isActive)
       .reduce((sum, [, categoryConfig]) => sum + categoryConfig.monthlyLimit, 0);
-    const totalSpent = Object.values(categorySpending).reduce((sum, amount) => sum + amount, 0);
+    
+    // Calculate total spent (only for active categories)
+    const totalSpent = Object.entries(categorySpending)
+      .filter(([category]) => config.categories[category]?.isActive)
+      .reduce((sum, [, amount]) => sum + amount, 0);
+    
     const totalVariance = totalSpent - totalBudgeted;
 
     // Calculate income for the month

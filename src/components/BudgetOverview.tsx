@@ -1,7 +1,9 @@
 import React, { useState, useMemo } from 'react';
 import { useFinance } from '../context/FinanceContext';
+import { useActiveBudget } from '../hooks/useBudgets';
 import { budgetService } from '../services/budgetService';
-import { AlertTriangle, CheckCircle, Target } from 'lucide-react';
+import { AlertTriangle, CheckCircle, Target, HelpCircle, X } from 'lucide-react';
+import type { BudgetConfiguration } from '../types';
 
 interface BudgetOverviewProps {
   selectedMonth?: Date;
@@ -9,8 +11,23 @@ interface BudgetOverviewProps {
 }
 
 const BudgetOverview: React.FC<BudgetOverviewProps> = ({ selectedMonth, isCompact = false }) => {
-  const { transactions, budgetConfig } = useFinance();
+  const { transactions, budgetConfig: oldBudgetConfig } = useFinance();
+  const { data: personalBudget } = useActiveBudget();
   const [showDetails, setShowDetails] = useState(false);
+  const [showProgressHelp, setShowProgressHelp] = useState(false);
+
+  // Convert personal budget to BudgetConfiguration format
+  const budgetConfig = useMemo((): BudgetConfiguration => {
+    if (personalBudget) {
+      return {
+        version: "2.0.0",
+        lastUpdated: personalBudget.updated_at,
+        categories: personalBudget.categories,
+        globalSettings: personalBudget.global_settings
+      };
+    }
+    return oldBudgetConfig;
+  }, [personalBudget, oldBudgetConfig]);
 
   // Get current month or use selected month
   const currentDate = selectedMonth || new Date();
@@ -19,7 +36,7 @@ const BudgetOverview: React.FC<BudgetOverviewProps> = ({ selectedMonth, isCompac
 
   // Calculate budget analysis for the selected month
   const budgetAnalysis = useMemo(() => {
-    return budgetService.analyzeBudgetPerformance(transactions, monthName, year);
+    return budgetService.analyzeBudgetPerformanceWithConfig(transactions, monthName, year, budgetConfig);
   }, [transactions, monthName, year, budgetConfig]);
 
   // Calculate income and balance for the selected month
@@ -149,7 +166,16 @@ const BudgetOverview: React.FC<BudgetOverviewProps> = ({ selectedMonth, isCompac
       {/* Budget Progress Bar */}
       <div className={isCompact ? 'mb-4' : 'mb-6'}>
         <div className="flex justify-between items-center mb-2">
-          <span className={`font-medium text-gray-700 ${isCompact ? 'text-xs' : 'text-sm'}`}>Overall Budget Progress</span>
+          <div className="flex items-center gap-2">
+            <span className={`font-medium text-gray-700 ${isCompact ? 'text-xs' : 'text-sm'}`}>Overall Budget Progress</span>
+            <button
+              onClick={() => setShowProgressHelp(true)}
+              className="text-gray-400 hover:text-blue-600 transition-colors"
+              title="Learn how this is calculated"
+            >
+              <HelpCircle className="h-4 w-4" />
+            </button>
+          </div>
           <span className={`text-gray-600 ${isCompact ? 'text-xs' : 'text-sm'}`}>{budgetUtilization.toFixed(1)}%</span>
         </div>
         <div className="w-full bg-gray-200 rounded-full h-2">
@@ -262,6 +288,120 @@ const BudgetOverview: React.FC<BudgetOverviewProps> = ({ selectedMonth, isCompac
           </div>
           <div className="text-xs text-gray-500 mt-1">
             Income to Expense Ratio: {budgetAnalysis.incomeExpenseRatio.toFixed(2)}
+          </div>
+        </div>
+      )}
+
+      {/* Budget Progress Help Modal */}
+      {showProgressHelp && (
+        <div 
+          className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 p-4"
+          onClick={() => setShowProgressHelp(false)}
+        >
+          <div 
+            className="bg-white rounded-lg shadow-xl max-w-2xl w-full max-h-[90vh] overflow-y-auto"
+            onClick={(e) => e.stopPropagation()}
+          >
+            {/* Header */}
+            <div className="sticky top-0 bg-white border-b px-6 py-4 flex items-center justify-between">
+              <div>
+                <h2 className="text-xl font-bold text-gray-900">Understanding Budget Progress</h2>
+                <p className="text-sm text-gray-500 mt-1">How we calculate your progress</p>
+              </div>
+              <button
+                onClick={() => setShowProgressHelp(false)}
+                className="text-gray-400 hover:text-gray-600 transition-colors"
+              >
+                <X className="w-6 h-6" />
+              </button>
+            </div>
+
+            {/* Content */}
+            <div className="p-6 space-y-6">
+              {/* Calculation Formula */}
+              <div className="bg-blue-50 border-l-4 border-blue-500 p-4 rounded">
+                <h3 className="font-semibold text-blue-900 mb-2">📊 The Formula</h3>
+                <div className="font-mono text-sm bg-white p-3 rounded border border-blue-200">
+                  Progress = (Total Spent / Total Budgeted) × 100%
+                </div>
+              </div>
+
+              {/* Current Values */}
+              <div className="grid grid-cols-2 gap-4">
+                <div className="bg-gray-50 p-4 rounded-lg">
+                  <p className="text-xs text-gray-600 mb-1">Total Budgeted (Active Categories)</p>
+                  <p className="text-2xl font-bold text-gray-900">{formatCurrency(budgetAnalysis.totalBudgeted)}</p>
+                </div>
+                <div className="bg-gray-50 p-4 rounded-lg">
+                  <p className="text-xs text-gray-600 mb-1">Total Spent (Active Categories)</p>
+                  <p className="text-2xl font-bold text-gray-900">{formatCurrency(budgetAnalysis.totalSpent)}</p>
+                </div>
+              </div>
+
+              {/* Example Calculation */}
+              <div className="bg-green-50 border-l-4 border-green-500 p-4 rounded">
+                <h3 className="font-semibold text-green-900 mb-2">🧮 Your Current Calculation</h3>
+                <div className="text-sm space-y-2">
+                  <p className="text-gray-700">
+                    Progress = ({formatCurrency(budgetAnalysis.totalSpent)} / {formatCurrency(budgetAnalysis.totalBudgeted)}) × 100%
+                  </p>
+                  <p className="text-lg font-bold text-green-900">
+                    = {budgetUtilization.toFixed(1)}%
+                  </p>
+                </div>
+              </div>
+
+              {/* What It Means */}
+              <div>
+                <h3 className="font-semibold text-gray-900 mb-3">💡 What This Means</h3>
+                <div className="space-y-2 text-sm text-gray-700">
+                  <div className="flex items-start gap-2">
+                    <div className="w-2 h-2 bg-green-500 rounded-full mt-1.5 flex-shrink-0"></div>
+                    <p><strong className="text-green-700">0-80%:</strong> You're doing great! Well within budget.</p>
+                  </div>
+                  <div className="flex items-start gap-2">
+                    <div className="w-2 h-2 bg-yellow-500 rounded-full mt-1.5 flex-shrink-0"></div>
+                    <p><strong className="text-yellow-700">80-100%:</strong> Watch your spending - approaching your limit.</p>
+                  </div>
+                  <div className="flex items-start gap-2">
+                    <div className="w-2 h-2 bg-red-500 rounded-full mt-1.5 flex-shrink-0"></div>
+                    <p><strong className="text-red-700">Over 100%:</strong> You've exceeded your budget - time to review!</p>
+                  </div>
+                </div>
+              </div>
+
+              {/* Important Notes */}
+              <div className="bg-yellow-50 border-l-4 border-yellow-500 p-4 rounded">
+                <h3 className="font-semibold text-yellow-900 mb-2">⚠️ Important Considerations</h3>
+                <ul className="text-sm text-gray-700 space-y-2 list-disc list-inside">
+                  <li><strong>Only Active Categories Count:</strong> Inactive categories are excluded from both budget and spending totals.</li>
+                  <li><strong>Month-to-Date:</strong> This shows your progress for the current/selected month only.</li>
+                  <li><strong>Real-Time Updates:</strong> Progress updates as you add transactions or modify budgets.</li>
+                  <li><strong>Category-Specific:</strong> Check individual category details below for specific breakdowns.</li>
+                </ul>
+              </div>
+
+              {/* Tips */}
+              <div className="bg-purple-50 border-l-4 border-purple-500 p-4 rounded">
+                <h3 className="font-semibold text-purple-900 mb-2">💰 Pro Tips</h3>
+                <ul className="text-sm text-gray-700 space-y-2 list-disc list-inside">
+                  <li>Deactivate categories you're not tracking this month to keep progress focused</li>
+                  <li>Aim to stay under 80% by month-end for a healthy financial buffer</li>
+                  <li>Review category details regularly to catch overspending early</li>
+                  <li>Adjust budgets mid-month if your circumstances change</li>
+                </ul>
+              </div>
+            </div>
+
+            {/* Footer */}
+            <div className="sticky bottom-0 bg-gray-50 border-t px-6 py-4 flex justify-end">
+              <button
+                onClick={() => setShowProgressHelp(false)}
+                className="px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors font-medium"
+              >
+                Got It!
+              </button>
+            </div>
           </div>
         </div>
       )}
