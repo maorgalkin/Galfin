@@ -438,6 +438,8 @@ export class MonthlyBudgetService {
         let personalLimit: number | null = personalConfig?.monthlyLimit ?? null;
         let monthlyLimit: number = monthlyConfig?.monthlyLimit ?? 0;
         let isActive = monthlyConfig?.isActive ?? false;
+        let difference: number;
+        let differencePercentage: number;
         
         if (!personalConfig && monthlyConfig) {
           // Category added in monthly budget
@@ -447,16 +449,24 @@ export class MonthlyBudgetService {
             activeCount++;
             totalMonthly += monthlyLimit;
           }
+          difference = monthlyLimit; // Full amount is the difference
+          differencePercentage = 0;
         } else if (personalConfig && !monthlyConfig?.isActive) {
           // Category exists in personal but deactivated in monthly budget
           status = 'removed';
           removedCount++;
-          continue; // Don't add to comparisons, skip deactivated categories
+          isActive = false;
+          // Show as removed from monthly budget
+          personalLimit = personalConfig.monthlyLimit;
+          monthlyLimit = 0; // It's deactivated, so monthly limit is effectively 0
+          difference = -personalLimit; // Negative to show reduction
+          differencePercentage = -100; // 100% reduction
         } else if (personalConfig && monthlyConfig && monthlyConfig.isActive) {
           // Category exists in both and is active in monthly
           isActive = true;
           activeCount++;
-          const difference = monthlyLimit - personalLimit!;
+          difference = monthlyLimit - personalLimit!;
+          differencePercentage = personalLimit! > 0 ? (difference / personalLimit!) * 100 : 0;
           
           if (difference > 0) {
             status = 'increased';
@@ -473,11 +483,6 @@ export class MonthlyBudgetService {
         } else {
           continue; // Skip inactive or undefined categories
         }
-
-        const difference = personalLimit !== null ? monthlyLimit - personalLimit : monthlyLimit;
-        const differencePercentage = personalLimit && personalLimit > 0
-          ? (difference / personalLimit) * 100 
-          : 0;
 
         comparisons.push({
           category: categoryName,
