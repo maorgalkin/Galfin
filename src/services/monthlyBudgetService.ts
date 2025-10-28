@@ -37,8 +37,59 @@ export class MonthlyBudgetService {
   }
 
   /**
+   * Sync monthly budget with personal budget
+   * Returns a synced copy without modifying the database
+   */
+  private static async syncWithPersonalBudget(
+    monthlyBudget: MonthlyBudget
+  ): Promise<MonthlyBudget> {
+    const personalBudget = await PersonalBudgetService.getActiveBudget();
+    if (!personalBudget) {
+      return monthlyBudget;
+    }
+
+    // Start with monthly budget categories
+    const syncedCategories = { ...monthlyBudget.categories };
+    
+    // Sync all categories from personal budget
+    for (const [categoryName, personalConfig] of Object.entries(personalBudget.categories)) {
+      if (syncedCategories[categoryName]) {
+        // Category exists in both - sync properties from personal budget
+        // Keep monthlyLimit from monthly budget (may have been adjusted)
+        syncedCategories[categoryName] = {
+          ...syncedCategories[categoryName],
+          isActive: personalConfig.isActive,
+          color: personalConfig.color,
+          description: personalConfig.description,
+          warningThreshold: personalConfig.warningThreshold,
+        };
+      } else {
+        // Category added to personal budget but not in monthly yet - add it
+        syncedCategories[categoryName] = { ...personalConfig };
+      }
+    }
+    
+    // Deactivate categories that were deleted from personal budget
+    for (const categoryName of Object.keys(syncedCategories)) {
+      if (!personalBudget.categories[categoryName]) {
+        syncedCategories[categoryName] = {
+          ...syncedCategories[categoryName],
+          isActive: false
+        };
+      }
+    }
+
+    return {
+      ...monthlyBudget,
+      categories: syncedCategories,
+      global_settings: personalBudget.global_settings // Sync global settings
+    };
+  }
+
+  /**
    * Get monthly budget for a specific month
    * Returns null if doesn't exist
+   * Syncs with personal budget for category metadata
    */
   static async getMonthlyBudget(
     year: number,
@@ -66,7 +117,8 @@ export class MonthlyBudgetService {
         throw error;
       }
 
-      return data;
+      // Sync with personal budget
+      return await this.syncWithPersonalBudget(data);
     } catch (error) {
       console.error('Error fetching monthly budget:', error);
       throw error;
@@ -75,7 +127,7 @@ export class MonthlyBudgetService {
 
   /**
    * Get current month's budget
-   * Syncs isActive status from personal budget to ensure consistency
+   * Syncs with personal budget to ensure all categories and isActive status are current
    */
   static async getCurrentMonthBudget(): Promise<MonthlyBudget> {
     const now = new Date();
@@ -84,27 +136,8 @@ export class MonthlyBudgetService {
       now.getMonth() + 1
     );
 
-    // Sync isActive status from personal budget
-    const personalBudget = await PersonalBudgetService.getActiveBudget();
-    if (personalBudget) {
-      // Update each category's isActive status from the personal budget
-      const syncedCategories = { ...monthlyBudget.categories };
-      Object.keys(syncedCategories).forEach(categoryName => {
-        if (personalBudget.categories[categoryName]) {
-          syncedCategories[categoryName] = {
-            ...syncedCategories[categoryName],
-            isActive: personalBudget.categories[categoryName].isActive
-          };
-        }
-      });
-
-      return {
-        ...monthlyBudget,
-        categories: syncedCategories
-      };
-    }
-
-    return monthlyBudget;
+    // Sync with personal budget
+    return await this.syncWithPersonalBudget(monthlyBudget);
   }
 
   /**
@@ -382,6 +415,13 @@ export class MonthlyBudgetService {
       let removedCount = 0;
       let activeCount = 0;
 
+      // Calculate total personal budget (all active categories in personal budget)
+      for (const [, categoryConfig] of Object.entries(personalBudget.categories)) {
+        if (categoryConfig.isActive) {
+          totalPersonal += categoryConfig.monthlyLimit;
+        }
+      }
+
       // Get all categories from both budgets
       const allCategories = new Set([
         ...Object.keys(monthlyBudget.categories),
@@ -408,12 +448,12 @@ export class MonthlyBudgetService {
             totalMonthly += monthlyLimit;
           }
         } else if (personalConfig && !monthlyConfig?.isActive) {
-          // Category exists but deactivated in monthly budget
+          // Category exists in personal but deactivated in monthly budget
           status = 'removed';
           removedCount++;
           continue; // Don't add to comparisons, skip deactivated categories
         } else if (personalConfig && monthlyConfig && monthlyConfig.isActive) {
-          // Category exists in both and is active
+          // Category exists in both and is active in monthly
           isActive = true;
           activeCount++;
           const difference = monthlyLimit - personalLimit!;
@@ -428,7 +468,7 @@ export class MonthlyBudgetService {
             status = 'unchanged';
           }
           
-          totalPersonal += personalLimit!;
+          // Don't add to totalPersonal here - already calculated above
           totalMonthly += monthlyLimit;
         } else {
           continue; // Skip inactive or undefined categories
