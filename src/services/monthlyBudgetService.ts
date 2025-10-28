@@ -3,7 +3,6 @@ import { PersonalBudgetService } from './personalBudgetService';
 import type {
   MonthlyBudget,
   PersonalBudget,
-  CategoryConfig,
   BudgetComparisonResult,
   BudgetComparisonSummary
 } from '../types/budget';
@@ -379,30 +378,66 @@ export class MonthlyBudgetService {
       let totalPersonal = 0;
       let totalMonthly = 0;
       let adjustedCount = 0;
+      let addedCount = 0;
+      let removedCount = 0;
+      let activeCount = 0;
+
+      // Get all categories from both budgets
+      const allCategories = new Set([
+        ...Object.keys(monthlyBudget.categories),
+        ...Object.keys(personalBudget.categories)
+      ]);
 
       // Compare each category
-      for (const [categoryName, monthlyConfig] of Object.entries(monthlyBudget.categories)) {
+      for (const categoryName of allCategories) {
+        const monthlyConfig = monthlyBudget.categories[categoryName];
         const personalConfig = personalBudget.categories[categoryName];
         
-        if (!personalConfig || !monthlyConfig.isActive) continue;
+        // Determine category status
+        let status: 'increased' | 'decreased' | 'unchanged' | 'added' | 'removed';
+        let personalLimit: number | null = personalConfig?.monthlyLimit ?? null;
+        let monthlyLimit: number = monthlyConfig?.monthlyLimit ?? 0;
+        let isActive = monthlyConfig?.isActive ?? false;
+        
+        if (!personalConfig && monthlyConfig) {
+          // Category added in monthly budget
+          status = 'added';
+          addedCount++;
+          if (isActive) {
+            activeCount++;
+            totalMonthly += monthlyLimit;
+          }
+        } else if (personalConfig && !monthlyConfig?.isActive) {
+          // Category exists but deactivated in monthly budget
+          status = 'removed';
+          removedCount++;
+          continue; // Don't add to comparisons, skip deactivated categories
+        } else if (personalConfig && monthlyConfig && monthlyConfig.isActive) {
+          // Category exists in both and is active
+          isActive = true;
+          activeCount++;
+          const difference = monthlyLimit - personalLimit!;
+          
+          if (difference > 0) {
+            status = 'increased';
+            adjustedCount++;
+          } else if (difference < 0) {
+            status = 'decreased';
+            adjustedCount++;
+          } else {
+            status = 'unchanged';
+          }
+          
+          totalPersonal += personalLimit!;
+          totalMonthly += monthlyLimit;
+        } else {
+          continue; // Skip inactive or undefined categories
+        }
 
-        const personalLimit = personalConfig.monthlyLimit;
-        const monthlyLimit = monthlyConfig.monthlyLimit;
-        const difference = monthlyLimit - personalLimit;
-        const differencePercentage = personalLimit > 0 
+        const difference = personalLimit !== null ? monthlyLimit - personalLimit : monthlyLimit;
+        const differencePercentage = personalLimit && personalLimit > 0
           ? (difference / personalLimit) * 100 
           : 0;
-
-        let status: 'increased' | 'decreased' | 'unchanged';
-        if (difference > 0) {
-          status = 'increased';
-          adjustedCount++;
-        } else if (difference < 0) {
-          status = 'decreased';
-          adjustedCount++;
-        } else {
-          status = 'unchanged';
-        }
 
         comparisons.push({
           category: categoryName,
@@ -410,11 +445,9 @@ export class MonthlyBudgetService {
           monthlyLimit,
           difference,
           differencePercentage,
-          status
+          status,
+          isActive
         });
-
-        totalPersonal += personalLimit;
-        totalMonthly += monthlyLimit;
       }
 
       const monthNames = ['January', 'February', 'March', 'April', 'May', 'June',
@@ -423,8 +456,12 @@ export class MonthlyBudgetService {
       return {
         personalBudgetName: personalBudget.name,
         monthlyBudgetDate: `${monthNames[month - 1]} ${year}`,
-        totalCategories: comparisons.length,
+        currency: personalBudget.global_settings.currency,
+        totalCategories: allCategories.size,
+        activeCategories: activeCount,
         adjustedCategories: adjustedCount,
+        addedCategories: addedCount,
+        removedCategories: removedCount,
         comparisons,
         totalPersonalLimit: totalPersonal,
         totalMonthlyLimit: totalMonthly,

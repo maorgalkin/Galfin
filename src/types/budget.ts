@@ -250,11 +250,12 @@ export interface GlobalBudgetSettings {
  */
 export interface BudgetComparisonResult {
   category: string;
-  personalLimit: number;
+  personalLimit: number | null; // null if category doesn't exist in personal budget
   monthlyLimit: number;
   difference: number;
   differencePercentage: number;
-  status: 'increased' | 'decreased' | 'unchanged';
+  status: 'increased' | 'decreased' | 'unchanged' | 'added' | 'removed';
+  isActive: boolean; // Whether category is active in monthly budget
 }
 
 /**
@@ -263,11 +264,15 @@ export interface BudgetComparisonResult {
 export interface BudgetComparisonSummary {
   personalBudgetName: string;
   monthlyBudgetDate: string; // "October 2025"
+  currency: string; // "USD", "ILS", etc.
   totalCategories: number;
+  activeCategories: number;
   adjustedCategories: number;
+  addedCategories: number; // Categories in monthly but not in personal
+  removedCategories: number; // Categories deactivated in monthly
   comparisons: BudgetComparisonResult[];
-  totalPersonalLimit: number;
-  totalMonthlyLimit: number;
+  totalPersonalLimit: number; // Active categories only
+  totalMonthlyLimit: number; // Active categories only
   totalDifference: number;
 }
 
