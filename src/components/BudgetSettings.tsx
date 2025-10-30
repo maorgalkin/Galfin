@@ -21,7 +21,7 @@ const BudgetSettings: React.FC<BudgetSettingsProps> = ({
   onOpenFamilyMembers,
   familyMembersCount: _familyMembersCount = 0
 }) => {
-  const { familyMembers } = useFinance();
+  const { familyMembers, transactions } = useFinance();
   const [config, setConfig] = useState<BudgetConfiguration | null>(null);
   const [activeTab, setActiveTab] = useState<'visual' | 'json'>('visual');
   const [jsonText, setJsonText] = useState('');
@@ -484,6 +484,8 @@ const BudgetSettings: React.FC<BudgetSettingsProps> = ({
                 onSave={(updates) => handleCategoryUpdate(selectedCategory, updates)}
                 onDelete={() => handleCategoryDelete(selectedCategory)}
                 onCancel={selectedCategory === newlyAddedCategory ? handleCancelNewCategory : undefined}
+                hasTransactions={transactions.filter(t => t.category === selectedCategory).length > 0}
+                transactionCount={transactions.filter(t => t.category === selectedCategory).length}
               />
             )}
 

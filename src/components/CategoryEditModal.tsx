@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import { X, Save } from 'lucide-react';
+import { X, Save, AlertCircle } from 'lucide-react';
 import type { BudgetConfiguration } from '../types';
 
 interface CategoryEditModalProps {
@@ -11,6 +11,8 @@ interface CategoryEditModalProps {
   onSave: (updates: Partial<BudgetConfiguration['categories'][string]>) => void;
   onDelete: () => void;
   onCancel?: () => void; // New prop for handling cancel of new categories
+  hasTransactions?: boolean; // Whether category has existing transactions
+  transactionCount?: number; // Number of transactions for this category
 }
 
 const CategoryEditModal: React.FC<CategoryEditModalProps> = ({
@@ -22,6 +24,8 @@ const CategoryEditModal: React.FC<CategoryEditModalProps> = ({
   onSave,
   onDelete,
   onCancel,
+  hasTransactions = false,
+  transactionCount = 0,
 }) => {
   const [monthlyLimit, setMonthlyLimit] = useState(category.monthlyLimit);
   const [warningThreshold, setWarningThreshold] = useState(category.warningThreshold);
@@ -30,6 +34,11 @@ const CategoryEditModal: React.FC<CategoryEditModalProps> = ({
   const [description, setDescription] = useState(category.description || '');
 
   if (!isOpen) return null;
+
+  const canDeactivate = !hasTransactions || !isActive;
+  const deactivationMessage = hasTransactions 
+    ? `Cannot deactivate: This category has ${transactionCount} transaction${transactionCount !== 1 ? 's' : ''}` 
+    : '';
 
   const getCurrencySymbol = (curr: string) => {
     switch (curr) {
@@ -99,15 +108,27 @@ const CategoryEditModal: React.FC<CategoryEditModalProps> = ({
         <div className="p-6 space-y-6">
           {/* Active Toggle */}
           <div className="flex items-center justify-between p-4 bg-gray-50 rounded-lg">
-            <div>
+            <div className="flex-1">
               <label className="text-sm font-medium text-gray-900">Active</label>
               <p className="text-xs text-gray-500">Enable budget tracking for this category</p>
+              {!canDeactivate && (
+                <div className="flex items-center gap-1 mt-2 text-xs text-amber-600">
+                  <AlertCircle className="h-3 w-3" />
+                  <span>{deactivationMessage}</span>
+                </div>
+              )}
             </div>
             <button
-              onClick={() => setIsActive(!isActive)}
+              onClick={() => {
+                if (canDeactivate) {
+                  setIsActive(!isActive);
+                }
+              }}
+              disabled={!canDeactivate && isActive}
+              title={!canDeactivate && isActive ? deactivationMessage : ''}
               className={`relative inline-flex h-6 w-10 items-center rounded-full transition-colors ${
                 isActive ? 'bg-blue-600' : 'bg-gray-300'
-              }`}
+              } ${!canDeactivate && isActive ? 'opacity-50 cursor-not-allowed' : 'cursor-pointer'}`}
             >
               <span
                 className={`inline-block h-4 w-4 transform rounded-full bg-white transition-transform ${

@@ -11,8 +11,8 @@ export const BudgetQuickView: React.FC = () => {
 
   const formatCurrency = (amount: number): string => {
     const currency = activeBudget?.global_settings?.currency || 'USD';
-    const locale = currency === 'ILS' ? 'he-IL' : 'en-US';
-    return new Intl.NumberFormat(locale, {
+    // Always use en-US locale for consistent left-side symbol placement
+    return new Intl.NumberFormat('en-US', {
       style: 'currency',
       currency: currency,
     }).format(amount);
@@ -103,20 +103,14 @@ export const BudgetQuickView: React.FC = () => {
               </div>
             )}
 
-            {/* Quick Actions */}
-            <div className="grid grid-cols-2 gap-2 pt-2">
+            {/* Quick Action */}
+            <div className="pt-2">
               <button
                 onClick={() => navigate('/?tab=budget')}
-                className="flex items-center justify-center px-4 py-2 bg-blue-600 text-white rounded-md hover:bg-blue-700 transition-colors text-sm font-medium"
-              >
-                Manage
-                <ArrowRight className="h-4 w-4 ml-1" />
-              </button>
-              <button
-                onClick={() => navigate('/?tab=budget')}
-                className="flex items-center justify-center px-4 py-2 bg-gray-100 dark:bg-gray-700 text-gray-700 dark:text-gray-300 rounded-md hover:bg-gray-200 dark:hover:bg-gray-600 transition-colors text-sm font-medium"
+                className="w-full flex items-center justify-center px-4 py-2 bg-blue-600 text-white rounded-md hover:bg-blue-700 transition-colors text-sm font-medium"
               >
                 View Details
+                <ArrowRight className="h-4 w-4 ml-1" />
               </button>
             </div>
           </div>

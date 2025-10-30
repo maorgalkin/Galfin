@@ -4,10 +4,9 @@ import { useFinance } from '../context/FinanceContext';
 import { useAuth } from '../contexts/AuthContext';
 import { Clock } from 'lucide-react';
 import { motion, AnimatePresence } from 'framer-motion';
-import BudgetOverview from './BudgetOverview';
+import { BudgetPerformanceCard } from './BudgetPerformanceCard';
 import EditTransactionModal from './EditTransactionModal';
 import FamilyMembersModal from './FamilyMembersModal';
-import { BudgetQuickView } from './BudgetQuickView';
 import { BudgetManagement } from '../pages/BudgetManagement';
 import { budgetService } from '../services/budgetService';
 import { getUserFirstName } from '../utils/userHelpers';
@@ -137,11 +136,6 @@ const Dashboard: React.FC = () => {
             />
           </div>
 
-          {/* Budget Quick View Widget */}
-          <div className="mb-8">
-            <BudgetQuickView />
-          </div>
-          
           {/* Budget Month Navigation - Carousel Style */}
           <MonthNavigator
             months={months}
@@ -152,16 +146,16 @@ const Dashboard: React.FC = () => {
             userName={getUserFirstName(user)}
           />
 
-          {/* 1. BUDGET PERFORMANCE - Most Important */}
+          {/* BUDGET PERFORMANCE - Unified Widget */}
           <div className="mb-8">
-            {/* Desktop version - compact 2x2 grid layout */}
+            {/* Desktop version - compact grid layout */}
             <div className="max-md:hidden">
-              <BudgetOverview selectedMonth={selectedMonthDate} isCompact={true} />
+              <BudgetPerformanceCard selectedMonth={selectedMonthDate} isCompact={true} />
             </div>
             
             {/* Mobile/Tablet version - full layout */}
             <div className="md:hidden">
-              <BudgetOverview selectedMonth={selectedMonthDate} isCompact={false} />
+              <BudgetPerformanceCard selectedMonth={selectedMonthDate} isCompact={false} />
             </div>
           </div>
 

@@ -243,22 +243,49 @@ export class BudgetAdjustmentService {
       };
 
       for (const adjustment of adjustments) {
+        // Check if this is a new category (metadata encoded in reason)
+        const isNewCategory = adjustment.current_limit === 0 && !updatedCategories[adjustment.category_name];
+        let categoryMetadata = null;
+        
+        if (isNewCategory && adjustment.reason) {
+          // Extract metadata from reason field
+          const metaMatch = adjustment.reason.match(/__META__:(.+)$/);
+          if (metaMatch) {
+            try {
+              categoryMetadata = JSON.parse(metaMatch[1]);
+            } catch (e) {
+              // If parsing fails, use defaults
+              categoryMetadata = null;
+            }
+          }
+        }
+
         if (updatedCategories[adjustment.category_name]) {
+          // Existing category - update monthly limit
           updatedCategories[adjustment.category_name] = {
             ...updatedCategories[adjustment.category_name],
             monthlyLimit: adjustment.new_limit
           };
-
-          // Update category adjustment history
-          await this.updateCategoryHistory(
-            adjustment.category_name,
-            adjustment.adjustment_type,
-            adjustment.adjustment_amount
-          );
-
-          // Mark adjustment as applied
-          await this.markAdjustmentAsApplied(adjustment.id);
+        } else if (isNewCategory) {
+          // New category - create it with metadata
+          updatedCategories[adjustment.category_name] = {
+            monthlyLimit: adjustment.new_limit,
+            warningThreshold: categoryMetadata?.warningThreshold || 80,
+            isActive: categoryMetadata?.isActive !== false,
+            color: categoryMetadata?.color || '#3B82F6',
+            description: categoryMetadata?.description || '',
+          };
         }
+
+        // Update category adjustment history
+        await this.updateCategoryHistory(
+          adjustment.category_name,
+          adjustment.adjustment_type,
+          adjustment.adjustment_amount
+        );
+
+        // Mark adjustment as applied
+        await this.markAdjustmentAsApplied(adjustment.id);
       }
 
       // Create new personal budget version with updated categories

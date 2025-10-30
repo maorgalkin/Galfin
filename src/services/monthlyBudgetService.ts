@@ -39,9 +39,12 @@ export class MonthlyBudgetService {
   /**
    * Sync monthly budget with personal budget
    * Returns a synced copy without modifying the database
+   * @param monthlyBudget - The monthly budget to sync
+   * @param addNewCategories - Whether to add categories from personal budget that don't exist in monthly budget
    */
   private static async syncWithPersonalBudget(
-    monthlyBudget: MonthlyBudget
+    monthlyBudget: MonthlyBudget,
+    addNewCategories: boolean = false
   ): Promise<MonthlyBudget> {
     const personalBudget = await PersonalBudgetService.getActiveBudget();
     if (!personalBudget) {
@@ -63,8 +66,8 @@ export class MonthlyBudgetService {
           description: personalConfig.description,
           warningThreshold: personalConfig.warningThreshold,
         };
-      } else {
-        // Category added to personal budget but not in monthly yet - add it
+      } else if (addNewCategories) {
+        // Category added to personal budget but not in monthly yet - add it (only if flag is true)
         syncedCategories[categoryName] = { ...personalConfig };
       }
     }
@@ -117,8 +120,8 @@ export class MonthlyBudgetService {
         throw error;
       }
 
-      // Sync with personal budget
-      return await this.syncWithPersonalBudget(data);
+      // Sync with personal budget (don't add new categories to existing monthly budgets)
+      return await this.syncWithPersonalBudget(data, false);
     } catch (error) {
       console.error('Error fetching monthly budget:', error);
       throw error;
@@ -136,8 +139,8 @@ export class MonthlyBudgetService {
       now.getMonth() + 1
     );
 
-    // Sync with personal budget
-    return await this.syncWithPersonalBudget(monthlyBudget);
+    // Sync with personal budget (don't add new categories mid-month)
+    return await this.syncWithPersonalBudget(monthlyBudget, false);
   }
 
   /**

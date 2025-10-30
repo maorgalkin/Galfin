@@ -46,8 +46,9 @@ export const MonthlyBudgetView: React.FC<MonthlyBudgetViewProps> = ({
     if (!budget) return;
 
     const newLimit = parseFloat(editValue);
+    // Allow 0 (deactivation) but reject negative numbers
     if (isNaN(newLimit) || newLimit < 0) {
-      alert('Please enter a valid positive number');
+      alert('Please enter a valid number (0 or greater). Set to 0 to deactivate.');
       return;
     }
 

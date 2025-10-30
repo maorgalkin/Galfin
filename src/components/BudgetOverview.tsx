@@ -55,9 +55,9 @@ const BudgetOverview: React.FC<BudgetOverviewProps> = ({ selectedMonth, isCompac
   const balance = monthIncome - monthExpense;
 
   const formatCurrency = (amount: number) => {
-    const currency = budgetConfig.globalSettings.currency;
-    const locale = currency === 'ILS' ? 'he-IL' : 'en-US';
-    return new Intl.NumberFormat(locale, {
+    const currency = personalBudget?.global_settings?.currency || 'USD';
+    // Always use en-US locale for consistent left-side symbol placement
+    return new Intl.NumberFormat('en-US', {
       style: 'currency',
       currency: currency,
     }).format(amount);

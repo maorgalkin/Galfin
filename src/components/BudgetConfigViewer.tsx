@@ -5,7 +5,7 @@ import CategoryEditModal from './CategoryEditModal';
 import type { BudgetConfiguration } from '../types';
 
 const BudgetConfigViewer: React.FC = () => {
-  const { budgetConfig, setBudgetConfig } = useFinance();
+  const { budgetConfig, setBudgetConfig, transactions } = useFinance();
   const [selectedCategory, setSelectedCategory] = useState<string | null>(null);
   const [isAddingCategory, setIsAddingCategory] = useState(false);
   const [newCategoryName, setNewCategoryName] = useState('');
@@ -277,6 +277,8 @@ const BudgetConfigViewer: React.FC = () => {
           currency={budgetConfig.globalSettings.currency}
           onSave={(updates) => handleCategoryUpdate(selectedCategory, updates)}
           onDelete={() => handleCategoryDelete(selectedCategory)}
+          hasTransactions={transactions.filter(t => t.category === selectedCategory).length > 0}
+          transactionCount={transactions.filter(t => t.category === selectedCategory).length}
         />
       )}
 

@@ -5,9 +5,9 @@ import { PersonalBudgetEditor } from '../components/PersonalBudgetEditor';
 import { PersonalBudgetDisplay } from '../components/PersonalBudgetDisplay';
 import { BudgetComparisonCard } from '../components/BudgetComparisonCard';
 import { BudgetAdjustmentScheduler } from '../components/BudgetAdjustmentScheduler';
-import { Wallet, TrendingUp, Settings } from 'lucide-react';
+import { Wallet, Settings, BarChart3 } from 'lucide-react';
 
-type TabType = 'budget' | 'comparison' | 'adjustments';
+type TabType = 'budget' | 'analytics' | 'adjustments';
 
 export const BudgetManagement: React.FC = () => {
   const [searchParams, setSearchParams] = useSearchParams();
@@ -33,7 +33,7 @@ export const BudgetManagement: React.FC = () => {
 
   const tabs = [
     { id: 'budget' as TabType, label: 'My Budget', icon: Wallet },
-    { id: 'comparison' as TabType, label: 'Comparison', icon: TrendingUp },
+    { id: 'analytics' as TabType, label: 'Analytics', icon: BarChart3 },
     { id: 'adjustments' as TabType, label: 'Adjustments', icon: Settings },
   ];
 
@@ -141,31 +141,73 @@ export const BudgetManagement: React.FC = () => {
             )
           )}
 
-          {activeTab === 'comparison' && (
+          {activeTab === 'analytics' && (
             <div>
-              <BudgetComparisonCard year={currentYear} month={currentMonth} />
-              <div className="text-sm text-gray-500 dark:text-gray-400 mt-4 p-4 bg-purple-50 dark:bg-purple-900/20 rounded-lg">
-                <p className="font-medium mb-2">💡 Understanding Comparisons:</p>
-                <ul className="list-disc list-inside space-y-1">
-                  <li>See how your monthly budget differs from your configured budget</li>
-                  <li>Green indicates increases, red indicates decreases</li>
-                  <li>Track which categories you adjust most frequently</li>
-                  <li>Use insights to refine your budget configuration</li>
-                </ul>
+              <div className="bg-white dark:bg-gray-800 rounded-lg shadow-md p-12 text-center">
+                <BarChart3 className="h-16 w-16 text-blue-500 mx-auto mb-4" />
+                <h3 className="text-2xl font-bold text-gray-900 dark:text-gray-100 mb-3">
+                  Advanced Analytics
+                </h3>
+                <p className="text-gray-600 dark:text-gray-400 mb-6 max-w-2xl mx-auto">
+                  Complex analytics and insights coming soon! This section will feature:
+                </p>
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-4 max-w-3xl mx-auto text-left">
+                  <div className="p-4 bg-blue-50 dark:bg-blue-900/20 rounded-lg">
+                    <p className="font-medium text-gray-900 dark:text-gray-100 mb-2">📊 Spending Trends</p>
+                    <p className="text-sm text-gray-600 dark:text-gray-400">
+                      Historical analysis across months and categories
+                    </p>
+                  </div>
+                  <div className="p-4 bg-green-50 dark:bg-green-900/20 rounded-lg">
+                    <p className="font-medium text-gray-900 dark:text-gray-100 mb-2">🎯 Budget Performance</p>
+                    <p className="text-sm text-gray-600 dark:text-gray-400">
+                      Success metrics and utilization patterns
+                    </p>
+                  </div>
+                  <div className="p-4 bg-purple-50 dark:bg-purple-900/20 rounded-lg">
+                    <p className="font-medium text-gray-900 dark:text-gray-100 mb-2">🔮 Predictions</p>
+                    <p className="text-sm text-gray-600 dark:text-gray-400">
+                      AI-powered forecasting and recommendations
+                    </p>
+                  </div>
+                  <div className="p-4 bg-orange-50 dark:bg-orange-900/20 rounded-lg">
+                    <p className="font-medium text-gray-900 dark:text-gray-100 mb-2">👥 Family Insights</p>
+                    <p className="text-sm text-gray-600 dark:text-gray-400">
+                      Member-level spending analysis and comparisons
+                    </p>
+                  </div>
+                </div>
               </div>
             </div>
           )}
 
           {activeTab === 'adjustments' && (
-            <div>
-              <BudgetAdjustmentScheduler />
-              <div className="text-sm text-gray-500 dark:text-gray-400 mt-4 p-4 bg-orange-50 dark:bg-orange-900/20 rounded-lg">
-                <p className="font-medium mb-2">💡 Scheduling Adjustments:</p>
+            <div className="space-y-6">
+              {/* Current Month's Changes */}
+              <div>
+                <h2 className="text-lg font-semibold text-gray-900 dark:text-gray-100 mb-3">
+                  This Month's Changes
+                </h2>
+                <BudgetComparisonCard year={currentYear} month={currentMonth} />
+              </div>
+
+              {/* Schedule Future Changes */}
+              <div>
+                <h2 className="text-lg font-semibold text-gray-900 dark:text-gray-100 mb-3">
+                  Next Month Budget Adjustments
+                </h2>
+                <BudgetAdjustmentScheduler />
+              </div>
+
+              {/* Tips */}
+              <div className="text-sm text-gray-500 dark:text-gray-400 p-4 bg-orange-50 dark:bg-orange-900/20 rounded-lg">
+                <p className="font-medium mb-2">💡 Managing Adjustments:</p>
                 <ul className="list-disc list-inside space-y-1">
-                  <li>Schedule changes to take effect in the next month</li>
-                  <li>Adjustments update your budget when applied</li>
-                  <li>Review and cancel pending adjustments before they're applied</li>
-                  <li>Automatically creates next month's budget with adjustments</li>
+                  <li><strong>Current Month:</strong> Review what changed from your base budget</li>
+                  <li><strong>Next Month:</strong> Schedule adjustments that will apply automatically</li>
+                  <li>Green indicates increases, red indicates decreases</li>
+                  <li>Scheduled adjustments can be reviewed and cancelled before they're applied</li>
+                  <li>Use insights to refine your budget configuration over time</li>
                 </ul>
               </div>
             </div>

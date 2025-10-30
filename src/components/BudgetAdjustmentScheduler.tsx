@@ -3,10 +3,11 @@ import {
   useNextMonthAdjustments, 
   useScheduleAdjustment, 
   useCancelAdjustment,
-  useActiveBudget 
+  useActiveBudget,
+  useUpdatePersonalBudget
 } from '../hooks/useBudgets';
-import { Calendar, TrendingUp, TrendingDown, X, Plus, Loader2, AlertCircle } from 'lucide-react';
-import type { CategoryConfig } from '../types/budget';
+import { Calendar, TrendingUp, TrendingDown, X, Plus, Loader2, AlertCircle, Sparkles } from 'lucide-react';
+import { getNextAvailableColor, CATEGORY_COLOR_PALETTE } from '../utils/categoryColors';
 
 interface BudgetAdjustmentSchedulerProps {
   className?: string;
@@ -19,46 +20,111 @@ export const BudgetAdjustmentScheduler: React.FC<BudgetAdjustmentSchedulerProps>
   const [selectedCategory, setSelectedCategory] = useState('');
   const [newLimit, setNewLimit] = useState('');
   const [reason, setReason] = useState('');
+  const [isCreatingNew, setIsCreatingNew] = useState(false);
+  const [newCategoryName, setNewCategoryName] = useState('');
+  const [newCategoryColor, setNewCategoryColor] = useState('#3B82F6'); // Default blue
 
   const { data: nextMonthSummary, isLoading } = useNextMonthAdjustments();
   const { data: activeBudget } = useActiveBudget();
   const scheduleAdjustment = useScheduleAdjustment();
   const cancelAdjustment = useCancelAdjustment();
+  const updatePersonalBudget = useUpdatePersonalBudget();
 
   const formatCurrency = (amount: number): string => {
+    const currency = activeBudget?.global_settings?.currency || 'USD';
     return new Intl.NumberFormat('en-US', {
       style: 'currency',
-      currency: 'USD',
+      currency: currency,
     }).format(amount);
   };
 
   const handleSchedule = async () => {
-    if (!selectedCategory || !newLimit || !activeBudget) return;
+    if (!activeBudget) return;
 
-    const currentLimit = activeBudget.categories[selectedCategory]?.monthlyLimit || 0;
+    // Validate based on mode
+    if (isCreatingNew) {
+      // Creating a new category
+      if (!newCategoryName.trim()) {
+        alert('Please enter a category name');
+        return;
+      }
+      if (newLimit === '') {
+        alert('Please enter a budget limit');
+        return;
+      }
+      // Check if category already exists
+      if (allPersonalCategories[newCategoryName.trim()]) {
+        alert('A category with this name already exists. Please choose a different name.');
+        return;
+      }
+    } else {
+      // Adjusting existing category
+      if (!selectedCategory || newLimit === '') return;
+    }
+
     const newLimitNum = parseFloat(newLimit);
 
+    // Allow 0 (deactivation) but reject negative numbers
     if (isNaN(newLimitNum) || newLimitNum < 0) {
-      alert('Please enter a valid amount');
+      alert('Please enter a valid amount (0 or greater)');
       return;
     }
 
     try {
-      await scheduleAdjustment.mutateAsync({
-        categoryName: selectedCategory,
-        currentLimit,
-        newLimit: newLimitNum,
-        reason: reason || undefined,
-      });
+      if (isCreatingNew) {
+        // Schedule an adjustment for next month with new category metadata
+        // Category will be added to personal budget when adjustment is applied on 1st
+        const categoryName = newCategoryName.trim();
+        
+        // Store category metadata in the reason field as JSON
+        const categoryMetadata = {
+          color: newCategoryColor,
+          warningThreshold: 80,
+          description: '',
+          isActive: true,
+        };
+        
+        const adjustmentReason = reason 
+          ? `${reason} | __META__:${JSON.stringify(categoryMetadata)}`
+          : `New category: ${categoryName} | __META__:${JSON.stringify(categoryMetadata)}`;
 
-      // Reset form
-      setSelectedCategory('');
+        await scheduleAdjustment.mutateAsync({
+          categoryName: categoryName,
+          currentLimit: 0,
+          newLimit: newLimitNum,
+          reason: adjustmentReason,
+        });
+
+        // Reset new category form
+        setNewCategoryName('');
+        setNewCategoryColor(getNextAvailableColor(
+          Object.values(activeBudget.categories)
+            .map(c => c.color)
+            .filter((color): color is string => color !== undefined)
+        ));
+      } else {
+        // Schedule adjustment for existing category
+        const currentLimit = activeBudget.categories[selectedCategory]?.monthlyLimit || 0;
+
+        await scheduleAdjustment.mutateAsync({
+          categoryName: selectedCategory,
+          currentLimit,
+          newLimit: newLimitNum,
+          reason: reason || undefined,
+        });
+
+        // Reset existing category form
+        setSelectedCategory('');
+      }
+
+      // Reset common fields
       setNewLimit('');
       setReason('');
       setIsScheduling(false);
+      setIsCreatingNew(false);
     } catch (error) {
       console.error('Error scheduling adjustment:', error);
-      alert('Failed to schedule adjustment');
+      alert(`Failed to ${isCreatingNew ? 'create category' : 'schedule adjustment'}`);
     }
   };
 
@@ -73,10 +139,11 @@ export const BudgetAdjustmentScheduler: React.FC<BudgetAdjustmentSchedulerProps>
     }
   };
 
-  const activeCategories = activeBudget?.categories || {};
-  const availableCategories = Object.keys(activeCategories).filter(
-    cat => activeCategories[cat].isActive
-  );
+  // Get all categories from personal budget (including inactive ones)
+  const allPersonalCategories = activeBudget?.categories || {};
+  
+  // Show all categories (active and inactive) - users can add new ones or adjust existing
+  const availableCategories = Object.keys(allPersonalCategories);
 
   if (isLoading) {
     return (
@@ -94,17 +161,12 @@ export const BudgetAdjustmentScheduler: React.FC<BudgetAdjustmentSchedulerProps>
       {/* Header */}
       <div className="px-6 py-4 border-b border-gray-200 dark:border-gray-700">
         <div className="flex items-center justify-between">
-          <div>
-            <h3 className="text-lg font-semibold text-gray-900 dark:text-gray-100">
-              Next Month Adjustments
-            </h3>
-            {nextMonthSummary && (
-              <p className="text-sm text-gray-600 dark:text-gray-400 mt-1">
-                <Calendar className="inline h-4 w-4 mr-1" />
-                {nextMonthSummary.effectiveDate}
-              </p>
-            )}
-          </div>
+          {nextMonthSummary && (
+            <p className="text-sm text-gray-600 dark:text-gray-400">
+              <Calendar className="inline h-4 w-4 mr-1" />
+              {nextMonthSummary.effectiveDate}
+            </p>
+          )}
           <button
             onClick={() => setIsScheduling(!isScheduling)}
             className="flex items-center px-4 py-2 bg-blue-600 text-white rounded-md hover:bg-blue-700 transition-colors text-sm font-medium"
@@ -167,23 +229,97 @@ export const BudgetAdjustmentScheduler: React.FC<BudgetAdjustmentSchedulerProps>
       {isScheduling && (
         <div className="px-6 py-4 bg-blue-50 dark:bg-blue-900/20 border-b border-blue-200 dark:border-blue-800">
           <div className="space-y-4">
-            <div>
-              <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
-                Category
-              </label>
-              <select
-                value={selectedCategory}
-                onChange={(e) => setSelectedCategory(e.target.value)}
-                className="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-md bg-white dark:bg-gray-700 text-gray-900 dark:text-gray-100"
+            {/* Toggle between existing and new category */}
+            <div className="flex items-center gap-4 pb-3 border-b border-blue-200 dark:border-blue-700">
+              <button
+                onClick={() => setIsCreatingNew(false)}
+                className={`px-4 py-2 rounded-md font-medium transition-colors ${
+                  !isCreatingNew
+                    ? 'bg-blue-600 text-white'
+                    : 'bg-white dark:bg-gray-700 text-gray-700 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-600'
+                }`}
               >
-                <option value="">Select a category...</option>
-                {availableCategories.map((cat) => (
-                  <option key={cat} value={cat}>
-                    {cat} - Current: {formatCurrency(activeCategories[cat].monthlyLimit)}
-                  </option>
-                ))}
-              </select>
+                Existing Category
+              </button>
+              <button
+                onClick={() => setIsCreatingNew(true)}
+                className={`flex items-center gap-2 px-4 py-2 rounded-md font-medium transition-colors ${
+                  isCreatingNew
+                    ? 'bg-blue-600 text-white'
+                    : 'bg-white dark:bg-gray-700 text-gray-700 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-600'
+                }`}
+              >
+                <Sparkles className="h-4 w-4" />
+                New Category
+              </button>
             </div>
+
+            {isCreatingNew ? (
+              <>
+                {/* New Category Name */}
+                <div>
+                  <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
+                    Category Name
+                  </label>
+                  <input
+                    type="text"
+                    value={newCategoryName}
+                    onChange={(e) => setNewCategoryName(e.target.value)}
+                    placeholder="e.g., Holiday Shopping, Vacation..."
+                    className="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-md bg-white dark:bg-gray-700 text-gray-900 dark:text-gray-100"
+                  />
+                </div>
+
+                {/* Color Selection */}
+                <div>
+                  <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
+                    Color
+                  </label>
+                  <div className="grid grid-cols-10 gap-2">
+                    {CATEGORY_COLOR_PALETTE.map((color) => (
+                      <button
+                        key={color}
+                        onClick={() => setNewCategoryColor(color)}
+                        className={`w-8 h-8 rounded-md transition-all ${
+                          newCategoryColor === color
+                            ? 'ring-2 ring-blue-500 ring-offset-2 dark:ring-offset-gray-800 scale-110'
+                            : 'hover:scale-105'
+                        }`}
+                        style={{ backgroundColor: color }}
+                        title={color}
+                      />
+                    ))}
+                  </div>
+                </div>
+              </>
+            ) : (
+              <>
+                {/* Existing Category Dropdown */}
+                <div>
+                  <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
+                    Category
+                  </label>
+                  <select
+                    value={selectedCategory}
+                    onChange={(e) => setSelectedCategory(e.target.value)}
+                    className="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-md bg-white dark:bg-gray-700 text-gray-900 dark:text-gray-100"
+                  >
+                    <option value="">Select a category...</option>
+                    {availableCategories.map((cat) => {
+                      const categoryConfig = allPersonalCategories[cat];
+                      const currentLimit = categoryConfig.monthlyLimit || 0;
+                      const isActive = categoryConfig.isActive;
+                      
+                      return (
+                        <option key={cat} value={cat}>
+                          {cat} - Current: {formatCurrency(currentLimit)} {!isActive ? '(Inactive)' : ''}
+                        </option>
+                      );
+                    })}
+                  </select>
+                </div>
+              </>
+            )}
 
             <div>
               <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
@@ -193,11 +329,14 @@ export const BudgetAdjustmentScheduler: React.FC<BudgetAdjustmentSchedulerProps>
                 type="number"
                 value={newLimit}
                 onChange={(e) => setNewLimit(e.target.value)}
-                placeholder="Enter new limit..."
+                placeholder="Enter new limit (0 to deactivate)..."
                 className="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-md bg-white dark:bg-gray-700 text-gray-900 dark:text-gray-100"
                 min="0"
                 step="0.01"
               />
+              <p className="mt-1 text-xs text-gray-500 dark:text-gray-400">
+                Set to 0 to deactivate category for next month
+              </p>
             </div>
 
             <div>
@@ -215,10 +354,16 @@ export const BudgetAdjustmentScheduler: React.FC<BudgetAdjustmentSchedulerProps>
 
             <button
               onClick={handleSchedule}
-              disabled={!selectedCategory || !newLimit || scheduleAdjustment.isPending}
+              disabled={
+                (isCreatingNew ? (!newCategoryName.trim() || newLimit === '') : (!selectedCategory || newLimit === '')) ||
+                scheduleAdjustment.isPending ||
+                updatePersonalBudget.isPending
+              }
               className="w-full px-4 py-2 bg-blue-600 text-white rounded-md hover:bg-blue-700 disabled:bg-gray-400 disabled:cursor-not-allowed transition-colors font-medium"
             >
-              {scheduleAdjustment.isPending ? 'Scheduling...' : 'Schedule Adjustment'}
+              {scheduleAdjustment.isPending || updatePersonalBudget.isPending 
+                ? (isCreatingNew ? 'Creating...' : 'Scheduling...') 
+                : (isCreatingNew ? 'Create Category' : 'Schedule Adjustment')}
             </button>
           </div>
         </div>
@@ -268,7 +413,7 @@ export const BudgetAdjustmentScheduler: React.FC<BudgetAdjustmentSchedulerProps>
                     </div>
                     {adjustment.reason && (
                       <p className="text-xs text-gray-500 dark:text-gray-500 mt-1 italic">
-                        "{adjustment.reason}"
+                        "{adjustment.reason.split(' | __META__:')[0]}"
                       </p>
                     )}
                   </div>

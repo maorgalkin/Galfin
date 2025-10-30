@@ -59,7 +59,7 @@ export const PersonalBudgetEditor: React.FC<PersonalBudgetEditorProps> = ({
 
   const { data: activeBudget, isLoading: loadingActive } = useActiveBudget();
   const { data: history = [], isLoading: loadingHistory } = usePersonalBudgetHistory();
-  const { budgetConfig } = useFinance();
+  const { budgetConfig, transactions } = useFinance();
   const createBudget = useCreatePersonalBudget();
   const updateBudget = useUpdatePersonalBudget();
   const setActive = useSetActiveBudget();
@@ -865,19 +865,47 @@ export const PersonalBudgetEditor: React.FC<PersonalBudgetEditorProps> = ({
                   </div>
                   
                   {/* Active Toggle */}
-                  <div className="flex items-center justify-between p-3 bg-gray-50 dark:bg-gray-700/50 rounded-md">
-                    <span className="text-sm font-medium text-gray-700 dark:text-gray-300">
-                      Active Category
-                    </span>
-                    <label className="relative inline-flex items-center cursor-pointer">
-                      <input
-                        type="checkbox"
-                        checked={categories[editingCategory]?.isActive || false}
-                        onChange={(e) => handleUpdateCategory(editingCategory, 'isActive', e.target.checked)}
-                        className="sr-only peer"
-                      />
-                      <div className="w-10 h-6 bg-gray-200 peer-focus:outline-none peer-focus:ring-4 peer-focus:ring-blue-300 dark:peer-focus:ring-blue-800 rounded-full peer dark:bg-gray-700 peer-checked:after:translate-x-4 rtl:peer-checked:after:-translate-x-4 peer-checked:after:border-white after:content-[''] after:absolute after:top-0.5 after:start-[2px] after:bg-white after:border-gray-300 after:border after:rounded-full after:h-5 after:w-5 after:transition-all dark:border-gray-600 peer-checked:bg-blue-600"></div>
-                    </label>
+                  <div className="space-y-2">
+                    <div className="flex items-center justify-between p-3 bg-gray-50 dark:bg-gray-700/50 rounded-md">
+                      <span className="text-sm font-medium text-gray-700 dark:text-gray-300">
+                        Active Category
+                      </span>
+                      <label className="relative inline-flex items-center cursor-pointer">
+                        <input
+                          type="checkbox"
+                          checked={categories[editingCategory]?.isActive || false}
+                          onChange={(e) => {
+                            const transactionCount = transactions.filter(t => t.category === editingCategory).length;
+                            const isCurrentlyActive = categories[editingCategory]?.isActive || false;
+                            const canDeactivate = transactionCount === 0 || !isCurrentlyActive;
+                            
+                            if (canDeactivate) {
+                              handleUpdateCategory(editingCategory, 'isActive', e.target.checked);
+                            }
+                          }}
+                          disabled={
+                            transactions.filter(t => t.category === editingCategory).length > 0 &&
+                            (categories[editingCategory]?.isActive || false)
+                          }
+                          className="sr-only peer"
+                        />
+                        <div className={`w-10 h-6 bg-gray-200 peer-focus:outline-none peer-focus:ring-4 peer-focus:ring-blue-300 dark:peer-focus:ring-blue-800 rounded-full peer dark:bg-gray-700 peer-checked:after:translate-x-4 rtl:peer-checked:after:-translate-x-4 peer-checked:after:border-white after:content-[''] after:absolute after:top-0.5 after:start-[2px] after:bg-white after:border-gray-300 after:border after:rounded-full after:h-5 after:w-5 after:transition-all dark:border-gray-600 peer-checked:bg-blue-600 ${
+                          transactions.filter(t => t.category === editingCategory).length > 0 &&
+                          (categories[editingCategory]?.isActive || false)
+                            ? 'opacity-50 cursor-not-allowed'
+                            : ''
+                        }`}></div>
+                      </label>
+                    </div>
+                    {transactions.filter(t => t.category === editingCategory).length > 0 &&
+                     (categories[editingCategory]?.isActive || false) && (
+                      <div className="flex items-center gap-1 text-xs text-amber-600 dark:text-amber-400 px-3">
+                        <AlertCircle className="h-3 w-3" />
+                        <span>
+                          Cannot deactivate: This category has {transactions.filter(t => t.category === editingCategory).length} transaction{transactions.filter(t => t.category === editingCategory).length !== 1 ? 's' : ''}
+                        </span>
+                      </div>
+                    )}
                   </div>
                   
                   {/* Buttons */}

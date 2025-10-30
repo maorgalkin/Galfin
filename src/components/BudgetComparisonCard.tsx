@@ -43,8 +43,8 @@ export const BudgetComparisonCard: React.FC<BudgetComparisonCardProps> = ({
 
   const formatCurrency = (amount: number): string => {
     const currency = comparison?.currency || 'USD';
-    const locale = currency === 'ILS' ? 'he-IL' : 'en-US';
-    return new Intl.NumberFormat(locale, {
+    // Always use en-US locale for consistent left-side symbol placement
+    return new Intl.NumberFormat('en-US', {
       style: 'currency',
       currency: currency,
     }).format(amount);
@@ -84,19 +84,12 @@ export const BudgetComparisonCard: React.FC<BudgetComparisonCardProps> = ({
     <div className={`bg-white dark:bg-gray-800 rounded-lg shadow-md ${className}`}>
       {/* Header */}
       <div className="px-6 py-4 border-b border-gray-200 dark:border-gray-700">
-        <h3 className="text-lg font-semibold text-gray-900 dark:text-gray-100">
-          Monthly Budget Adjustments
-        </h3>
-        <div className="flex items-center justify-between mt-2">
-          <div>
-            <p className="text-sm text-gray-600 dark:text-gray-400">
-              {comparison.monthlyBudgetDate} compared to My Budget
-            </p>
-            <p className="text-xs text-gray-500 dark:text-gray-500 mt-1">
-              {comparison.adjustedCategories} adjusted · {comparison.addedCategories} added · {comparison.activeCategories} active
-            </p>
-          </div>
-        </div>
+        <p className="text-sm text-gray-600 dark:text-gray-400">
+          {comparison.monthlyBudgetDate} compared to My Budget
+        </p>
+        <p className="text-xs text-gray-500 dark:text-gray-500 mt-1">
+          {comparison.adjustedCategories} adjusted · {comparison.addedCategories} added · {comparison.activeCategories} active
+        </p>
       </div>
 
       {/* Summary */}
