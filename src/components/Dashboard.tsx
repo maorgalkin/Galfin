@@ -192,17 +192,10 @@ const Dashboard: React.FC = () => {
           
           {/* Transaction Overview Section */}
           <div className="mb-8">
-            <div className="flex justify-between items-center mb-6">
+            <div className="mb-6">
               <h2 className="text-2xl font-semibold text-gray-900">
                 Transaction History
               </h2>
-              <button
-                onClick={() => navigate('/older-transactions')}
-                className="flex items-center px-4 py-2 bg-gray-600 text-white rounded-md hover:bg-gray-700 transition-colors"
-              >
-                <Clock className="h-4 w-4 mr-2" />
-                View Older Transactions
-              </button>
             </div>
 
             {/* Month Carousel Navigation with Arrows */}
@@ -284,18 +277,20 @@ const Dashboard: React.FC = () => {
                       );
                     })}
                     
-                    {/* Dummy placeholder on the right */}
+                    {/* "Older" clickable button on the right */}
                     {activeMonthTab === months.length - 1 && (
-                      <motion.div
-                        key="transactions-past-dummy"
+                      <motion.button
+                        key="transactions-older-button"
                         initial={{ opacity: 0, x: direction * 50 }}
-                        animate={{ opacity: 0.4, x: 0 }}
+                        animate={{ opacity: 0.7, x: 0 }}
                         exit={{ opacity: 0, x: direction * -50 }}
                         transition={{ duration: 0.3, ease: "easeInOut" }}
-                        className="absolute -right-3 sm:relative w-28 sm:w-40 h-16 sm:h-28 rounded-lg border border-gray-200 bg-gray-50 scale-75 sm:scale-[0.7] flex-shrink-0 flex items-center justify-center z-0 sm:z-auto"
+                        onClick={() => navigate('/older-transactions')}
+                        className="absolute -right-3 sm:relative w-24 sm:w-32 h-14 sm:h-24 rounded-lg border-2 border-gray-300 bg-gray-100 scale-75 sm:scale-[0.7] flex-shrink-0 flex items-center justify-center z-0 sm:z-auto hover:opacity-100 hover:bg-gray-200 hover:border-gray-400 hover:scale-[0.8] sm:hover:scale-[0.75] transition-all cursor-pointer"
+                        title="View older transactions"
                       >
-                        <span className="text-xs sm:text-base font-medium text-gray-400">Past</span>
-                      </motion.div>
+                        <span className="text-xs sm:text-base font-semibold text-gray-600">Older</span>
+                      </motion.button>
                     )}
                   </AnimatePresence>
                 </div>
