@@ -42,8 +42,8 @@ export function useDashboardData({
   activeMonthIndex,
 }: UseDashboardDataProps): UseDashboardDataReturn {
   
-  // Generate last 4 months (current month + 3 previous)
-  const months = useMemo(() => getLastNMonths(4), []);
+  // Generate last 24 months (current month + 23 previous) for full transaction history
+  const months = useMemo(() => getLastNMonths(24), []);
 
   // Filter transactions by date range
   const getTransactionsForMonth = (start: Date, end: Date) =>

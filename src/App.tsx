@@ -11,7 +11,6 @@ import Register from './pages/auth/Register';
 import { DevTools } from './pages/DevTools';
 import { Plus, LogOut, Loader2 } from 'lucide-react';
 import './App.css';
-import OlderTransactions from './pages/OlderTransactions';
 
 // Create a React Query client
 const queryClient = new QueryClient({
@@ -91,7 +90,6 @@ function AppContent() {
       <main className="px-4 sm:px-6 lg:px-8">
         <Routes>
           <Route path="/" element={<Dashboard />} />
-          <Route path="/older-transactions" element={<OlderTransactions />} />
           <Route path="/dev-tools" element={<DevTools />} />
         </Routes>
       </main>
