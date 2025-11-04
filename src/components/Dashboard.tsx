@@ -19,6 +19,7 @@ import { DummyDataControls } from './dashboard/DummyDataControls';
 import { FamilyMembersCard } from './dashboard/FamilyMembersCard';
 import { TransactionsList } from './dashboard/TransactionsList';
 import { CategoryTransactionsModal } from './dashboard/CategoryTransactionsModal';
+import CustomDateRangeModal from './CustomDateRangeModal';
 import type { Transaction } from '../types';
 
 const Dashboard: React.FC = () => {
@@ -34,6 +35,7 @@ const Dashboard: React.FC = () => {
   const [isFamilyMembersModalOpen, setIsFamilyMembersModalOpen] = useState(false);
   const [selectedDesktopCategory, setSelectedDesktopCategory] = useState<string | null>(null);
   const [isCategoryModalOpen, setIsCategoryModalOpen] = useState(false);
+  const [isCustomDateRangeModalOpen, setIsCustomDateRangeModalOpen] = useState(false);
 
   // Handle tab query parameter
   useEffect(() => {
@@ -277,18 +279,19 @@ const Dashboard: React.FC = () => {
                       );
                     })}
                     
-                    {/* "Past" placeholder on the right */}
+                    {/* "Older" button on the right */}
                     {activeMonthTab === months.length - 1 && (
-                      <motion.div
-                        key="transactions-past-dummy"
+                      <motion.button
+                        key="transactions-older-button"
                         initial={{ opacity: 0, x: direction * 50 }}
-                        animate={{ opacity: 0.4, x: 0 }}
+                        animate={{ opacity: 0.7, x: 0 }}
                         exit={{ opacity: 0, x: direction * -50 }}
                         transition={{ duration: 0.3, ease: "easeInOut" }}
-                        className="absolute -right-3 sm:relative w-28 sm:w-40 h-16 sm:h-28 rounded-lg border border-gray-200 bg-gray-50 scale-75 sm:scale-[0.7] flex-shrink-0 flex items-center justify-center z-0 sm:z-auto"
+                        onClick={() => setIsCustomDateRangeModalOpen(true)}
+                        className="absolute -right-3 sm:relative w-24 sm:w-32 h-16 sm:h-28 rounded-lg border border-blue-300 bg-blue-50 hover:bg-blue-100 hover:opacity-100 scale-75 sm:scale-[0.7] flex-shrink-0 flex items-center justify-center z-0 sm:z-auto transition-all"
                       >
-                        <span className="text-xs sm:text-base font-medium text-gray-400">Past</span>
-                      </motion.div>
+                        <span className="text-xs sm:text-sm font-semibold text-blue-600">Older</span>
+                      </motion.button>
                     )}
                   </AnimatePresence>
                 </div>
@@ -395,6 +398,12 @@ const Dashboard: React.FC = () => {
           setSelectedDesktopCategory(null);
         }}
         onEditTransaction={setEditingTransaction}
+      />
+
+      {/* Custom Date Range Modal */}
+      <CustomDateRangeModal
+        isOpen={isCustomDateRangeModalOpen}
+        onClose={() => setIsCustomDateRangeModalOpen(false)}
       />
     </div>
   );
