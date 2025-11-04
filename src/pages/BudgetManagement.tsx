@@ -5,6 +5,7 @@ import { PersonalBudgetEditor } from '../components/PersonalBudgetEditor';
 import { PersonalBudgetDisplay } from '../components/PersonalBudgetDisplay';
 import { BudgetComparisonCard } from '../components/BudgetComparisonCard';
 import { BudgetAdjustmentScheduler } from '../components/BudgetAdjustmentScheduler';
+import { BudgetVsActual } from '../components/analytics/BudgetVsActual';
 import { Wallet, Settings, BarChart3 } from 'lucide-react';
 
 type TabType = 'budget' | 'analytics' | 'adjustments';
@@ -143,41 +144,7 @@ export const BudgetManagement: React.FC = () => {
 
           {activeTab === 'analytics' && (
             <div>
-              <div className="bg-white dark:bg-gray-800 rounded-lg shadow-md p-12 text-center">
-                <BarChart3 className="h-16 w-16 text-blue-500 mx-auto mb-4" />
-                <h3 className="text-2xl font-bold text-gray-900 dark:text-gray-100 mb-3">
-                  Advanced Analytics
-                </h3>
-                <p className="text-gray-600 dark:text-gray-400 mb-6 max-w-2xl mx-auto">
-                  Complex analytics and insights coming soon! This section will feature:
-                </p>
-                <div className="grid grid-cols-1 md:grid-cols-2 gap-4 max-w-3xl mx-auto text-left">
-                  <div className="p-4 bg-blue-50 dark:bg-blue-900/20 rounded-lg">
-                    <p className="font-medium text-gray-900 dark:text-gray-100 mb-2">📊 Spending Trends</p>
-                    <p className="text-sm text-gray-600 dark:text-gray-400">
-                      Historical analysis across months and categories
-                    </p>
-                  </div>
-                  <div className="p-4 bg-green-50 dark:bg-green-900/20 rounded-lg">
-                    <p className="font-medium text-gray-900 dark:text-gray-100 mb-2">🎯 Budget Performance</p>
-                    <p className="text-sm text-gray-600 dark:text-gray-400">
-                      Success metrics and utilization patterns
-                    </p>
-                  </div>
-                  <div className="p-4 bg-purple-50 dark:bg-purple-900/20 rounded-lg">
-                    <p className="font-medium text-gray-900 dark:text-gray-100 mb-2">🔮 Predictions</p>
-                    <p className="text-sm text-gray-600 dark:text-gray-400">
-                      AI-powered forecasting and recommendations
-                    </p>
-                  </div>
-                  <div className="p-4 bg-orange-50 dark:bg-orange-900/20 rounded-lg">
-                    <p className="font-medium text-gray-900 dark:text-gray-100 mb-2">👥 Family Insights</p>
-                    <p className="text-sm text-gray-600 dark:text-gray-400">
-                      Member-level spending analysis and comparisons
-                    </p>
-                  </div>
-                </div>
-              </div>
+              <BudgetVsActual />
             </div>
           )}
 

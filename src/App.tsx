@@ -5,11 +5,11 @@ import { FinanceProvider, useFinance } from './context/FinanceContext';
 import { AuthProvider, useAuth } from './contexts/AuthContext';
 import Dashboard from './components/Dashboard';
 import AddTransaction from './components/AddTransaction';
-import BudgetSettings from './components/BudgetSettings';
 import FamilyMembersModal from './components/FamilyMembersModal';
 import Login from './pages/auth/Login';
 import Register from './pages/auth/Register';
-import { Plus, Settings, LogOut, Loader2 } from 'lucide-react';
+import { DevTools } from './pages/DevTools';
+import { Plus, LogOut, Loader2 } from 'lucide-react';
 import './App.css';
 import OlderTransactions from './pages/OlderTransactions';
 
@@ -48,9 +48,7 @@ function ProtectedRoute({ children }: { children: React.ReactNode }) {
 
 function AppContent() {
   const [isAddTransactionOpen, setIsAddTransactionOpen] = useState(false);
-  const [isBudgetSettingsOpen, setIsBudgetSettingsOpen] = useState(false);
   const [isFamilyMembersOpen, setIsFamilyMembersOpen] = useState(false);
-  const { setBudgetConfig, familyMembers } = useFinance();
   const { signOut, user } = useAuth();
 
   return (
@@ -79,13 +77,6 @@ function AppContent() {
                 <span className="ml-2 max-md:hidden">Add Transaction</span>
               </button>
               <button
-                onClick={() => setIsBudgetSettingsOpen(true)}
-                className="flex items-center justify-center px-3 py-2 bg-gray-600 text-white rounded-md hover:bg-gray-700 transition-colors text-sm font-medium min-h-[38px]"
-              >
-                <Settings className="h-4 w-4 flex-shrink-0" />
-                <span className="ml-2 max-md:hidden">Settings</span>
-              </button>
-              <button
                 onClick={signOut}
                 className="flex items-center justify-center px-3 py-2 bg-red-600 text-white rounded-md hover:bg-red-700 transition-colors text-sm font-medium min-h-[38px]"
                 title="Sign Out"
@@ -101,21 +92,12 @@ function AppContent() {
         <Routes>
           <Route path="/" element={<Dashboard />} />
           <Route path="/older-transactions" element={<OlderTransactions />} />
+          <Route path="/dev-tools" element={<DevTools />} />
         </Routes>
       </main>
       <AddTransaction
         isOpen={isAddTransactionOpen}
         onClose={() => setIsAddTransactionOpen(false)}
-      />
-      <BudgetSettings
-        isOpen={isBudgetSettingsOpen}
-        onClose={() => setIsBudgetSettingsOpen(false)}
-        onSave={setBudgetConfig}
-        onOpenFamilyMembers={() => {
-          setIsBudgetSettingsOpen(false);
-          setIsFamilyMembersOpen(true);
-        }}
-        familyMembersCount={familyMembers.length}
       />
       <FamilyMembersModal
         isOpen={isFamilyMembersOpen}

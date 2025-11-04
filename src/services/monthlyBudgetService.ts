@@ -199,6 +199,150 @@ export class MonthlyBudgetService {
   }
 
   /**
+   * Get monthly budgets for a date range
+   * Auto-creates missing monthly budgets from personal budget if they don't exist
+   */
+  static async getMonthlyBudgetsForDateRange(
+    startDate: Date,
+    endDate: Date
+  ): Promise<MonthlyBudget[]> {
+    try {
+      console.log('getMonthlyBudgetsForDateRange called:', { startDate, endDate });
+      
+      const { data: { user } } = await supabase.auth.getUser();
+      
+      if (!user) {
+        throw new Error('User not authenticated');
+      }
+
+      // Get all months in the range
+      const monthsInRange: { year: number; month: number }[] = [];
+      const current = new Date(startDate);
+      while (current <= endDate) {
+        monthsInRange.push({
+          year: current.getFullYear(),
+          month: current.getMonth() + 1, // 1-12
+        });
+        current.setMonth(current.getMonth() + 1);
+      }
+
+      console.log('Months in range:', monthsInRange);
+
+      // Fetch existing monthly budgets
+      // Note: We need to fetch all budgets that fall within the year/month range
+      const startYear = startDate.getFullYear();
+      const startMonthNum = startDate.getMonth() + 1;
+      const endYear = endDate.getFullYear();
+      const endMonthNum = endDate.getMonth() + 1;
+
+      console.log('Querying range:', { startYear, startMonthNum, endYear, endMonthNum });
+
+      // Build query based on whether it spans multiple years
+      let query = supabase
+        .from('monthly_budgets')
+        .select('*')
+        .eq('user_id', user.id);
+
+      if (startYear === endYear) {
+        // Same year, simple range
+        query = query
+          .eq('year', startYear)
+          .gte('month', startMonthNum)
+          .lte('month', endMonthNum);
+      } else {
+        // Multiple years - need OR condition
+        // For now, fetch all budgets in year range and filter in memory
+        query = query
+          .gte('year', startYear)
+          .lte('year', endYear);
+      }
+
+      const { data, error } = await query.order('year', { ascending: true }).order('month', { ascending: true });
+
+      if (error) throw error;
+
+      // Filter to exact range if spanning multiple years
+      let existingBudgets = data || [];
+      if (startYear !== endYear) {
+        existingBudgets = existingBudgets.filter(b => {
+          if (b.year < startYear || b.year > endYear) return false;
+          if (b.year === startYear && b.month < startMonthNum) return false;
+          if (b.year === endYear && b.month > endMonthNum) return false;
+          return true;
+        });
+      }
+
+      console.log('Existing budgets found:', existingBudgets.length);
+      
+      const existingMonths = new Set(existingBudgets.map(b => `${b.year}-${b.month}`));
+
+      // Create missing monthly budgets
+      const missingMonths = monthsInRange.filter(m => {
+        const monthStr = `${m.year}-${m.month}`;
+        return !existingMonths.has(monthStr);
+      });
+
+      console.log('Missing months:', missingMonths);
+
+      // Create missing budgets if any
+      if (missingMonths.length > 0) {
+        console.log('Creating missing budgets...');
+        
+        const createdBudgets = await Promise.all(
+          missingMonths.map(m => 
+            this.getOrCreateMonthlyBudget(m.year, m.month)
+          )
+        );
+        
+        console.log('Created budgets:', createdBudgets.length);
+
+        // Re-fetch all budgets after creation
+        let refreshQuery = supabase
+          .from('monthly_budgets')
+          .select('*')
+          .eq('user_id', user.id);
+
+        if (startYear === endYear) {
+          refreshQuery = refreshQuery
+            .eq('year', startYear)
+            .gte('month', startMonthNum)
+            .lte('month', endMonthNum);
+        } else {
+          refreshQuery = refreshQuery
+            .gte('year', startYear)
+            .lte('year', endYear);
+        }
+
+        const { data: refreshedData, error: refreshError } = await refreshQuery
+          .order('year', { ascending: true })
+          .order('month', { ascending: true });
+
+        if (refreshError) throw refreshError;
+
+        // Filter to exact range if spanning multiple years
+        let finalBudgets = refreshedData || [];
+        if (startYear !== endYear) {
+          finalBudgets = finalBudgets.filter(b => {
+            if (b.year < startYear || b.year > endYear) return false;
+            if (b.year === startYear && b.month < startMonthNum) return false;
+            if (b.year === endYear && b.month > endMonthNum) return false;
+            return true;
+          });
+        }
+        
+        console.log('Refreshed budgets:', finalBudgets.length);
+        return finalBudgets;
+      }
+
+      console.log('Returning existing budgets:', existingBudgets.length);
+      return existingBudgets;
+    } catch (error) {
+      console.error('Error fetching monthly budgets for date range:', error);
+      throw error;
+    }
+  }
+
+  /**
    * Create monthly budget from active personal budget
    */
   static async createMonthlyBudget(

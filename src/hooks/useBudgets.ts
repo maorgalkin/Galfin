@@ -159,6 +159,18 @@ export function useAllMonthlyBudgets(limit: number = 12) {
 }
 
 /**
+ * Hook to get monthly budgets for a date range
+ */
+export function useMonthlyBudgetsForDateRange(startDate?: Date, endDate?: Date) {
+  return useQuery({
+    queryKey: ['monthlyBudget', 'dateRange', startDate?.toISOString(), endDate?.toISOString()],
+    queryFn: () => startDate && endDate ? MonthlyBudgetService.getMonthlyBudgetsForDateRange(startDate, endDate) : [],
+    enabled: !!startDate && !!endDate,
+    staleTime: 2 * 60 * 1000,
+  });
+}
+
+/**
  * Hook to update a category limit in a monthly budget
  */
 export function useUpdateCategoryLimit() {
