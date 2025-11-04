@@ -129,11 +129,13 @@ const Dashboard: React.FC = () => {
           <div className="flex items-center justify-between mb-8">
             <h1 className="text-3xl font-bold text-gray-900">Dashboard</h1>
             
-            {/* Dummy Data Controls */}
-            <DummyDataControls
-              onAddDummyData={handleAddDummyData}
-              onRemoveDummyData={handleRemoveDummyData}
-            />
+            {/* Dummy Data Controls - Development Only */}
+            {import.meta.env.DEV && (
+              <DummyDataControls
+                onAddDummyData={handleAddDummyData}
+                onRemoveDummyData={handleRemoveDummyData}
+              />
+            )}
           </div>
 
           {/* Budget Month Navigation - Carousel Style */}
