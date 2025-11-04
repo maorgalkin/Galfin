@@ -127,9 +127,9 @@ const Dashboard: React.FC = () => {
       />
 
       {activeTab === 'dashboard' && (
-        <div>
+        <div className="bg-purple-50 dark:bg-purple-900/10 rounded-lg p-6 -mx-6 -mb-6">
           <div className="flex items-center justify-between mb-8">
-            <h1 className="text-3xl font-bold text-gray-900">Dashboard</h1>
+            <h1 className="text-3xl font-bold text-purple-900 dark:text-purple-100">Dashboard</h1>
             
             {/* Dummy Data Controls - Development Only */}
             {import.meta.env.DEV && (
@@ -189,13 +189,13 @@ const Dashboard: React.FC = () => {
       )}
 
       {activeTab === 'transactions' && (
-        <div>
-          <h1 className="text-3xl font-bold text-gray-900 mb-8">Transactions</h1>
+        <div className="bg-blue-50 dark:bg-blue-900/10 rounded-lg p-6 -mx-6 -mb-6">
+          <h1 className="text-3xl font-bold text-blue-900 dark:text-blue-100 mb-8">Transactions</h1>
           
           {/* Transaction Overview Section */}
           <div className="mb-8">
             <div className="mb-6">
-              <h2 className="text-2xl font-semibold text-gray-900">
+              <h2 className="text-2xl font-semibold text-blue-900 dark:text-blue-100">
                 Transaction History
               </h2>
             </div>
@@ -209,10 +209,10 @@ const Dashboard: React.FC = () => {
                   setActiveMonthTab(activeMonthTab - 1);
                 }}
                 disabled={activeMonthTab <= 0}
-                className="flex-shrink-0 p-2 sm:p-3 rounded-full bg-white border border-gray-300 hover:bg-gray-50 disabled:opacity-30 disabled:cursor-not-allowed transition-all"
+                className="flex-shrink-0 p-2 sm:p-3 rounded-full bg-blue-100 dark:bg-blue-800 border border-blue-300 dark:border-blue-600 hover:bg-blue-200 dark:hover:bg-blue-700 disabled:opacity-30 disabled:cursor-not-allowed transition-all"
                 title="Newer Month"
               >
-                <svg className="w-4 h-4 sm:w-6 sm:h-6 text-gray-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <svg className="w-4 h-4 sm:w-6 sm:h-6 text-blue-700 dark:text-blue-200" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                   <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 19l-7-7 7-7" />
                 </svg>
               </button>
@@ -265,8 +265,8 @@ const Dashboard: React.FC = () => {
                           }}
                           className={`${positionClass} sm:relative sm:z-auto w-28 sm:w-40 h-16 sm:h-28 rounded-lg border font-medium flex flex-col items-center justify-center flex-shrink-0 ${
                             isActive
-                              ? 'bg-blue-600 text-white border-blue-600 shadow-lg scale-100'
-                              : 'bg-white text-gray-500 border-gray-200 scale-75 sm:scale-[0.7] hover:opacity-100 hover:scale-80'
+                              ? 'bg-blue-600 dark:bg-blue-700 text-white border-blue-600 dark:border-blue-500 shadow-lg scale-100'
+                              : 'bg-white dark:bg-blue-900/20 text-blue-500 dark:text-blue-300 border-blue-200 dark:border-blue-700 scale-75 sm:scale-[0.7] hover:opacity-100 hover:scale-80'
                           }`}
                         >
                           <div className={`text-sm sm:text-xl ${isActive ? 'font-semibold' : 'font-medium'}`}>
@@ -288,9 +288,9 @@ const Dashboard: React.FC = () => {
                         exit={{ opacity: 0, x: direction * -50 }}
                         transition={{ duration: 0.3, ease: "easeInOut" }}
                         onClick={() => setIsCustomDateRangeModalOpen(true)}
-                        className="absolute -right-3 sm:relative w-24 sm:w-32 h-16 sm:h-28 rounded-lg border border-blue-300 bg-blue-50 hover:bg-blue-100 hover:opacity-100 scale-75 sm:scale-[0.7] flex-shrink-0 flex items-center justify-center z-0 sm:z-auto transition-all"
+                        className="absolute -right-3 sm:relative w-24 sm:w-32 h-16 sm:h-28 rounded-lg border border-blue-400 dark:border-blue-500 bg-blue-100 dark:bg-blue-800/50 hover:bg-blue-200 dark:hover:bg-blue-700/50 hover:opacity-100 scale-75 sm:scale-[0.7] flex-shrink-0 flex items-center justify-center z-0 sm:z-auto transition-all"
                       >
-                        <span className="text-xs sm:text-sm font-semibold text-blue-600">Older</span>
+                        <span className="text-xs sm:text-sm font-semibold text-blue-700 dark:text-blue-200">Older</span>
                       </motion.button>
                     )}
                   </AnimatePresence>
@@ -304,10 +304,10 @@ const Dashboard: React.FC = () => {
                   setActiveMonthTab(activeMonthTab + 1);
                 }}
                 disabled={activeMonthTab >= months.length - 1}
-                className="flex-shrink-0 p-2 sm:p-3 rounded-full bg-white border border-gray-300 hover:bg-gray-50 disabled:opacity-30 disabled:cursor-not-allowed transition-all"
+                className="flex-shrink-0 p-2 sm:p-3 rounded-full bg-blue-100 dark:bg-blue-800 border border-blue-300 dark:border-blue-600 hover:bg-blue-200 dark:hover:bg-blue-700 disabled:opacity-30 disabled:cursor-not-allowed transition-all"
                 title="Older Month"
               >
-                <svg className="w-4 h-4 sm:w-6 sm:h-6 text-gray-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <svg className="w-4 h-4 sm:w-6 sm:h-6 text-blue-700 dark:text-blue-200" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                   <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 5l7 7-7 7" />
                 </svg>
               </button>
@@ -319,8 +319,8 @@ const Dashboard: React.FC = () => {
                 onClick={() => setTransactionTypeFilter('all')}
                 className={`px-4 py-2 rounded-md border font-medium transition-all ${
                   transactionTypeFilter === 'all'
-                    ? 'bg-blue-600 text-white border-blue-600'
-                    : 'bg-white text-gray-700 border-gray-300 hover:bg-gray-50'
+                    ? 'bg-blue-600 dark:bg-blue-700 text-white border-blue-600 dark:border-blue-500'
+                    : 'bg-white dark:bg-blue-900/20 text-blue-700 dark:text-blue-200 border-blue-300 dark:border-blue-600 hover:bg-blue-50 dark:hover:bg-blue-800/30'
                 }`}
               >
                 All
@@ -329,8 +329,8 @@ const Dashboard: React.FC = () => {
                 onClick={() => setTransactionTypeFilter('income')}
                 className={`px-4 py-2 rounded-md border font-medium transition-all ${
                   transactionTypeFilter === 'income'
-                    ? 'bg-green-600 text-white border-green-600'
-                    : 'bg-white text-gray-700 border-gray-300 hover:bg-gray-50'
+                    ? 'bg-green-600 dark:bg-green-700 text-white border-green-600 dark:border-green-500'
+                    : 'bg-white dark:bg-blue-900/20 text-blue-700 dark:text-blue-200 border-blue-300 dark:border-blue-600 hover:bg-blue-50 dark:hover:bg-blue-800/30'
                 }`}
               >
                 Income
@@ -339,8 +339,8 @@ const Dashboard: React.FC = () => {
                 onClick={() => setTransactionTypeFilter('expense')}
                 className={`px-4 py-2 rounded-md border font-medium transition-all ${
                   transactionTypeFilter === 'expense'
-                    ? 'bg-red-600 text-white border-red-600'
-                    : 'bg-white text-gray-700 border-gray-300 hover:bg-gray-50'
+                    ? 'bg-red-600 dark:bg-red-700 text-white border-red-600 dark:border-red-500'
+                    : 'bg-white dark:bg-blue-900/20 text-blue-700 dark:text-blue-200 border-blue-300 dark:border-blue-600 hover:bg-blue-50 dark:hover:bg-blue-800/30'
                 }`}
               >
                 Expenses
@@ -367,7 +367,9 @@ const Dashboard: React.FC = () => {
       )}
 
       {activeTab === 'budget' && (
-        <BudgetManagement />
+        <div className="bg-green-50 dark:bg-green-900/10 rounded-lg p-6 -mx-6 -mb-6">
+          <BudgetManagement />
+        </div>
       )}
 
       {/* Edit Transaction Modal */}

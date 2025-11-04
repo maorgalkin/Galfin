@@ -16,17 +16,17 @@ export const FamilyMembersCard: React.FC<FamilyMembersCardProps> = ({
   return (
     <button
       onClick={onOpenModal}
-      className="bg-white rounded-lg shadow-sm border p-4 w-full hover:shadow-md transition-shadow cursor-pointer"
+      className="bg-white dark:bg-purple-900/20 rounded-lg shadow-sm border border-purple-200 dark:border-purple-700 p-4 w-full hover:shadow-md hover:border-purple-300 dark:hover:border-purple-600 transition-all cursor-pointer"
     >
       <div className="flex items-center justify-between">
         <div className="flex items-center">
-          <Users className="h-5 w-5 text-blue-600 mr-3" />
+          <Users className="h-5 w-5 text-purple-600 dark:text-purple-400 mr-3" />
           <div>
-            <p className="text-sm font-medium text-gray-900">Family Members</p>
-            <p className="text-xs text-gray-500">Click to manage family members</p>
+            <p className="text-sm font-medium text-purple-900 dark:text-purple-100">Family Members</p>
+            <p className="text-xs text-purple-600 dark:text-purple-400">Click to manage family members</p>
           </div>
         </div>
-        <p className="text-2xl font-bold text-blue-600">{familyMembersCount}</p>
+        <p className="text-2xl font-bold text-purple-600 dark:text-purple-400">{familyMembersCount}</p>
       </div>
     </button>
   );
