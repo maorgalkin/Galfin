@@ -26,7 +26,7 @@ export const TransactionsList: React.FC<TransactionsListProps> = ({
 }) => {
   if (transactions.length === 0) {
     return (
-      <div className="text-gray-500 text-center py-8">{emptyMessage}</div>
+      <div className="text-gray-500 dark:text-gray-400 text-center py-8">{emptyMessage}</div>
     );
   }
 
@@ -35,7 +35,7 @@ export const TransactionsList: React.FC<TransactionsListProps> = ({
       {transactions.map(t => {
         const categoryColors = getCategoryColor(t.category, t.type, budgetConfig);
         return (
-          <div key={t.id} className="bg-white rounded-lg shadow p-4 hover:shadow-md transition-shadow">
+          <div key={t.id} className="bg-white dark:bg-gray-800 rounded-lg shadow border border-gray-200 dark:border-gray-700 p-4 hover:shadow-md transition-shadow">
             <div className="flex justify-between items-start">
               <div className="flex-1">
                 <div className="flex items-center mb-2">
@@ -51,9 +51,9 @@ export const TransactionsList: React.FC<TransactionsListProps> = ({
                   </span>
                 </div>
                 {t.description && (
-                  <div className="text-sm text-gray-700 mb-2">{t.description}</div>
+                  <div className="text-sm text-gray-700 dark:text-gray-300 mb-2">{t.description}</div>
                 )}
-                <div className="text-sm text-gray-500">
+                <div className="text-sm text-gray-500 dark:text-gray-400">
                   {new Date(t.date).toLocaleDateString()} 
                   {t.familyMember && ` • ${familyMembers.find(m => m.id === t.familyMember)?.name || 'Unknown'}`}
                 </div>

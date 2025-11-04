@@ -40,16 +40,16 @@ export const ExpenseChart: React.FC<ExpenseChartProps> = ({
 
   if (categoryData.length === 0) {
     return (
-      <div className="bg-white rounded-lg shadow-sm border p-4 sm:p-6">
-        <h2 className="text-xl font-semibold text-gray-900 mb-4">Expenses by Category</h2>
-        <p className="text-gray-500 text-center py-12">No expense data available</p>
+      <div className="bg-white dark:bg-gray-800 rounded-lg shadow-sm border border-gray-200 dark:border-gray-700 p-4 sm:p-6">
+        <h2 className="text-xl font-semibold text-gray-900 dark:text-gray-100 mb-4">Expenses by Category</h2>
+        <p className="text-gray-500 dark:text-gray-400 text-center py-12">No expense data available</p>
       </div>
     );
   }
 
   return (
-    <div className="bg-white rounded-lg shadow-sm border p-4 sm:p-6">
-      <h2 className="text-xl font-semibold text-gray-900 mb-4">Expenses by Category</h2>
+    <div className="bg-white dark:bg-gray-800 rounded-lg shadow-sm border border-gray-200 dark:border-gray-700 p-4 sm:p-6">
+      <h2 className="text-xl font-semibold text-gray-900 dark:text-gray-100 mb-4">Expenses by Category</h2>
 
       {/* Desktop Layout - Chart slides left when category selected */}
       <div className="max-md:hidden">

@@ -29,10 +29,10 @@ function ProtectedRoute({ children }: { children: React.ReactNode }) {
 
   if (loading) {
     return (
-      <div className="min-h-screen flex items-center justify-center bg-gray-100">
+      <div className="min-h-screen flex items-center justify-center bg-gray-100 dark:bg-gray-900">
         <div className="text-center">
-          <Loader2 className="h-12 w-12 animate-spin text-blue-600 mx-auto mb-4" />
-          <p className="text-gray-600">Loading...</p>
+          <Loader2 className="h-12 w-12 animate-spin text-blue-600 dark:text-blue-400 mx-auto mb-4" />
+          <p className="text-gray-600 dark:text-gray-400">Loading...</p>
         </div>
       </div>
     );
@@ -51,16 +51,16 @@ function AppContent() {
   const { signOut, user } = useAuth();
 
   return (
-    <div className="min-h-screen bg-gray-100">
-      <nav className="bg-white shadow-sm border-b">
+    <div className="min-h-screen bg-gray-100 dark:bg-gray-900">
+      <nav className="bg-white dark:bg-gray-800 shadow-sm border-b border-gray-200 dark:border-gray-700">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
           <div className="h-16 flex items-center justify-between">
             {/* Logo */}
             <div className="flex items-center">
-              <h1 className="text-xl font-bold text-gray-900">Galfin</h1>
-              <span className="hidden sm:inline ml-2 text-sm text-gray-500">Family Finance Tracker</span>
+              <h1 className="text-xl font-bold text-gray-900 dark:text-gray-100">Galfin</h1>
+              <span className="hidden sm:inline ml-2 text-sm text-gray-500 dark:text-gray-400">Family Finance Tracker</span>
               {user && (
-                <span className="hidden md:inline ml-4 text-xs text-gray-400">
+                <span className="hidden md:inline ml-4 text-xs text-gray-400 dark:text-gray-500">
                   {user.email}
                 </span>
               )}
