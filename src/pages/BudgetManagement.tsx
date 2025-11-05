@@ -52,9 +52,9 @@ export const BudgetManagement: React.FC = () => {
         </div>
 
         {/* Tabs */}
-        <div className="bg-white dark:bg-green-900/20 rounded-lg shadow-sm border border-green-200 dark:border-green-700 mb-6 overflow-x-auto">
-          <div className="border-b border-green-200 dark:border-green-700">
-            <nav className="flex space-x-1 px-3 sm:px-6 min-w-max" aria-label="Tabs">
+        <div className="bg-white dark:bg-green-900/20 rounded-lg shadow-sm border border-green-200 dark:border-green-700 mb-6">
+          <div className="border-b border-green-200 dark:border-green-700 overflow-x-auto">
+            <nav className="flex px-2 sm:px-4" aria-label="Tabs">
               {tabs.map((tab) => {
                 const Icon = tab.icon;
                 const isActive = activeTab === tab.id;
@@ -63,7 +63,7 @@ export const BudgetManagement: React.FC = () => {
                     key={tab.id}
                     onClick={() => setActiveTab(tab.id)}
                     className={`
-                      flex items-center px-3 sm:px-4 py-3 text-xs sm:text-sm font-medium border-b-2 transition-colors whitespace-nowrap
+                      flex items-center justify-center flex-1 px-2 sm:px-4 py-3 text-xs sm:text-sm font-medium border-b-2 transition-colors whitespace-nowrap
                       ${
                         isActive
                           ? 'border-green-600 dark:border-green-500 text-green-700 dark:text-green-300'
@@ -71,8 +71,8 @@ export const BudgetManagement: React.FC = () => {
                       }
                     `}
                   >
-                    <Icon className="h-3 w-3 sm:h-4 sm:w-4 mr-1 sm:mr-2" />
-                    {tab.label}
+                    <Icon className="h-3 w-3 sm:h-4 sm:w-4 mr-1 sm:mr-2 flex-shrink-0" />
+                    <span className="truncate">{tab.label}</span>
                   </button>
                 );
               })}
