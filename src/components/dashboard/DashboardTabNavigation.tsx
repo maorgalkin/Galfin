@@ -16,14 +16,14 @@ export const DashboardTabNavigation: React.FC<DashboardTabNavigationProps> = ({
 }) => {
   return (
     <div className="mb-6">
-      <div className="border-b border-gray-200">
-        <nav className="-mb-px flex space-x-8">
+      <div className="border-b border-gray-200 dark:border-gray-700">
+        <nav className="-mb-px flex">
           <button
             onClick={() => onTabChange('dashboard')}
-            className={`py-2 px-1 border-b-2 font-medium text-sm relative ${
+            className={`py-3 px-4 border-b-2 font-medium text-sm relative transition-colors ${
               activeTab === 'dashboard'
-                ? 'border-purple-500 text-purple-600'
-                : 'border-transparent text-gray-500 hover:text-gray-700 hover:border-gray-300'
+                ? 'border-purple-500 text-purple-600 dark:text-purple-400'
+                : 'border-transparent text-gray-500 dark:text-gray-400 hover:text-gray-700 dark:hover:text-gray-300 hover:border-gray-300 dark:hover:border-gray-600'
             }`}
           >
             Dashboard
@@ -35,20 +35,20 @@ export const DashboardTabNavigation: React.FC<DashboardTabNavigationProps> = ({
           </button>
           <button
             onClick={() => onTabChange('transactions')}
-            className={`py-2 px-1 border-b-2 font-medium text-sm ${
+            className={`py-3 px-4 border-b-2 font-medium text-sm transition-colors ${
               activeTab === 'transactions'
-                ? 'border-blue-500 text-blue-600'
-                : 'border-transparent text-gray-500 hover:text-gray-700 hover:border-gray-300'
+                ? 'border-blue-500 text-blue-600 dark:text-blue-400'
+                : 'border-transparent text-gray-500 dark:text-gray-400 hover:text-gray-700 dark:hover:text-gray-300 hover:border-gray-300 dark:hover:border-gray-600'
             }`}
           >
             Transactions
           </button>
           <button
             onClick={() => onTabChange('budget')}
-            className={`py-2 px-1 border-b-2 font-medium text-sm ${
+            className={`py-3 px-4 border-b-2 font-medium text-sm transition-colors ${
               activeTab === 'budget'
-                ? 'border-green-500 text-green-600'
-                : 'border-transparent text-gray-500 hover:text-gray-700 hover:border-gray-300'
+                ? 'border-green-500 text-green-600 dark:text-green-400'
+                : 'border-transparent text-gray-500 dark:text-gray-400 hover:text-gray-700 dark:hover:text-gray-300 hover:border-gray-300 dark:hover:border-gray-600'
             }`}
           >
             Budget
