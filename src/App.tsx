@@ -53,7 +53,7 @@ function AppContent() {
   return (
     <div className="min-h-screen bg-gray-100 dark:bg-gray-900">
       <nav className="bg-white dark:bg-gray-800 shadow-sm border-b border-gray-200 dark:border-gray-700">
-        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+        <div className="max-w-7xl mx-auto px-3 sm:px-4 lg:px-6">
           <div className="h-16 flex items-center justify-between">
             {/* Logo */}
             <div className="flex items-center">
@@ -87,7 +87,7 @@ function AppContent() {
           </div>
         </div>
       </nav>
-      <main className="px-4 sm:px-6 lg:px-8">
+      <main className="px-3 sm:px-4 lg:px-6">
         <Routes>
           <Route path="/" element={<Dashboard />} />
           <Route path="/dev-tools" element={<DevTools />} />
