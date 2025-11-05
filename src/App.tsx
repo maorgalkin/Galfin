@@ -1,5 +1,5 @@
 import { useState } from 'react';
-import { BrowserRouter, Routes, Route, Navigate } from 'react-router-dom';
+import { BrowserRouter, Routes, Route, Navigate, Link } from 'react-router-dom';
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
 import { FinanceProvider, useFinance } from './context/FinanceContext';
 import { AuthProvider, useAuth } from './contexts/AuthContext';
@@ -56,7 +56,7 @@ function AppContent() {
         <div className="max-w-7xl mx-auto px-3 sm:px-4 lg:px-6">
           <div className="h-16 flex items-center justify-between">
             {/* Logo */}
-            <div className="flex items-center">
+            <Link to="/" className="flex items-center hover:opacity-80 transition-opacity">
               <h1 className="text-xl font-bold text-gray-900 dark:text-gray-100">Galfin</h1>
               <span className="hidden sm:inline ml-2 text-sm text-gray-500 dark:text-gray-400">Family Finance Tracker</span>
               {user && (
@@ -64,7 +64,7 @@ function AppContent() {
                   {user.email}
                 </span>
               )}
-            </div>
+            </Link>
             
             {/* Desktop & Mobile Buttons - Always visible */}
             <div className="flex items-center space-x-2 sm:space-x-3">
