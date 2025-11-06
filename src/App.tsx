@@ -52,16 +52,16 @@ function AppContent() {
 
   const textureStyle = {
     backgroundImage: `
-      radial-gradient(circle at 1px 1px, rgba(0, 0, 0, 0.04) 1px, transparent 0),
-      radial-gradient(circle at 1px 1px, rgba(0, 0, 0, 0.03) 1px, transparent 0)
+      radial-gradient(circle at 20px 20px, rgba(0, 0, 0, 0.06) 2%, transparent 0),
+      radial-gradient(circle at 60px 60px, rgba(0, 0, 0, 0.04) 2%, transparent 0)
     `,
-    backgroundSize: '50px 50px, 70px 70px',
-    backgroundPosition: '0 0, 35px 35px',
+    backgroundSize: '80px 80px',
+    backgroundPosition: '0 0, 40px 40px',
   };
 
   return (
     <div 
-      className="min-h-screen bg-gradient-to-br from-gray-50 via-gray-100 to-gray-50 dark:from-gray-950 dark:via-gray-900 dark:to-gray-950 transition-colors duration-500"
+      className="min-h-screen bg-gradient-to-br from-gray-100 via-gray-50 to-gray-100 dark:from-gray-950 dark:via-gray-900 dark:to-gray-950 transition-colors duration-500"
       style={textureStyle}
     >
       <nav className="bg-white/80 dark:bg-gray-800/80 backdrop-blur-sm shadow-sm border-b border-gray-200 dark:border-gray-700">

@@ -141,25 +141,38 @@ const Dashboard: React.FC = () => {
   const getBackgroundClass = () => {
     switch (activeTab) {
       case 'dashboard':
-        return 'bg-gradient-to-br from-purple-50 via-purple-50/50 to-white dark:from-purple-950/20 dark:via-purple-900/10 dark:to-gray-900';
+        return 'bg-gradient-to-br from-purple-100 via-purple-50 to-white dark:from-purple-950/30 dark:via-purple-900/20 dark:to-gray-900';
       case 'transactions':
-        return 'bg-gradient-to-br from-blue-50 via-blue-50/50 to-white dark:from-blue-950/20 dark:via-blue-900/10 dark:to-gray-900';
+        return 'bg-gradient-to-br from-blue-100 via-blue-50 to-white dark:from-blue-950/30 dark:via-blue-900/20 dark:to-gray-900';
       case 'budget':
-        return 'bg-gradient-to-br from-green-50 via-green-50/50 to-white dark:from-green-950/20 dark:via-green-900/10 dark:to-gray-900';
+        return 'bg-gradient-to-br from-green-100 via-green-50 to-white dark:from-green-950/30 dark:via-green-900/20 dark:to-gray-900';
       default:
         return 'bg-white dark:bg-gray-900';
     }
   };
 
   const getTextureStyle = () => {
-    // Subtle dot pattern texture
+    // Hexagon geometric pattern based on active tab
+    const getColor = () => {
+      switch (activeTab) {
+        case 'dashboard':
+          return 'rgba(147, 51, 234, 0.08)'; // purple
+        case 'transactions':
+          return 'rgba(59, 130, 246, 0.08)'; // blue
+        case 'budget':
+          return 'rgba(34, 197, 94, 0.08)'; // green
+        default:
+          return 'rgba(0, 0, 0, 0.05)';
+      }
+    };
+
     return {
       backgroundImage: `
-        radial-gradient(circle at 1px 1px, rgba(0, 0, 0, 0.03) 1px, transparent 0),
-        radial-gradient(circle at 1px 1px, rgba(0, 0, 0, 0.02) 1px, transparent 0)
+        radial-gradient(circle at 25px 25px, ${getColor()} 2%, transparent 0%),
+        radial-gradient(circle at 75px 75px, ${getColor()} 2%, transparent 0%)
       `,
-      backgroundSize: '40px 40px, 60px 60px',
-      backgroundPosition: '0 0, 30px 30px',
+      backgroundSize: '100px 100px',
+      backgroundPosition: '0 0, 50px 50px',
     };
   };
 
