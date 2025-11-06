@@ -175,11 +175,12 @@ describe('PersonalBudgetService', () => {
 
       vi.mocked(supabase.from).mockReturnValue(mockChain);
 
-      const result = await PersonalBudgetService.createBudget(
-        mockBudgetConfig,
-        'My First Budget',
-        'Starting fresh'
-      );
+      const result = await PersonalBudgetService.createBudget({
+        name: 'My First Budget',
+        categories: mockBudgetConfig.categories as Record<string, CategoryConfig>,
+        global_settings: mockPersonalBudget.global_settings,
+        notes: 'Starting fresh'
+      });
 
       expect(result).toEqual(newBudget);
     });
@@ -193,7 +194,11 @@ describe('PersonalBudgetService', () => {
       vi.mocked(supabase.from).mockReturnValue(mockChain);
 
       await expect(
-        PersonalBudgetService.createBudget(mockBudgetConfig)
+        PersonalBudgetService.createBudget({
+          name: 'Test Budget',
+          categories: mockBudgetConfig.categories as Record<string, CategoryConfig>,
+          global_settings: mockPersonalBudget.global_settings
+        })
       ).rejects.toThrow('Insert failed');  // Updated to match actual error
     });
   });
@@ -220,8 +225,8 @@ describe('PersonalBudgetService', () => {
       vi.mocked(supabase.from).mockReturnValue(mockChain);
 
       const result = await PersonalBudgetService.updateBudget(
-        { ...mockBudgetConfig, categories: updatedCategories },
-        'Updated groceries limit'
+        currentBudget.id,
+        { categories: updatedCategories, name: 'Updated groceries limit' }
       );
 
       expect(result.version).toBe(2);

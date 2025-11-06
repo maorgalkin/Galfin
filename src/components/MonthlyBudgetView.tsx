@@ -92,12 +92,16 @@ export const MonthlyBudgetView: React.FC<MonthlyBudgetViewProps> = ({
     }).format(amount);
   };
 
-  const getStatusIcon = (status: 'increased' | 'decreased' | 'unchanged') => {
+  const getStatusIcon = (status: 'increased' | 'decreased' | 'unchanged' | 'added' | 'removed') => {
     switch (status) {
       case 'increased':
         return <TrendingUp className="h-4 w-4 text-green-600" />;
       case 'decreased':
         return <TrendingDown className="h-4 w-4 text-red-600" />;
+      case 'added':
+        return <TrendingUp className="h-4 w-4 text-blue-600" />;
+      case 'removed':
+        return <TrendingDown className="h-4 w-4 text-gray-600" />;
       default:
         return <Minus className="h-4 w-4 text-gray-400" />;
     }
@@ -291,7 +295,7 @@ export const MonthlyBudgetView: React.FC<MonthlyBudgetViewProps> = ({
                     <div className="font-medium text-gray-900 dark:text-gray-100">
                       {categoryName}
                     </div>
-                    {comparisonData && comparisonData.difference !== 0 && (
+                    {comparisonData && comparisonData.difference !== 0 && comparisonData.personalLimit !== null && (
                       <div className="text-xs text-gray-500 dark:text-gray-400">
                         Personal: {formatCurrency(comparisonData.personalLimit)}
                         {' '}({comparisonData.differencePercentage > 0 ? '+' : ''}

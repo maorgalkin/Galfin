@@ -8,7 +8,6 @@ import type {
   PersonalBudget,
   CategoryConfig
 } from '../types/budget';
-import type { BudgetConfiguration } from '../types';
 
 /**
  * Budget Adjustment Service
@@ -290,13 +289,11 @@ export class BudgetAdjustmentService {
 
       // Create new personal budget version with updated categories
       const newPersonalBudget = await PersonalBudgetService.updateBudget(
+        currentPersonalBudget.id,
         {
-          version: '2.0',
-          lastUpdated: new Date().toISOString(),
           categories: updatedCategories,
-          globalSettings: currentPersonalBudget.global_settings
-        } as BudgetConfiguration,
-        `Applied ${adjustments.length} scheduled adjustments for ${MonthlyBudgetService.formatMonthYear(year, month)}`
+          name: `${currentPersonalBudget.name} (Auto-adjusted ${MonthlyBudgetService.formatMonthYear(year, month)})`
+        }
       );
 
       return {
