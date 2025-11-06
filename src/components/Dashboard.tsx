@@ -137,7 +137,7 @@ const Dashboard: React.FC = () => {
     }
   };
 
-  // Dynamic background based on active tab
+  // Dynamic background based on active tab with subtle textures
   const getBackgroundClass = () => {
     switch (activeTab) {
       case 'dashboard':
@@ -151,8 +151,23 @@ const Dashboard: React.FC = () => {
     }
   };
 
+  const getTextureStyle = () => {
+    // Subtle dot pattern texture
+    return {
+      backgroundImage: `
+        radial-gradient(circle at 1px 1px, rgba(0, 0, 0, 0.03) 1px, transparent 0),
+        radial-gradient(circle at 1px 1px, rgba(0, 0, 0, 0.02) 1px, transparent 0)
+      `,
+      backgroundSize: '40px 40px, 60px 60px',
+      backgroundPosition: '0 0, 30px 30px',
+    };
+  };
+
   return (
-    <div className={`px-3 sm:px-4 lg:px-6 py-8 max-w-7xl mx-auto transition-colors duration-500 ${getBackgroundClass()}`}>
+    <div 
+      className={`min-h-screen px-3 sm:px-4 lg:px-6 py-8 max-w-7xl mx-auto transition-colors duration-500 ${getBackgroundClass()}`}
+      style={getTextureStyle()}
+    >
       
       {/* Tab Navigation */}
       <DashboardTabNavigation

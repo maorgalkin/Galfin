@@ -50,8 +50,20 @@ function AppContent() {
   const [isFamilyMembersOpen, setIsFamilyMembersOpen] = useState(false);
   const { signOut, user } = useAuth();
 
+  const textureStyle = {
+    backgroundImage: `
+      radial-gradient(circle at 1px 1px, rgba(0, 0, 0, 0.04) 1px, transparent 0),
+      radial-gradient(circle at 1px 1px, rgba(0, 0, 0, 0.03) 1px, transparent 0)
+    `,
+    backgroundSize: '50px 50px, 70px 70px',
+    backgroundPosition: '0 0, 35px 35px',
+  };
+
   return (
-    <div className="min-h-screen bg-gradient-to-br from-gray-50 via-gray-100 to-gray-50 dark:from-gray-950 dark:via-gray-900 dark:to-gray-950 transition-colors duration-500">
+    <div 
+      className="min-h-screen bg-gradient-to-br from-gray-50 via-gray-100 to-gray-50 dark:from-gray-950 dark:via-gray-900 dark:to-gray-950 transition-colors duration-500"
+      style={textureStyle}
+    >
       <nav className="bg-white/80 dark:bg-gray-800/80 backdrop-blur-sm shadow-sm border-b border-gray-200 dark:border-gray-700">
         <div className="max-w-7xl mx-auto px-3 sm:px-4 lg:px-6">
           <div className="h-16 flex items-center justify-between">
@@ -87,7 +99,7 @@ function AppContent() {
           </div>
         </div>
       </nav>
-      <main className="px-3 sm:px-4 lg:px-6">
+      <main>
         <Routes>
           <Route path="/" element={<Dashboard />} />
           <Route path="/dev-tools" element={<DevTools />} />
