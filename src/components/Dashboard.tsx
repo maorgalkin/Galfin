@@ -162,7 +162,7 @@ const Dashboard: React.FC = () => {
       />
 
       {activeTab === 'dashboard' && (
-        <div className="bg-purple-50 dark:bg-purple-900/10 rounded-lg p-6 -mx-6 -mb-6">
+        <div>
           <div className="flex items-center justify-between mb-8">
             <h1 className="text-3xl font-bold text-purple-900 dark:text-purple-100">Dashboard</h1>
             
@@ -224,7 +224,7 @@ const Dashboard: React.FC = () => {
       )}
 
       {activeTab === 'transactions' && (
-        <div className="bg-blue-50 dark:bg-blue-900/10 rounded-lg p-6 -mx-6 -mb-6">
+        <div>
           <h1 className="text-3xl font-bold text-blue-900 dark:text-blue-100 mb-8">Transactions</h1>
           
           {/* Transaction Overview Section */}
@@ -402,7 +402,7 @@ const Dashboard: React.FC = () => {
       )}
 
       {activeTab === 'budget' && (
-        <div className="bg-green-50 dark:bg-green-900/10 rounded-lg p-6 -mx-6 -mb-6">
+        <div>
           <BudgetManagement />
         </div>
       )}
