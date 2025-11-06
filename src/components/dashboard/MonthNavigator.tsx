@@ -1,5 +1,19 @@
 import React from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
+import {
+  getButtonBg,
+  getButtonHoverBg,
+  getBorderColor,
+  getIconColor,
+  getHeadingColor,
+  getSubheadingColor,
+  getActiveBg,
+  getActiveBorderColor,
+  getInactiveBg,
+  getInactiveTextColor,
+  getInactiveBorderColor,
+  type ThemeColor,
+} from '../../utils/themeColors';
 
 interface MonthData {
   label: string;
@@ -16,6 +30,7 @@ interface MonthNavigatorProps {
   direction: number;
   onDirectionChange: (direction: number) => void;
   userName?: string;
+  themeColor?: ThemeColor;
 }
 
 /**
@@ -29,6 +44,7 @@ export const MonthNavigator: React.FC<MonthNavigatorProps> = ({
   direction,
   onDirectionChange,
   userName,
+  themeColor = 'purple',
 }) => {
   const handlePrevious = () => {
     onDirectionChange(-1);
@@ -43,10 +59,10 @@ export const MonthNavigator: React.FC<MonthNavigatorProps> = ({
   return (
     <div className="mb-8">
       <div className="flex justify-between items-center mb-6">
-        <h2 className="text-2xl font-semibold text-purple-900 dark:text-purple-100">
+        <h2 className={`text-2xl font-semibold ${getHeadingColor(themeColor)}`}>
           {userName ? `${userName}'s Family Budget` : 'Family Budget'}
         </h2>
-        <div className="text-sm text-purple-700 dark:text-purple-300">
+        <div className={`text-sm ${getSubheadingColor(themeColor)}`}>
           Select month to analyze budget performance and financial overview
         </div>
       </div>
@@ -56,10 +72,10 @@ export const MonthNavigator: React.FC<MonthNavigatorProps> = ({
         <button
           onClick={handlePrevious}
           disabled={activeMonthIndex <= 0}
-          className="flex-shrink-0 p-2 sm:p-3 rounded-full bg-purple-100 dark:bg-purple-800 border border-purple-300 dark:border-purple-600 hover:bg-purple-200 dark:hover:bg-purple-700 disabled:opacity-30 disabled:cursor-not-allowed transition-all"
+          className={`flex-shrink-0 p-2 sm:p-3 rounded-full ${getButtonBg(themeColor)} border ${getBorderColor(themeColor)} ${getButtonHoverBg(themeColor)} disabled:opacity-30 disabled:cursor-not-allowed transition-all`}
           title="Newer Month"
         >
-          <svg className="w-4 h-4 sm:w-6 sm:h-6 text-purple-700 dark:text-purple-200" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+          <svg className={`w-4 h-4 sm:w-6 sm:h-6 ${getIconColor(themeColor)}`} fill="none" stroke="currentColor" viewBox="0 0 24 24">
             <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 19l-7-7 7-7" />
           </svg>
         </button>
@@ -117,8 +133,8 @@ export const MonthNavigator: React.FC<MonthNavigatorProps> = ({
                     onClick={() => onMonthChange(idx)}
                     className={`${positionClass} sm:relative sm:z-auto w-28 sm:w-40 h-16 sm:h-28 rounded-lg border font-medium flex flex-col items-center justify-center flex-shrink-0 ${
                       isActive
-                        ? 'bg-purple-600 dark:bg-purple-700 text-white border-purple-600 dark:border-purple-500 shadow-lg scale-100'
-                        : 'bg-white dark:bg-purple-900/20 text-purple-500 dark:text-purple-300 border-purple-200 dark:border-purple-700 scale-75 sm:scale-[0.7] hover:opacity-100 hover:scale-80'
+                        ? `${getActiveBg(themeColor)} text-white ${getActiveBorderColor(themeColor)} shadow-lg scale-100`
+                        : `${getInactiveBg(themeColor)} ${getInactiveTextColor(themeColor)} ${getInactiveBorderColor(themeColor)} scale-75 sm:scale-[0.7] hover:opacity-100 hover:scale-80`
                     }`}
                   >
                     <div className={`text-sm sm:text-xl ${isActive ? 'font-semibold' : 'font-medium'}`}>
@@ -152,10 +168,10 @@ export const MonthNavigator: React.FC<MonthNavigatorProps> = ({
         <button
           onClick={handleNext}
           disabled={activeMonthIndex >= months.length - 1}
-          className="flex-shrink-0 p-2 sm:p-3 rounded-full bg-purple-100 dark:bg-purple-800 border border-purple-300 dark:border-purple-600 hover:bg-purple-200 dark:hover:bg-purple-700 disabled:opacity-30 disabled:cursor-not-allowed transition-all"
+          className={`flex-shrink-0 p-2 sm:p-3 rounded-full ${getButtonBg(themeColor)} border ${getBorderColor(themeColor)} ${getButtonHoverBg(themeColor)} disabled:opacity-30 disabled:cursor-not-allowed transition-all`}
           title="Older Month"
         >
-          <svg className="w-4 h-4 sm:w-6 sm:h-6 text-purple-700 dark:text-purple-200" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+          <svg className={`w-4 h-4 sm:w-6 sm:h-6 ${getIconColor(themeColor)}`} fill="none" stroke="currentColor" viewBox="0 0 24 24">
             <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 5l7 7-7 7" />
           </svg>
         </button>

@@ -1,9 +1,9 @@
-import React, { useEffect, useState } from 'react';
+import React, { useEffect, useState, useMemo } from 'react';
 import { createPortal } from 'react-dom';
 import { useFinance } from '../context/FinanceContext';
+import { useActiveBudget } from '../hooks/useBudgets';
 import { X, Upload, HelpCircle } from 'lucide-react';
 import CategorySelector from './CategorySelector';
-import { BudgetConfigService } from '../services/budgetConfig';
 
 interface AddTransactionProps {
   isOpen: boolean;
@@ -12,6 +12,7 @@ interface AddTransactionProps {
 
 const AddTransaction: React.FC<AddTransactionProps> = ({ isOpen, onClose }) => {
   const { addTransaction, familyMembers, setTransactions } = useFinance();
+  const { data: personalBudget } = useActiveBudget();
   const [showCategorySelector, setShowCategorySelector] = useState(false);
   const [showTooltip, setShowTooltip] = useState(false);
   const [formData, setFormData] = useState({
@@ -23,12 +24,25 @@ const AddTransaction: React.FC<AddTransactionProps> = ({ isOpen, onClose }) => {
     date: new Date().toISOString().split('T')[0],
   });
 
-  // Get expense categories from user's budget config
-  const budgetConfig = BudgetConfigService.loadConfig();
-  const expenseCategories = Object.keys(budgetConfig.categories)
-    .filter(cat => cat !== 'Other')
-    .sort()
-    .concat(Object.keys(budgetConfig.categories).includes('Other') ? ['Other'] : []);
+  // Get active expense categories from user's active budget
+  const expenseCategories = useMemo(() => {
+    if (!personalBudget) return [];
+    
+    // Get active categories from global settings
+    const activeCategories = personalBudget.global_settings?.activeExpenseCategories || [];
+    
+    // Filter to only include categories that are both in activeCategories list AND marked as active
+    const categories = activeCategories.filter(catName => {
+      const categoryConfig = personalBudget.categories[catName];
+      return categoryConfig && categoryConfig.isActive !== false;
+    });
+    
+    // Sort alphabetically with "Other" at the end
+    return categories
+      .filter(cat => cat !== 'Other')
+      .sort()
+      .concat(categories.includes('Other') ? ['Other'] : []);
+  }, [personalBudget]);
 
   // Income categories - sorted alphabetically with "Other" last
   const incomeCategories = [

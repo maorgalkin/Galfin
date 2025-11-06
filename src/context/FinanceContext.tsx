@@ -1,6 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import type { Transaction, Budget, FamilyMember, BudgetConfiguration } from '../types/index';
-import { BudgetConfigService } from '../services/budgetConfig';
+import type { Transaction, Budget, FamilyMember } from '../types/index';
 import { useAuth } from '../contexts/AuthContext';
 import * as SupabaseService from '../services/supabaseDataService';
 
@@ -8,14 +7,12 @@ interface FinanceContextType {
   transactions: Transaction[];
   budgets: Budget[];
   familyMembers: FamilyMember[];
-  budgetConfig: BudgetConfiguration;
   isLoading: boolean;
   addTransaction: (transaction: Omit<Transaction, 'id'>) => Promise<void>;
   updateTransaction: (id: string, transaction: Omit<Transaction, 'id'>) => Promise<void>;
   deleteTransaction: (id: string) => Promise<void>;
   updateBudget: (budget: Budget) => void;
   addFamilyMember: (member: Omit<FamilyMember, 'id'>) => Promise<void>;
-  setBudgetConfig: (config: BudgetConfiguration) => Promise<void>;
   getTotalIncome: () => number;
   getTotalExpenses: () => number;
   getBalance: () => number;

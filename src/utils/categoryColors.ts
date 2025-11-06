@@ -201,13 +201,17 @@ export function getDistinctColor(
   return getNextAvailableColor(existingColors);
 }
 
-// Get category color from budget config and return inline styles
-export const getCategoryColor = (category: string, type: 'income' | 'expense', budgetConfig?: any) => {
+// Get category color from personal budget and return inline styles
+export const getCategoryColor = (
+  category: string, 
+  type: 'income' | 'expense', 
+  personalBudget?: { categories?: Record<string, { color?: string }> } | null
+) => {
   let hexColor = '#64748B'; // Default gray
   
-  // Try to get color from budget config for expenses
-  if (type === 'expense' && budgetConfig?.categories?.[category]?.color) {
-    hexColor = budgetConfig.categories[category].color;
+  // Try to get color from personal budget for expenses
+  if (type === 'expense' && personalBudget?.categories?.[category]?.color) {
+    hexColor = personalBudget.categories[category].color!;
   } else if (type === 'income') {
     // Income categories with predefined colors
     const incomeColors: Record<string, string> = {

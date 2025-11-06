@@ -1,8 +1,8 @@
-import React, { useState } from 'react';
+import React, { useState, useMemo } from 'react';
 import { useFinance } from '../context/FinanceContext';
+import { useActiveBudget } from '../hooks/useBudgets';
 import { X } from 'lucide-react';
 import type { Transaction } from '../types';
-import { BudgetConfigService } from '../services/budgetConfig';
 
 interface EditTransactionModalProps {
   transaction: Transaction;
@@ -10,7 +10,8 @@ interface EditTransactionModalProps {
 }
 
 const EditTransactionModal: React.FC<EditTransactionModalProps> = ({ transaction, onClose }) => {
-  const { updateTransaction, deleteTransaction, familyMembers, budgetConfig } = useFinance();
+  const { updateTransaction, deleteTransaction, familyMembers } = useFinance();
+  const { data: personalBudget } = useActiveBudget();
   
   const [formData, setFormData] = useState({
     date: transaction.date,
@@ -23,7 +24,7 @@ const EditTransactionModal: React.FC<EditTransactionModalProps> = ({ transaction
 
   const [showDeleteConfirm, setShowDeleteConfirm] = useState(false);
 
-  // Get currency symbol
+  // Get currency symbol - use personal budget if available
   const getCurrencySymbol = (currency: string) => {
     switch (currency) {
       case 'USD': return '$';
@@ -34,14 +35,31 @@ const EditTransactionModal: React.FC<EditTransactionModalProps> = ({ transaction
     }
   };
 
-  const currencySymbol = getCurrencySymbol(budgetConfig.globalSettings.currency);
+  const currency = personalBudget?.global_settings?.currency || 'ILS';
+  const currencySymbol = getCurrencySymbol(currency);
 
-  // Get expense categories from user's budget config
-  const budgetConfigData = BudgetConfigService.loadConfig();
-  const expenseCategories = Object.keys(budgetConfigData.categories)
-    .filter(cat => cat !== 'Other')
-    .sort()
-    .concat(Object.keys(budgetConfigData.categories).includes('Other') ? ['Other'] : []);
+  // Get active expense categories from user's active budget
+  const expenseCategories = useMemo(() => {
+    if (!personalBudget) {
+      // No personal budget - return empty array (user should create one)
+      return [];
+    }
+    
+    // Get active categories from global settings
+    const activeCategories = personalBudget.global_settings?.activeExpenseCategories || [];
+    
+    // Filter to only include categories that are both in activeCategories list AND marked as active
+    const categories = activeCategories.filter(catName => {
+      const categoryConfig = personalBudget.categories[catName];
+      return categoryConfig && categoryConfig.isActive !== false;
+    });
+    
+    // Sort alphabetically with "Other" at the end
+    return categories
+      .filter(cat => cat !== 'Other')
+      .sort()
+      .concat(categories.includes('Other') ? ['Other'] : []);
+  }, [personalBudget]);
 
   // Income categories - sorted alphabetically with "Other" last
   const incomeCategories = [

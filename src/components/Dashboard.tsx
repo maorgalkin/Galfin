@@ -2,6 +2,7 @@ import React, { useState, useEffect } from 'react';
 import { useNavigate, useSearchParams } from 'react-router-dom';
 import { useFinance } from '../context/FinanceContext';
 import { useAuth } from '../contexts/AuthContext';
+import { useActiveBudget } from '../hooks/useBudgets';
 import { Clock } from 'lucide-react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { BudgetPerformanceCard } from './BudgetPerformanceCard';
@@ -23,7 +24,8 @@ import CustomDateRangeModal from './CustomDateRangeModal';
 import type { Transaction } from '../types';
 
 const Dashboard: React.FC = () => {
-  const { transactions, familyMembers, addTransaction, deleteTransaction, budgetConfig } = useFinance();
+  const { transactions, familyMembers, addTransaction, deleteTransaction } = useFinance();
+  const { data: personalBudget } = useActiveBudget();
   const { user } = useAuth();
   const navigate = useNavigate();
   const [searchParams, setSearchParams] = useSearchParams();
@@ -81,7 +83,7 @@ const Dashboard: React.FC = () => {
   } = useDashboardData({
     transactions,
     familyMembers,
-    budgetConfig,
+    budgetConfig: null, // No longer needed
     activeMonthIndex: activeMonthTab,
   });
 
@@ -199,6 +201,7 @@ const Dashboard: React.FC = () => {
             direction={direction}
             onDirectionChange={setDirection}
             userName={getUserFirstName(user)}
+            themeColor="purple"
           />
 
           {/* BUDGET PERFORMANCE - Unified Widget */}
@@ -219,7 +222,7 @@ const Dashboard: React.FC = () => {
             <ExpenseChart
               categoryData={monthCategoryData}
               transactions={monthTransactions}
-              budgetConfig={budgetConfig}
+              personalBudget={personalBudget}
               formatCurrency={formatCurrency}
               onEditTransaction={setEditingTransaction}
               onViewAllTransactions={(category) => {
@@ -408,7 +411,7 @@ const Dashboard: React.FC = () => {
                 return filtered;
               })()}
               familyMembers={familyMembers}
-              budgetConfig={budgetConfig}
+              personalBudget={personalBudget}
               formatCurrency={formatCurrency}
               onEditTransaction={setEditingTransaction}
               emptyMessage="No transactions for this month"

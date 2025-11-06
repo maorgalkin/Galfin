@@ -2,7 +2,8 @@ import React, { useState } from 'react';
 import { PieChart, Pie, Cell, ResponsiveContainer, Tooltip as RechartsTooltip } from 'recharts';
 import { motion, AnimatePresence } from 'framer-motion';
 import { getCategoryColor } from '../../utils/categoryColors';
-import type { Transaction, BudgetConfiguration } from '../../types';
+import type { Transaction } from '../../types';
+import type { PersonalBudget } from '../../types/budget';
 
 interface CategoryData {
   category: string;
@@ -12,7 +13,7 @@ interface CategoryData {
 interface ExpenseChartProps {
   categoryData: CategoryData[];
   transactions: Transaction[];
-  budgetConfig: BudgetConfiguration | null;
+  personalBudget: PersonalBudget | null | undefined;
   formatCurrency: (amount: number) => string;
   onEditTransaction: (transaction: Transaction) => void;
   onViewAllTransactions: (category: string) => void;
@@ -26,7 +27,7 @@ interface ExpenseChartProps {
 export const ExpenseChart: React.FC<ExpenseChartProps> = ({
   categoryData,
   transactions,
-  budgetConfig,
+  personalBudget,
   formatCurrency,
   onEditTransaction,
   onViewAllTransactions,
@@ -82,7 +83,7 @@ export const ExpenseChart: React.FC<ExpenseChartProps> = ({
                   }}
                 >
                   {categoryData.map((entry, index) => {
-                    const colors = getCategoryColor(entry.category, 'expense', budgetConfig);
+                    const colors = getCategoryColor(entry.category, 'expense', personalBudget);
                     return (
                       <Cell 
                         key={`cell-${index}`} 
@@ -209,7 +210,7 @@ export const ExpenseChart: React.FC<ExpenseChartProps> = ({
               }}
             >
               {categoryData.map((entry, index) => {
-                const colors = getCategoryColor(entry.category, 'expense', budgetConfig);
+                const colors = getCategoryColor(entry.category, 'expense', personalBudget);
                 return (
                   <Cell key={`cell-${index}`} fill={colors.hexColor} />
                 );

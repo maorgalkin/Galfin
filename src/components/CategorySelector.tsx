@@ -72,7 +72,7 @@ const CategorySelector: React.FC<CategorySelectorProps> = ({
         <div className="p-6">
           <div className="grid grid-cols-2 md:grid-cols-3 gap-3">
             {categories.map((category) => {
-              const categoryColors = getCategoryColor(category, type, budgetConfig);
+              const categoryColors = getCategoryColor(category, type, personalBudget);
               const icon = getCategoryIcon(category);
               return (
                 <button

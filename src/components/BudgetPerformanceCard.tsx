@@ -16,11 +16,12 @@ import {
   ChevronUp
 } from 'lucide-react';
 import type { BudgetConfiguration } from '../types';
+import { getHeaderGradient, getAccentColor, getTextColor, getPrimaryButtonBg, getPrimaryButtonHoverBg, type ThemeColor } from '../utils/themeColors';
 
 interface BudgetPerformanceCardProps {
   selectedMonth?: Date;
   isCompact?: boolean;
-  themeColor?: 'purple' | 'blue' | 'green';
+  themeColor?: ThemeColor;
 }
 
 export const BudgetPerformanceCard: React.FC<BudgetPerformanceCardProps> = ({ 
@@ -29,53 +30,13 @@ export const BudgetPerformanceCard: React.FC<BudgetPerformanceCardProps> = ({
   themeColor = 'purple'
 }) => {
   const navigate = useNavigate();
-  const { transactions, budgetConfig: oldBudgetConfig } = useFinance();
+  const { transactions } = useFinance();
   const { data: personalBudget, isLoading: loadingActive } = useActiveBudget();
   const { data: monthlyBudget, isLoading: loadingMonthly } = useCurrentMonthBudget();
   const { data: adjustments } = useNextMonthAdjustments();
   const [showDetails, setShowDetails] = useState(false);
 
-  // Get gradient colors based on theme
-  const getHeaderGradient = () => {
-    switch (themeColor) {
-      case 'purple':
-        return 'bg-gradient-to-r from-purple-500 to-purple-600';
-      case 'blue':
-        return 'bg-gradient-to-r from-blue-500 to-blue-600';
-      case 'green':
-        return 'bg-gradient-to-r from-green-500 to-green-600';
-      default:
-        return 'bg-gradient-to-r from-purple-500 to-purple-600';
-    }
-  };
-
-  const getAccentColor = () => {
-    switch (themeColor) {
-      case 'purple':
-        return 'bg-purple-400/30';
-      case 'blue':
-        return 'bg-blue-400/30';
-      case 'green':
-        return 'bg-green-400/30';
-      default:
-        return 'bg-purple-400/30';
-    }
-  };
-
-  const getTextColor = () => {
-    switch (themeColor) {
-      case 'purple':
-        return 'text-purple-100';
-      case 'blue':
-        return 'text-blue-100';
-      case 'green':
-        return 'text-green-100';
-      default:
-        return 'text-purple-100';
-    }
-  };
-
-  // Convert personal budget to BudgetConfiguration format
+  // Convert personal budget to BudgetConfiguration format for budgetService
   const budgetConfig = useMemo((): BudgetConfiguration => {
     if (personalBudget) {
       return {
@@ -85,8 +46,18 @@ export const BudgetPerformanceCard: React.FC<BudgetPerformanceCardProps> = ({
         globalSettings: personalBudget.global_settings
       };
     }
-    return oldBudgetConfig;
-  }, [personalBudget, oldBudgetConfig]);
+    // Default minimal config if no budget exists
+    return {
+      version: "2.0.0",
+      lastUpdated: new Date().toISOString(),
+      categories: {},
+      globalSettings: {
+        currency: 'ILS',
+        warningNotifications: true,
+        emailAlerts: false
+      }
+    };
+  }, [personalBudget]);
 
   // Get current month or use selected month
   const currentDate = selectedMonth || new Date();
@@ -150,9 +121,9 @@ export const BudgetPerformanceCard: React.FC<BudgetPerformanceCardProps> = ({
   if (!personalBudget && !monthlyBudget) {
     return (
       <div className="bg-white dark:bg-gray-800 rounded-lg shadow-md overflow-hidden">
-        <div className={`px-6 py-4 ${getHeaderGradient()}`}>
+        <div className={`px-6 py-4 ${getHeaderGradient(themeColor)}`}>
           <h3 className="text-lg font-semibold text-white">Budget Performance</h3>
-          <p className={`text-sm ${getTextColor()} mt-1`}>
+          <p className={`text-sm ${getTextColor(themeColor)} mt-1`}>
             {monthName} {year}
           </p>
         </div>
@@ -185,16 +156,16 @@ export const BudgetPerformanceCard: React.FC<BudgetPerformanceCardProps> = ({
   return (
     <div className="bg-white dark:bg-gray-800 rounded-lg shadow-md overflow-hidden">
       {/* Header */}
-      <div className={`px-6 py-4 ${getHeaderGradient()}`}>
+      <div className={`px-6 py-4 ${getHeaderGradient(themeColor)}`}>
         <div className="flex items-center justify-between">
           <div>
             <h3 className="text-lg font-semibold text-white">Budget Performance</h3>
-            <p className={`text-sm ${getTextColor()} mt-1`}>
+            <p className={`text-sm ${getTextColor(themeColor)} mt-1`}>
               {monthName} {year}
             </p>
           </div>
           {personalBudget && (
-            <span className={`text-xs ${getTextColor()} ${getAccentColor()} px-2 py-1 rounded truncate max-w-[150px]`}>
+            <span className={`text-xs ${getTextColor(themeColor)} ${getAccentColor(themeColor)} px-2 py-1 rounded truncate max-w-[150px]`}>
               {personalBudget.name}
             </span>
           )}
@@ -398,7 +369,7 @@ export const BudgetPerformanceCard: React.FC<BudgetPerformanceCardProps> = ({
           </button>
           <button
             onClick={() => navigate('/?tab=budget')}
-            className="flex-1 flex items-center justify-center px-4 py-2 bg-blue-600 text-white rounded-md hover:bg-blue-700 transition-colors text-sm font-medium"
+            className={`flex-1 flex items-center justify-center px-4 py-2 ${getPrimaryButtonBg(themeColor)} text-white rounded-md ${getPrimaryButtonHoverBg(themeColor)} transition-colors text-sm font-medium`}
           >
             Manage Budget
             <ArrowRight className="h-4 w-4 ml-1" />

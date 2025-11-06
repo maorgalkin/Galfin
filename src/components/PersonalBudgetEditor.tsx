@@ -59,7 +59,7 @@ export const PersonalBudgetEditor: React.FC<PersonalBudgetEditorProps> = ({
 
   const { data: activeBudget, isLoading: loadingActive } = useActiveBudget();
   const { data: history = [], isLoading: loadingHistory } = usePersonalBudgetHistory();
-  const { budgetConfig, transactions } = useFinance();
+  const { transactions } = useFinance();
   const createBudget = useCreatePersonalBudget();
   const updateBudget = useUpdatePersonalBudget();
   const setActive = useSetActiveBudget();
@@ -92,47 +92,24 @@ export const PersonalBudgetEditor: React.FC<PersonalBudgetEditorProps> = ({
     setBudgetName('My Budget');
     setNotes('');
     
-    // Initialize global settings from budgetConfig or defaults
-    if (budgetConfig.globalSettings) {
-      setCurrency(budgetConfig.globalSettings.currency || 'USD');
-      setWarningNotifications(budgetConfig.globalSettings.warningNotifications ?? true);
-      setEmailAlerts(budgetConfig.globalSettings.emailAlerts ?? false);
+    // Initialize global settings and categories from active budget or defaults
+    if (activeBudget) {
+      // Use active budget as template
+      setCurrency(activeBudget.global_settings?.currency || 'ILS');
+      setWarningNotifications(activeBudget.global_settings?.warningNotifications ?? true);
+      setEmailAlerts(activeBudget.global_settings?.emailAlerts ?? false);
+      setCategories({ ...activeBudget.categories });
     } else {
-      setCurrency('USD');
+      // Use defaults if no active budget exists
+      setCurrency('ILS');
       setWarningNotifications(true);
       setEmailAlerts(false);
-    }
-    
-    // Priority 1: Use existing categories from budgetConfig (Personalize Budget section)
-    // Transfer ALL fields: monthlyLimit, warningThreshold, isActive, color, description
-    const existingCategories = Object.entries(budgetConfig.categories).reduce((acc, [name, cat]) => {
-      acc[name] = {
-        monthlyLimit: cat.monthlyLimit,
-        warningThreshold: cat.warningThreshold || 80,
-        isActive: cat.isActive,
-        color: cat.color, // Transfer color for UI consistency
-        description: cat.description, // Transfer description for context
-      };
-      return acc;
-    }, {} as Record<string, CategoryConfig>);
-    
-    // Priority 2: If no budgetConfig categories, use active budget
-    // Priority 3: If no active budget, use minimal defaults
-    if (Object.keys(existingCategories).length > 0) {
-      setCategories(existingCategories);
-    } else if (activeBudget) {
-      setCategories({ ...activeBudget.categories });
-      // Also load global settings from active budget
-      if (activeBudget.global_settings) {
-        setCurrency(activeBudget.global_settings.currency || 'USD');
-        setWarningNotifications(activeBudget.global_settings.warningNotifications ?? true);
-        setEmailAlerts(activeBudget.global_settings.emailAlerts ?? false);
-      }
-    } else {
       setCategories({
-        'Groceries': { monthlyLimit: 500, warningThreshold: 80, isActive: true },
-        'Transportation': { monthlyLimit: 200, warningThreshold: 80, isActive: true },
-        'Entertainment': { monthlyLimit: 150, warningThreshold: 80, isActive: true },
+        'Groceries': { monthlyLimit: 1500, warningThreshold: 80, isActive: true },
+        'Transportation': { monthlyLimit: 600, warningThreshold: 80, isActive: true },
+        'Entertainment': { monthlyLimit: 400, warningThreshold: 80, isActive: true },
+        'Bills & Utilities': { monthlyLimit: 1000, warningThreshold: 80, isActive: true },
+        'Home & Garden': { monthlyLimit: 300, warningThreshold: 80, isActive: true },
       });
     }
   };

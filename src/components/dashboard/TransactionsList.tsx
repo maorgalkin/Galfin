@@ -1,12 +1,13 @@
 import React from 'react';
 import { Edit2 } from 'lucide-react';
 import { getCategoryColor } from '../../utils/categoryColors';
-import type { Transaction, FamilyMember, BudgetConfiguration } from '../../types';
+import type { Transaction, FamilyMember } from '../../types';
+import type { PersonalBudget } from '../../types/budget';
 
 interface TransactionsListProps {
   transactions: Transaction[];
   familyMembers: FamilyMember[];
-  budgetConfig: BudgetConfiguration | null;
+  personalBudget: PersonalBudget | null | undefined;
   formatCurrency: (amount: number) => string;
   onEditTransaction: (transaction: Transaction) => void;
   emptyMessage?: string;
@@ -19,7 +20,7 @@ interface TransactionsListProps {
 export const TransactionsList: React.FC<TransactionsListProps> = ({
   transactions,
   familyMembers,
-  budgetConfig,
+  personalBudget,
   formatCurrency,
   onEditTransaction,
   emptyMessage = 'No transactions available',
@@ -33,7 +34,7 @@ export const TransactionsList: React.FC<TransactionsListProps> = ({
   return (
     <div className="grid gap-4">
       {transactions.map(t => {
-        const categoryColors = getCategoryColor(t.category, t.type, budgetConfig);
+        const categoryColors = getCategoryColor(t.category, t.type, personalBudget);
         return (
           <div key={t.id} className="bg-white dark:bg-gray-800 rounded-lg shadow border border-gray-200 dark:border-gray-700 p-4 hover:shadow-md transition-shadow">
             <div className="flex justify-between items-start">
