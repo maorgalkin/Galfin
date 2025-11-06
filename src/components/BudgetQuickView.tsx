@@ -2,12 +2,20 @@ import React from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useActiveBudget, useCurrentMonthBudget, useNextMonthAdjustments } from '../hooks/useBudgets';
 import { Calendar, Settings, Loader2, ArrowRight, Sparkles } from 'lucide-react';
+import {
+  getHeaderGradient,
+  getTextColor,
+  getPrimaryButtonBg,
+  getPrimaryButtonHoverBg,
+} from '../utils/themeColors';
 
 export const BudgetQuickView: React.FC = () => {
   const navigate = useNavigate();
   const { data: activeBudget, isLoading: loadingActive } = useActiveBudget();
   const { data: monthlyBudget, isLoading: loadingMonthly } = useCurrentMonthBudget();
   const { data: adjustments } = useNextMonthAdjustments();
+  
+  const themeColor = 'green';
 
   const formatCurrency = (amount: number): string => {
     const currency = activeBudget?.global_settings?.currency || 'USD';
@@ -22,7 +30,7 @@ export const BudgetQuickView: React.FC = () => {
     return (
       <div className="bg-white dark:bg-gray-800 rounded-lg shadow-md p-6">
         <div className="flex items-center justify-center py-8">
-          <Loader2 className="h-6 w-6 animate-spin text-blue-500" />
+          <Loader2 className="h-6 w-6 animate-spin text-gray-400" />
           <span className="ml-2 text-gray-600 dark:text-gray-300">Loading budget...</span>
         </div>
       </div>
@@ -36,9 +44,9 @@ export const BudgetQuickView: React.FC = () => {
   return (
     <div className="bg-white dark:bg-gray-800 rounded-lg shadow-md overflow-hidden">
       {/* Header */}
-      <div className="px-6 py-4 bg-gradient-to-r from-blue-500 to-blue-600">
+      <div className={`px-6 py-4 ${getHeaderGradient(themeColor)}`}>
         <h3 className="text-lg font-semibold text-white">Budget Overview</h3>
-        <p className="text-sm text-blue-100 mt-1">
+        <p className={`text-sm ${getTextColor(themeColor)} mt-1`}>
           {new Date().toLocaleDateString('en-US', { month: 'long', year: 'numeric' })}
         </p>
       </div>
@@ -47,7 +55,7 @@ export const BudgetQuickView: React.FC = () => {
       <div className="p-6">
         {!activeBudget && !monthlyBudget ? (
           <div className="flex flex-col items-center justify-center py-8 text-center">
-            <Sparkles className="h-16 w-16 text-blue-500 mb-4" />
+            <Sparkles className="h-16 w-16 text-gray-400 mb-4" />
             <h3 className="text-xl font-semibold text-gray-900 dark:text-gray-100 mb-2">
               Welcome to Budget Management! 🎉
             </h3>
@@ -56,7 +64,7 @@ export const BudgetQuickView: React.FC = () => {
             </p>
             <button
               onClick={() => navigate('/?tab=budget')}
-              className="px-6 py-3 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors font-medium shadow-md hover:shadow-lg flex items-center gap-2"
+              className={`px-6 py-3 ${getPrimaryButtonBg(themeColor)} text-white rounded-lg ${getPrimaryButtonHoverBg(themeColor)} transition-colors font-medium shadow-md hover:shadow-lg flex items-center gap-2`}
             >
               <Sparkles className="h-5 w-5" />
               Create Your First Budget
@@ -107,7 +115,7 @@ export const BudgetQuickView: React.FC = () => {
             <div className="pt-2">
               <button
                 onClick={() => navigate('/?tab=budget')}
-                className="w-full flex items-center justify-center px-4 py-2 bg-blue-600 text-white rounded-md hover:bg-blue-700 transition-colors text-sm font-medium"
+                className={`w-full flex items-center justify-center px-4 py-2 ${getPrimaryButtonBg(themeColor)} text-white rounded-md ${getPrimaryButtonHoverBg(themeColor)} transition-colors text-sm font-medium`}
               >
                 View Details
                 <ArrowRight className="h-4 w-4 ml-1" />

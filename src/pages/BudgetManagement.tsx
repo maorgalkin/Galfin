@@ -7,6 +7,14 @@ import { BudgetComparisonCard } from '../components/BudgetComparisonCard';
 import { BudgetAdjustmentScheduler } from '../components/BudgetAdjustmentScheduler';
 import { BudgetVsActual } from '../components/analytics/BudgetVsActual';
 import { Wallet, Settings, BarChart3 } from 'lucide-react';
+import {
+  getHeadingColor,
+  getSubheadingColor,
+  getInactiveBg,
+  getInactiveBorderColor,
+  getActiveBorderColor,
+  getInactiveTextColor,
+} from '../utils/themeColors';
 
 type TabType = 'budget' | 'analytics' | 'adjustments';
 
@@ -18,6 +26,8 @@ export const BudgetManagement: React.FC = () => {
   const currentDate = new Date();
   const currentYear = currentDate.getFullYear();
   const currentMonth = currentDate.getMonth() + 1;
+  
+  const themeColor = 'green';
 
   // Check if user has an active budget
   const { data: activeBudget, isLoading: loadingActiveBudget } = useActiveBudget();
@@ -43,17 +53,17 @@ export const BudgetManagement: React.FC = () => {
       <div className="max-w-7xl mx-auto">
         {/* Header */}
         <div className="mb-8">
-          <h1 className="text-3xl font-bold text-green-900 dark:text-green-100 mb-2">
+          <h1 className={`text-3xl font-bold ${getHeadingColor(themeColor)} mb-2`}>
             Budget Management
           </h1>
-          <p className="text-green-700 dark:text-green-300">
+          <p className={getSubheadingColor(themeColor)}>
             Manage your budget and track monthly spending
           </p>
         </div>
 
         {/* Tabs */}
-        <div className="bg-white dark:bg-green-900/20 rounded-lg shadow-sm border border-green-200 dark:border-green-700 mb-6">
-          <div className="border-b border-green-200 dark:border-green-700 overflow-x-auto">
+        <div className={`${getInactiveBg(themeColor)} rounded-lg shadow-sm border ${getInactiveBorderColor(themeColor)} mb-6`}>
+          <div className={`border-b ${getInactiveBorderColor(themeColor)} overflow-x-auto`}>
             <nav className="flex px-2 sm:px-4" aria-label="Tabs">
               {tabs.map((tab) => {
                 const Icon = tab.icon;
@@ -66,8 +76,8 @@ export const BudgetManagement: React.FC = () => {
                       flex items-center justify-center flex-1 px-2 sm:px-4 py-3 text-xs sm:text-sm font-medium border-b-2 transition-colors whitespace-nowrap
                       ${
                         isActive
-                          ? 'border-green-600 dark:border-green-500 text-green-700 dark:text-green-300'
-                          : 'border-transparent text-green-600 dark:text-green-400 hover:text-green-900 dark:hover:text-green-200 hover:border-green-300 dark:hover:border-green-600'
+                          ? `${getActiveBorderColor(themeColor)} ${getSubheadingColor(themeColor)}`
+                          : `border-transparent ${getInactiveTextColor(themeColor)} hover:${getSubheadingColor(themeColor)} hover:${getInactiveBorderColor(themeColor)}`
                       }
                     `}
                   >
@@ -91,7 +101,7 @@ export const BudgetManagement: React.FC = () => {
               // Fresh view - no budget yet
               <div>
                 {/* Tips Block - at the top */}
-                <div className="text-sm text-gray-500 dark:text-gray-400 mb-6 p-4 bg-green-50 dark:bg-green-900/20 rounded-lg">
+                <div className={`text-sm text-gray-500 dark:text-gray-400 mb-6 p-4 ${getInactiveBg(themeColor)} rounded-lg`}>
                   <p className="font-medium mb-2">💡 Getting Started:</p>
                   <ul className="list-disc list-inside space-y-1">
                     <li>Add your spending categories and set monthly limits</li>
@@ -106,7 +116,7 @@ export const BudgetManagement: React.FC = () => {
               // Editing mode - show editor
               <div>
                 {/* Tips Block - at the top */}
-                <div className="text-sm text-gray-500 dark:text-gray-400 mb-6 p-4 bg-green-50 dark:bg-green-900/20 rounded-lg">
+                <div className={`text-sm text-gray-500 dark:text-gray-400 mb-6 p-4 ${getInactiveBg(themeColor)} rounded-lg`}>
                   <p className="font-medium mb-2">💡 Editing Your Budget:</p>
                   <ul className="list-disc list-inside space-y-1">
                     <li>Changes to your budget apply to future months automatically</li>

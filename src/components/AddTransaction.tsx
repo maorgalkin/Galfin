@@ -273,11 +273,7 @@ const AddTransaction: React.FC<AddTransactionProps> = ({ isOpen, onClose }) => {
                 Choose
               </button>
             </div>
-            {formData.type === 'income' && (
-              <p className="text-xs text-blue-600 mt-1">
-                💡 Income sources: Salary, Rent, Government Allowance, Gift, Other
-              </p>
-            )}
+
           </div>
 
           <div>

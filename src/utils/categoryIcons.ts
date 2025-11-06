@@ -11,14 +11,14 @@ export const categoryIcons: Record<string, string> = {
   "Healthcare": "⚕️",
   "Education": "📚",
   "Travel": "✈️",
-  "Home & Garden": "🏡",
-  "Housing": "�️",
+  "Home & Garden": "🏠",
+  "Housing": "🏡",
   "Digital Subscriptions": "📱",
   "Other": "📦",
   
   // Income categories
   "Salary": "💰",
-  "Rent": "�",
+  "Rent": "💵",
   "Government Allowance": "🏛️",
   "Gift": "🎁",
 };

@@ -8,6 +8,12 @@ import {
 } from '../hooks/useBudgets';
 import { Calendar, TrendingUp, TrendingDown, X, Plus, Loader2, AlertCircle, Sparkles } from 'lucide-react';
 import { getNextAvailableColor, CATEGORY_COLOR_PALETTE } from '../utils/categoryColors';
+import {
+  getPrimaryButtonBg,
+  getPrimaryButtonHoverBg,
+  getInactiveBg,
+  getInactiveBorderColor,
+} from '../utils/themeColors';
 
 interface BudgetAdjustmentSchedulerProps {
   className?: string;
@@ -24,6 +30,8 @@ export const BudgetAdjustmentScheduler: React.FC<BudgetAdjustmentSchedulerProps>
   const [newCategoryName, setNewCategoryName] = useState('');
   const [newCategoryColor, setNewCategoryColor] = useState('#3B82F6'); // Default blue
 
+  const themeColor = 'green';
+  
   const { data: nextMonthSummary, isLoading } = useNextMonthAdjustments();
   const { data: activeBudget } = useActiveBudget();
   const scheduleAdjustment = useScheduleAdjustment();
@@ -149,7 +157,7 @@ export const BudgetAdjustmentScheduler: React.FC<BudgetAdjustmentSchedulerProps>
     return (
       <div className={`bg-white dark:bg-gray-800 rounded-lg shadow-md p-6 ${className}`}>
         <div className="flex items-center justify-center py-8">
-          <Loader2 className="h-8 w-8 animate-spin text-blue-500" />
+          <Loader2 className="h-8 w-8 animate-spin text-gray-400" />
           <span className="ml-3 text-gray-600 dark:text-gray-300">Loading adjustments...</span>
         </div>
       </div>
@@ -169,7 +177,7 @@ export const BudgetAdjustmentScheduler: React.FC<BudgetAdjustmentSchedulerProps>
           )}
           <button
             onClick={() => setIsScheduling(!isScheduling)}
-            className="flex items-center px-4 py-2 bg-blue-600 text-white rounded-md hover:bg-blue-700 transition-colors text-sm font-medium"
+            className={`flex items-center px-4 py-2 ${getPrimaryButtonBg(themeColor)} text-white rounded-md ${getPrimaryButtonHoverBg(themeColor)} transition-colors text-sm font-medium`}
           >
             {isScheduling ? (
               <>
@@ -227,15 +235,15 @@ export const BudgetAdjustmentScheduler: React.FC<BudgetAdjustmentSchedulerProps>
 
       {/* Scheduling Form */}
       {isScheduling && (
-        <div className="px-6 py-4 bg-blue-50 dark:bg-blue-900/20 border-b border-blue-200 dark:border-blue-800">
+        <div className={`px-6 py-4 ${getInactiveBg(themeColor)} border-b ${getInactiveBorderColor(themeColor)}`}>
           <div className="space-y-4">
             {/* Toggle between existing and new category */}
-            <div className="flex items-center gap-4 pb-3 border-b border-blue-200 dark:border-blue-700">
+            <div className={`flex items-center gap-4 pb-3 border-b ${getInactiveBorderColor(themeColor)}`}>
               <button
                 onClick={() => setIsCreatingNew(false)}
                 className={`px-4 py-2 rounded-md font-medium transition-colors ${
                   !isCreatingNew
-                    ? 'bg-blue-600 text-white'
+                    ? `${getPrimaryButtonBg(themeColor)} text-white`
                     : 'bg-white dark:bg-gray-700 text-gray-700 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-600'
                 }`}
               >
@@ -245,7 +253,7 @@ export const BudgetAdjustmentScheduler: React.FC<BudgetAdjustmentSchedulerProps>
                 onClick={() => setIsCreatingNew(true)}
                 className={`flex items-center gap-2 px-4 py-2 rounded-md font-medium transition-colors ${
                   isCreatingNew
-                    ? 'bg-blue-600 text-white'
+                    ? `${getPrimaryButtonBg(themeColor)} text-white`
                     : 'bg-white dark:bg-gray-700 text-gray-700 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-600'
                 }`}
               >
@@ -359,7 +367,7 @@ export const BudgetAdjustmentScheduler: React.FC<BudgetAdjustmentSchedulerProps>
                 scheduleAdjustment.isPending ||
                 updatePersonalBudget.isPending
               }
-              className="w-full px-4 py-2 bg-blue-600 text-white rounded-md hover:bg-blue-700 disabled:bg-gray-400 disabled:cursor-not-allowed transition-colors font-medium"
+              className={`w-full px-4 py-2 ${getPrimaryButtonBg(themeColor)} text-white rounded-md ${getPrimaryButtonHoverBg(themeColor)} disabled:bg-gray-400 disabled:cursor-not-allowed transition-colors font-medium`}
             >
               {scheduleAdjustment.isPending || updatePersonalBudget.isPending 
                 ? (isCreatingNew ? 'Creating...' : 'Scheduling...') 
