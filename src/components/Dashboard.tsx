@@ -174,7 +174,6 @@ const Dashboard: React.FC = () => {
 
   const getTextureStyle = (): React.CSSProperties => {
     // Flat honeycomb hexagon pattern with white lines (only in light mode, flat in dark mode)
-    console.log('getTextureStyle - isDarkMode:', isDarkMode);
     if (isDarkMode) {
       return {}; // No pattern in dark mode
     }
