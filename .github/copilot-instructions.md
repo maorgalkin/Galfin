@@ -18,6 +18,7 @@ For complete project information, refer to:
 - `/docs/COMPLETE_FEATURE_SUMMARY.md` - All features and capabilities
 - `/docs/SUPABASE_BRINGUP.md` - Backend setup guide
 - `/docs/TEST_DOCUMENTATION.md` - Testing guide
+- `/docs/DEPRECATED_FEATURES.md` - Historical context
 
 ## Important Notes
 
