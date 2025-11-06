@@ -152,22 +152,18 @@ const Dashboard: React.FC = () => {
   };
 
   const getTextureStyle = () => {
-    // Hexagon pattern with white outlines
-    const hexagonPattern = `
-      <svg width="100" height="86.6" xmlns="http://www.w3.org/2000/svg">
-        <path d="M 50 0 L 93.3 25 L 93.3 75 L 50 100 L 6.7 75 L 6.7 25 Z" 
-              fill="none" 
-              stroke="rgba(255, 255, 255, 0.15)" 
-              stroke-width="1"/>
-      </svg>
-    `;
-    
-    const encodedPattern = `data:image/svg+xml;base64,${btoa(hexagonPattern)}`;
-
+    // Geometric pattern with white lines using CSS
     return {
-      backgroundImage: `url("${encodedPattern}")`,
-      backgroundSize: '100px 86.6px',
-      backgroundPosition: '0 0, 50px 43.3px',
+      backgroundImage: `
+        linear-gradient(30deg, rgba(255, 255, 255, 0.1) 12%, transparent 12.5%, transparent 87%, rgba(255, 255, 255, 0.1) 87.5%, rgba(255, 255, 255, 0.1)),
+        linear-gradient(150deg, rgba(255, 255, 255, 0.1) 12%, transparent 12.5%, transparent 87%, rgba(255, 255, 255, 0.1) 87.5%, rgba(255, 255, 255, 0.1)),
+        linear-gradient(30deg, rgba(255, 255, 255, 0.1) 12%, transparent 12.5%, transparent 87%, rgba(255, 255, 255, 0.1) 87.5%, rgba(255, 255, 255, 0.1)),
+        linear-gradient(150deg, rgba(255, 255, 255, 0.1) 12%, transparent 12.5%, transparent 87%, rgba(255, 255, 255, 0.1) 87.5%, rgba(255, 255, 255, 0.1)),
+        linear-gradient(60deg, rgba(255, 255, 255, 0.05) 25%, transparent 25.5%, transparent 75%, rgba(255, 255, 255, 0.05) 75%, rgba(255, 255, 255, 0.05)),
+        linear-gradient(60deg, rgba(255, 255, 255, 0.05) 25%, transparent 25.5%, transparent 75%, rgba(255, 255, 255, 0.05) 75%, rgba(255, 255, 255, 0.05))
+      `,
+      backgroundSize: '80px 140px',
+      backgroundPosition: '0 0, 0 0, 40px 70px, 40px 70px, 0 0, 40px 70px',
     };
   };
 

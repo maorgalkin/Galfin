@@ -51,13 +51,11 @@ function AppContent() {
   const { signOut, user } = useAuth();
 
   const textureStyle = {
-    backgroundImage: `url("data:image/svg+xml;base64,${btoa(`
-      <svg width="80" height="80" xmlns="http://www.w3.org/2000/svg">
-        <rect x="10" y="10" width="60" height="60" fill="none" stroke="rgba(255, 255, 255, 0.1)" stroke-width="1"/>
-        <circle cx="40" cy="40" r="25" fill="none" stroke="rgba(255, 255, 255, 0.08)" stroke-width="1"/>
-      </svg>
-    `)}")`,
-    backgroundSize: '80px 80px',
+    backgroundImage: `
+      linear-gradient(90deg, rgba(255, 255, 255, 0.05) 1px, transparent 1px),
+      linear-gradient(rgba(255, 255, 255, 0.05) 1px, transparent 1px)
+    `,
+    backgroundSize: '50px 50px',
   };
 
   return (
