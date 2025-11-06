@@ -6,11 +6,13 @@ import type {
 } from '../types/budget';
 import type { Transaction, BudgetConfiguration } from '../types/index';
 import { budgetTemplate } from '../config/budgetTemplate';
-import { BudgetConfigService } from './budgetConfig';
 
 /**
  * Budget Configuration Service
  * Handles budget template loading, calculations, and analysis
+ * 
+ * NOTE: This service has been migrated to work with PersonalBudget configurations
+ * passed as parameters rather than loading from localStorage.
  */
 export class BudgetService {
   private budgetTemplate: BudgetTemplate;
@@ -24,55 +26,6 @@ export class BudgetService {
    */
   getBudgetTemplate(): BudgetTemplate {
     return this.budgetTemplate;
-  }
-
-  /**
-   * Get current budget configuration (from JSON config or fallback to template)
-   */
-  getCurrentBudgetConfig(): BudgetConfiguration {
-    return BudgetConfigService.loadConfig();
-  }
-
-  /**
-   * Get budget limit for a specific category from current configuration
-   */
-  getCategoryBudget(category: string): number {
-    const config = this.getCurrentBudgetConfig();
-    return config.categories[category]?.monthlyLimit || 0;
-  }
-
-  /**
-   * Get all category budgets from current configuration
-   */
-  getAllCategoryBudgets(): Record<string, number> {
-    const config = this.getCurrentBudgetConfig();
-    const budgets: Record<string, number> = {};
-    
-    for (const [category, categoryConfig] of Object.entries(config.categories)) {
-      if (categoryConfig.isActive) {
-        budgets[category] = categoryConfig.monthlyLimit;
-      }
-    }
-    return budgets;
-  }
-
-  /**
-   * Get warning threshold for a specific category
-   */
-  getCategoryWarningThreshold(category: string): number {
-    const config = this.getCurrentBudgetConfig();
-    return config.categories[category]?.warningThreshold || 80;
-  }
-
-  /**
-   * Calculate budget variance for a category in a specific month
-   */
-  calculateBudgetVariance(
-    category: string, 
-    actualSpent: number
-  ): BudgetComparison {
-    const config = this.getCurrentBudgetConfig();
-    return this.calculateBudgetVarianceWithConfig(category, actualSpent, config);
   }
 
   /**
@@ -109,19 +62,6 @@ export class BudgetService {
       status,
       trend: 'stable' // Would need historical data to calculate actual trend
     };
-  }
-
-  /**
-   * Analyze budget performance for a specific month
-   */
-  analyzeBudgetPerformance(
-    transactions: Transaction[], 
-    month: string, 
-    year: number
-  ): BudgetAnalysis {
-    // Get current budget configuration
-    const config = this.getCurrentBudgetConfig();
-    return this.analyzeBudgetPerformanceWithConfig(transactions, month, year, config);
   }
 
   /**
@@ -183,7 +123,7 @@ export class BudgetService {
     const incomeExpenseRatio = totalSpent > 0 ? monthIncome / totalSpent : 0;
 
     // Generate alerts
-    const alerts = this.generateBudgetAlerts(categoryComparisons, month, year);
+    const alerts = this.generateBudgetAlertsWithConfig(categoryComparisons, month, year, config);
 
     return {
       month,
@@ -256,58 +196,8 @@ export class BudgetService {
   }
 
   /**
-   * Get family member budget information
-   * Note: Family member budgets are not yet implemented in the JSON configuration
-   */
-  getFamilyMemberBudget(_memberName: string): { allowance: number; categories: string[] } | null {
-    // Family member budgets feature not yet implemented in JSON configuration
-    return null;
-  }
-
-  /**
-   * Get income targets
-   * Note: Income targets are not yet implemented in the JSON configuration
-   */
-  getIncomeTargets(): Record<string, number> {
-    // Income targets feature not yet implemented in JSON configuration
-    return {};
-  }
-
-  /**
-   * Validate budget configuration
-   */
-  validateBudgetConfig(): { isValid: boolean; errors: string[] } {
-    const config = BudgetConfigService.loadConfig();
-    const errors: string[] = [];
-
-    // Check warning thresholds
-    for (const [category, categoryConfig] of Object.entries(config.categories)) {
-      if (categoryConfig.warningThreshold < 0 || categoryConfig.warningThreshold > 100) {
-        errors.push(`Invalid warning threshold for ${category}: ${categoryConfig.warningThreshold}% (must be 0-100)`);
-      }
-      
-      if (categoryConfig.monthlyLimit <= 0) {
-        errors.push(`Invalid monthly limit for ${category}: ${categoryConfig.monthlyLimit} (must be greater than 0)`);
-      }
-    }
-
-    return {
-      isValid: errors.length === 0,
-      errors
-    };
-  }
-
-  /**
-   * Update budget configuration
-   */
-  updateBudgetConfig(updates: Partial<BudgetConfiguration>): void {
-    const config = BudgetConfigService.loadConfig();
-    const updatedConfig = { ...config, ...updates };
-    BudgetConfigService.saveConfig(updatedConfig);
-  }
-
-  /**
    * Get budget status summary for dashboard
+   * Note: This is a deprecated method. Consider using analyzeBudgetPerformanceWithConfig instead.
    */
   getBudgetStatusSummary(transactions: Transaction[]): {
     totalBudgeted: number;
@@ -315,17 +205,13 @@ export class BudgetService {
     categoriesOverBudget: number;
     alertsCount: number;
   } {
-    const currentDate = new Date();
-    const currentMonth = currentDate.toLocaleDateString('en-US', { month: 'long' });
-    const currentYear = currentDate.getFullYear();
-
-    const analysis = this.analyzeBudgetPerformance(transactions, currentMonth, currentYear);
-
+    // Return empty summary since we don't have budget config here
+    // Components should use PersonalBudget instead
     return {
-      totalBudgeted: analysis.totalBudgeted,
-      totalSpent: analysis.totalSpent,
-      categoriesOverBudget: analysis.categoryComparisons.filter(c => c.status === 'over').length,
-      alertsCount: analysis.alerts.length
+      totalBudgeted: 0,
+      totalSpent: 0,
+      categoriesOverBudget: 0,
+      alertsCount: 0
     };
   }
 }
