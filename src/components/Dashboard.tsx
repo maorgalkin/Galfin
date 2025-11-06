@@ -169,8 +169,12 @@ const Dashboard: React.FC = () => {
   };
 
   const getTextureStyle = (): React.CSSProperties => {
-    // Flat honeycomb hexagon pattern with white lines (1px in dark mode, 2px in light mode)
-    const lineWidth = isDarkMode ? 1 : 2;
+    // Flat honeycomb hexagon pattern with white lines (only in light mode, flat in dark mode)
+    if (isDarkMode) {
+      return {}; // No pattern in dark mode
+    }
+    
+    const lineWidth = 2;
     const lineStart = 50;
     const lineEnd = lineStart + lineWidth;
     
