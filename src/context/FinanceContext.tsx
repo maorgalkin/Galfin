@@ -33,9 +33,6 @@ export const FinanceProvider: React.FC<{ children: React.ReactNode }> = ({ child
   const { user } = useAuth();
   const [transactions, setTransactions] = useState<Transaction[]>([]);
   const [budgets, setBudgets] = useState<Budget[]>([]);
-  const [budgetConfig, setBudgetConfigState] = useState<BudgetConfiguration>(() => 
-    BudgetConfigService.loadConfig()
-  );
   const [familyMembers, setFamilyMembers] = useState<FamilyMember[]>([]);
   const [isLoading, setIsLoading] = useState(false);
 
@@ -45,7 +42,6 @@ export const FinanceProvider: React.FC<{ children: React.ReactNode }> = ({ child
       // User logged out, clear data
       setTransactions([]);
       setFamilyMembers([]);
-      setBudgetConfigState(BudgetConfigService.loadConfig());
       return;
     }
 
@@ -53,10 +49,9 @@ export const FinanceProvider: React.FC<{ children: React.ReactNode }> = ({ child
       setIsLoading(true);
       try {
         // Load all data from Supabase
-        const [txns, members, config] = await Promise.all([
+        const [txns, members] = await Promise.all([
           SupabaseService.getTransactions(),
           SupabaseService.getFamilyMembers(),
-          SupabaseService.getBudgetConfig(),
         ]);
 
         setTransactions(txns);
@@ -64,15 +59,6 @@ export const FinanceProvider: React.FC<{ children: React.ReactNode }> = ({ child
         // Load family members from database
         setFamilyMembers(members);
         // Note: If empty, users can add their own via the app
-
-        // If no config in Supabase, save the default one
-        if (config) {
-          setBudgetConfigState(config);
-        } else {
-          const defaultConfig = BudgetConfigService.loadConfig();
-          setBudgetConfigState(defaultConfig);
-          await SupabaseService.saveBudgetConfig(defaultConfig);
-        }
       } catch (error) {
         console.error('Error loading data from Supabase:', error);
         // Fallback to localStorage in case of error
@@ -92,19 +78,6 @@ export const FinanceProvider: React.FC<{ children: React.ReactNode }> = ({ child
 
     loadData();
   }, [user]);
-
-  const setBudgetConfig = async (config: BudgetConfiguration) => {
-    try {
-      if (user) {
-        await SupabaseService.saveBudgetConfig(config);
-      }
-      setBudgetConfigState(config);
-      BudgetConfigService.saveConfig(config);
-    } catch (error) {
-      console.error('Error saving budget config:', error);
-      throw error;
-    }
-  };
 
   const addTransaction = async (transaction: Omit<Transaction, 'id'>) => {
     try {
@@ -226,14 +199,12 @@ export const FinanceProvider: React.FC<{ children: React.ReactNode }> = ({ child
       transactions,
       budgets,
       familyMembers,
-      budgetConfig,
       isLoading,
       addTransaction,
       updateTransaction,
       deleteTransaction,
       updateBudget,
       addFamilyMember,
-      setBudgetConfig,
       getTotalIncome,
       getTotalExpenses,
       getBalance,
