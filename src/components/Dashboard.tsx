@@ -152,18 +152,14 @@ const Dashboard: React.FC = () => {
   };
 
   const getTextureStyle = () => {
-    // Geometric pattern with white lines using CSS
+    // Flat honeycomb hexagon pattern with white lines
     return {
       backgroundImage: `
-        linear-gradient(30deg, rgba(255, 255, 255, 0.1) 12%, transparent 12.5%, transparent 87%, rgba(255, 255, 255, 0.1) 87.5%, rgba(255, 255, 255, 0.1)),
-        linear-gradient(150deg, rgba(255, 255, 255, 0.1) 12%, transparent 12.5%, transparent 87%, rgba(255, 255, 255, 0.1) 87.5%, rgba(255, 255, 255, 0.1)),
-        linear-gradient(30deg, rgba(255, 255, 255, 0.1) 12%, transparent 12.5%, transparent 87%, rgba(255, 255, 255, 0.1) 87.5%, rgba(255, 255, 255, 0.1)),
-        linear-gradient(150deg, rgba(255, 255, 255, 0.1) 12%, transparent 12.5%, transparent 87%, rgba(255, 255, 255, 0.1) 87.5%, rgba(255, 255, 255, 0.1)),
-        linear-gradient(60deg, rgba(255, 255, 255, 0.05) 25%, transparent 25.5%, transparent 75%, rgba(255, 255, 255, 0.05) 75%, rgba(255, 255, 255, 0.05)),
-        linear-gradient(60deg, rgba(255, 255, 255, 0.05) 25%, transparent 25.5%, transparent 75%, rgba(255, 255, 255, 0.05) 75%, rgba(255, 255, 255, 0.05))
+        repeating-linear-gradient(0deg, transparent, transparent 50px, rgba(255, 255, 255, 0.2) 50px, rgba(255, 255, 255, 0.2) 51px),
+        repeating-linear-gradient(60deg, transparent, transparent 50px, rgba(255, 255, 255, 0.2) 50px, rgba(255, 255, 255, 0.2) 51px),
+        repeating-linear-gradient(120deg, transparent, transparent 50px, rgba(255, 255, 255, 0.2) 50px, rgba(255, 255, 255, 0.2) 51px)
       `,
-      backgroundSize: '80px 140px',
-      backgroundPosition: '0 0, 0 0, 40px 70px, 40px 70px, 0 0, 40px 70px',
+      backgroundSize: '100% 100%',
     };
   };
 
