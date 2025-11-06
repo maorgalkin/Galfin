@@ -136,7 +136,7 @@ export const BudgetManagement: React.FC = () => {
               // Display mode - show configured budget
               <div>
                 {/* Tips Block - at the top */}
-                <div className="text-sm text-gray-500 dark:text-gray-400 mb-6 p-4 bg-blue-50 dark:bg-blue-900/20 rounded-lg">
+                <div className={`text-sm text-gray-500 dark:text-gray-400 mb-6 p-4 ${getInactiveBg(themeColor)} rounded-lg`}>
                   <p className="font-medium mb-2">💡 Your Budget:</p>
                   <ul className="list-disc list-inside space-y-1">
                     <li>This is your configured budget used for all monthly budgets</li>

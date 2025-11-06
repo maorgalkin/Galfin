@@ -2,6 +2,12 @@ import React from 'react';
 import { useActiveBudget } from '../hooks/useBudgets';
 import { Edit2, Loader2, DollarSign } from 'lucide-react';
 import type { CategoryConfig } from '../types/budget';
+import {
+  getPrimaryButtonBg,
+  getPrimaryButtonHoverBg,
+  getInactiveBg,
+  getIconColor,
+} from '../utils/themeColors';
 
 interface PersonalBudgetDisplayProps {
   className?: string;
@@ -13,6 +19,7 @@ export const PersonalBudgetDisplay: React.FC<PersonalBudgetDisplayProps> = ({
   onEdit,
 }) => {
   const { data: activeBudget, isLoading } = useActiveBudget();
+  const themeColor = 'green';
 
   const formatCurrency = (amount: number): string => {
     return new Intl.NumberFormat('en-US', {
@@ -25,7 +32,7 @@ export const PersonalBudgetDisplay: React.FC<PersonalBudgetDisplayProps> = ({
     return (
       <div className={`bg-white dark:bg-gray-800 rounded-lg shadow-md p-6 ${className}`}>
         <div className="flex items-center justify-center py-12">
-          <Loader2 className="h-8 w-8 animate-spin text-blue-500" />
+          <Loader2 className="h-8 w-8 animate-spin text-gray-400" />
           <span className="ml-3 text-gray-600 dark:text-gray-300">Loading budget...</span>
         </div>
       </div>
@@ -60,7 +67,7 @@ export const PersonalBudgetDisplay: React.FC<PersonalBudgetDisplayProps> = ({
           {onEdit && (
             <button
               onClick={onEdit}
-              className="flex items-center px-4 py-2 bg-blue-600 text-white rounded-md hover:bg-blue-700 transition-colors text-sm font-medium"
+              className={`flex items-center px-4 py-2 ${getPrimaryButtonBg(themeColor)} text-white rounded-md ${getPrimaryButtonHoverBg(themeColor)} transition-colors text-sm font-medium`}
             >
               <Edit2 className="h-4 w-4 mr-2" />
               Edit Budget
@@ -70,15 +77,15 @@ export const PersonalBudgetDisplay: React.FC<PersonalBudgetDisplayProps> = ({
       </div>
 
       {/* Budget Summary */}
-      <div className="px-6 py-4 border-b border-gray-200 dark:border-gray-700 bg-blue-50 dark:bg-blue-900/20">
+      <div className={`px-6 py-4 border-b border-gray-200 dark:border-gray-700 ${getInactiveBg(themeColor)}`}>
         <div className="flex items-center justify-between">
           <div className="flex items-center">
-            <DollarSign className="h-5 w-5 text-blue-600 dark:text-blue-400 mr-2" />
+            <DollarSign className={`h-5 w-5 ${getIconColor(themeColor)} mr-2`} />
             <span className="text-sm font-medium text-gray-700 dark:text-gray-300">
               Total Monthly Budget
             </span>
           </div>
-          <span className="text-2xl font-bold text-blue-600 dark:text-blue-400">
+          <span className={`text-2xl font-bold ${getIconColor(themeColor)}`}>
             {formatCurrency(totalBudget)}
           </span>
         </div>
