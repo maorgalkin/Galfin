@@ -43,19 +43,30 @@ const Dashboard: React.FC = () => {
   const [isCategoryModalOpen, setIsCategoryModalOpen] = useState(false);
   const [isCustomDateRangeModalOpen, setIsCustomDateRangeModalOpen] = useState(false);
 
-  // Sync activeTab state with URL query parameter
+  // Listen to URL changes and update activeTab accordingly
   useEffect(() => {
-    const currentTab = searchParams.get('tab');
-    if (currentTab !== activeTab) {
-      if (activeTab === 'dashboard') {
-        // Remove tab param for dashboard (clean URL)
-        searchParams.delete('tab');
-        setSearchParams(searchParams, { replace: true });
-      } else {
-        // Set tab param for transactions/budget
-        searchParams.set('tab', activeTab);
-        setSearchParams(searchParams, { replace: true });
-      }
+    const urlTab = searchParams.get('tab');
+    const targetTab = (urlTab === 'budget' || urlTab === 'transactions') ? urlTab : 'dashboard';
+    
+    if (targetTab !== activeTab) {
+      setActiveTab(targetTab);
+    }
+  }, [searchParams]);
+
+  // Sync URL with activeTab changes (when user clicks tabs)
+  useEffect(() => {
+    const currentUrlTab = searchParams.get('tab');
+    
+    if (activeTab === 'dashboard' && currentUrlTab !== null) {
+      // Remove tab param for dashboard (clean URL)
+      const newParams = new URLSearchParams(searchParams);
+      newParams.delete('tab');
+      setSearchParams(newParams, { replace: true });
+    } else if (activeTab !== 'dashboard' && currentUrlTab !== activeTab) {
+      // Set tab param for transactions/budget
+      const newParams = new URLSearchParams(searchParams);
+      newParams.set('tab', activeTab);
+      setSearchParams(newParams, { replace: true });
     }
   }, [activeTab]);
 
