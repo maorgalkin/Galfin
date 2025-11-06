@@ -30,24 +30,34 @@ const Dashboard: React.FC = () => {
   const [activeMonthTab, setActiveMonthTab] = useState(0);
   const [direction, setDirection] = useState(0); // Track animation direction: -1 (left), 1 (right)
   const [transactionTypeFilter, setTransactionTypeFilter] = useState<'all' | 'income' | 'expense'>('all');
-  const [activeTab, setActiveTab] = useState<'dashboard' | 'transactions' | 'budget'>('dashboard');
+  // Initialize activeTab from URL query parameter
+  const tabParam = searchParams.get('tab');
+  const initialTab = (tabParam === 'budget' || tabParam === 'transactions' || tabParam === 'dashboard') 
+    ? tabParam 
+    : 'dashboard';
+  const [activeTab, setActiveTab] = useState<'dashboard' | 'transactions' | 'budget'>(initialTab);
+  
   const [editingTransaction, setEditingTransaction] = useState<Transaction | null>(null);
   const [isFamilyMembersModalOpen, setIsFamilyMembersModalOpen] = useState(false);
   const [selectedDesktopCategory, setSelectedDesktopCategory] = useState<string | null>(null);
   const [isCategoryModalOpen, setIsCategoryModalOpen] = useState(false);
   const [isCustomDateRangeModalOpen, setIsCustomDateRangeModalOpen] = useState(false);
 
-  // Handle tab query parameter
+  // Sync activeTab state with URL query parameter
   useEffect(() => {
-    const tabParam = searchParams.get('tab');
-    if (tabParam === 'budget' || tabParam === 'transactions' || tabParam === 'dashboard') {
-      setActiveTab(tabParam);
-      // Clear the query param after setting the tab
-      const newSearchParams = new URLSearchParams(searchParams);
-      newSearchParams.delete('tab');
-      setSearchParams(newSearchParams, { replace: true });
+    const currentTab = searchParams.get('tab');
+    if (currentTab !== activeTab) {
+      if (activeTab === 'dashboard') {
+        // Remove tab param for dashboard (clean URL)
+        searchParams.delete('tab');
+        setSearchParams(searchParams, { replace: true });
+      } else {
+        // Set tab param for transactions/budget
+        searchParams.set('tab', activeTab);
+        setSearchParams(searchParams, { replace: true });
+      }
     }
-  }, [searchParams.get('tab')]); // Only watch the tab parameter value
+  }, [activeTab]);
 
   // Use custom hook for data management
   const {
