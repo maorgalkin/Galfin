@@ -3,7 +3,8 @@ import { render, screen } from '@testing-library/react';
 import type { RenderOptions } from '@testing-library/react';
 import { FinanceProvider } from '../context/FinanceContext';
 import type { Transaction, FamilyMember } from '../types';
-import { dummyTransactions } from './dummyTransactions';
+
+// Note: dummyTransactions file was removed. Using mock data generator instead.
 
 // Test data generators
 export const createMockTransaction = (overrides: Partial<Transaction> = {}): Transaction => ({
@@ -45,15 +46,27 @@ export const renderWithProvider = (
   return render(ui, { wrapper: Wrapper, ...renderOptions });
 };
 
-// Test data sets - use actual dummy data from JSON
-export const sampleTransactions: Transaction[] = dummyTransactions.slice(0, 10); // First 10 transactions
+// Test data sets - using mock data generators
+export const sampleTransactions: Transaction[] = Array.from({ length: 10 }, (_, i) => 
+  createMockTransaction({
+    id: `sample-${i}`,
+    description: `Sample Transaction ${i + 1}`,
+    amount: (i + 1) * 50,
+    date: `2025-08-${(i % 28) + 1}`,
+    category: ['Groceries', 'Entertainment', 'Transport'][i % 3],
+  })
+);
 
-// Get transactions by month helper
+// Get transactions by month helper (returns empty for now - can be populated with mock data)
 export const getTransactionsByMonth = (month: number, year: number): Transaction[] => {
-  return dummyTransactions.filter(transaction => {
-    const transactionDate = new Date(transaction.date);
-    return transactionDate.getMonth() === month - 1 && transactionDate.getFullYear() === year;
-  });
+  // Generate mock transactions for the requested month
+  return Array.from({ length: 5 }, (_, i) => 
+    createMockTransaction({
+      id: `month-${month}-${i}`,
+      description: `Transaction for ${month}/${year}`,
+      date: `${year}-${month.toString().padStart(2, '0')}-${((i * 5) % 28 + 1).toString().padStart(2, '0')}`,
+    })
+  );
 };
 
 // Pre-defined month data
