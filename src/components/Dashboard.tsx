@@ -29,7 +29,13 @@ const Dashboard: React.FC = () => {
   const [activeMonthTab, setActiveMonthTab] = useState(0);
   const [direction, setDirection] = useState(0); // Track animation direction: -1 (left), 1 (right)
   const [transactionTypeFilter, setTransactionTypeFilter] = useState<'all' | 'income' | 'expense'>('all');
-  const [isDarkMode, setIsDarkMode] = useState(false);
+  const [isDarkMode, setIsDarkMode] = useState(() => {
+    // Initialize with actual dark mode state
+    if (typeof document !== 'undefined') {
+      return document.documentElement.classList.contains('dark');
+    }
+    return false;
+  });
   
   // Initialize activeTab from URL query parameter
   const tabParam = searchParams.get('tab');
