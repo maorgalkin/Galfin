@@ -2,7 +2,9 @@ import { describe, it, expect, beforeEach, afterEach, vi } from 'vitest';
 import { BudgetConfigService, defaultBudgetConfig } from '../../src/services/budgetConfig';
 import type { BudgetConfiguration } from '../../src/types/index';
 
-describe('BudgetConfigService', () => {
+// NOTE: BudgetConfigService is DEPRECATED - migrated to Supabase PersonalBudget system
+// These tests are skipped but kept for reference during migration cleanup
+describe.skip('BudgetConfigService (DEPRECATED)', () => {
   const STORAGE_KEY = 'galfin-budget-config';
   
   beforeEach(() => {
