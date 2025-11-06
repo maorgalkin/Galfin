@@ -148,12 +148,17 @@ const Dashboard: React.FC = () => {
   };
 
   const getTextureStyle = (): React.CSSProperties => {
-    // Flat honeycomb hexagon pattern with white lines
+    // Flat honeycomb hexagon pattern with white lines (1px in dark mode, 2px in light mode)
+    const isDark = document.documentElement.classList.contains('dark');
+    const lineWidth = isDark ? 1 : 2;
+    const lineStart = 50;
+    const lineEnd = lineStart + lineWidth;
+    
     return {
       backgroundImage: [
-        'repeating-linear-gradient(0deg, transparent 0px, transparent 50px, rgba(255, 255, 255, 0.2) 50px, rgba(255, 255, 255, 0.2) 52px)',
-        'repeating-linear-gradient(60deg, transparent 0px, transparent 50px, rgba(255, 255, 255, 0.2) 50px, rgba(255, 255, 255, 0.2) 52px)',
-        'repeating-linear-gradient(120deg, transparent 0px, transparent 50px, rgba(255, 255, 255, 0.2) 50px, rgba(255, 255, 255, 0.2) 52px)'
+        `repeating-linear-gradient(0deg, transparent 0px, transparent ${lineStart}px, rgba(255, 255, 255, 0.2) ${lineStart}px, rgba(255, 255, 255, 0.2) ${lineEnd}px)`,
+        `repeating-linear-gradient(60deg, transparent 0px, transparent ${lineStart}px, rgba(255, 255, 255, 0.2) ${lineStart}px, rgba(255, 255, 255, 0.2) ${lineEnd}px)`,
+        `repeating-linear-gradient(120deg, transparent 0px, transparent ${lineStart}px, rgba(255, 255, 255, 0.2) ${lineStart}px, rgba(255, 255, 255, 0.2) ${lineEnd}px)`
       ].join(', '),
       backgroundSize: '100% 100%',
     };

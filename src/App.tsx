@@ -50,19 +50,8 @@ function AppContent() {
   const [isFamilyMembersOpen, setIsFamilyMembersOpen] = useState(false);
   const { signOut, user } = useAuth();
 
-  const textureStyle = {
-    backgroundImage: `
-      linear-gradient(90deg, rgba(255, 255, 255, 0.08) 1px, transparent 1px),
-      linear-gradient(rgba(255, 255, 255, 0.08) 1px, transparent 1px)
-    `,
-    backgroundSize: '50px 50px',
-  };
-
   return (
-    <div 
-      className="min-h-screen dark:bg-gray-900 transition-colors duration-500"
-      style={textureStyle}
-    >
+    <div className="min-h-screen dark:bg-gray-900 transition-colors duration-500">
       <nav className="relative overflow-hidden shadow-md border-b border-gray-200/20">
         {/* Diagonal color sections - clean cuts between colors */}
         <div className="absolute inset-0">
