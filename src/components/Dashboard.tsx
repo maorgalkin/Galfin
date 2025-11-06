@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { useNavigate, useSearchParams } from 'react-router-dom';
+import { useSearchParams } from 'react-router-dom';
 import { useFinance } from '../context/FinanceContext';
 import { useAuth } from '../contexts/AuthContext';
 import { useActiveBudget } from '../hooks/useBudgets';
@@ -8,7 +8,6 @@ import { BudgetPerformanceCard } from './BudgetPerformanceCard';
 import EditTransactionModal from './EditTransactionModal';
 import FamilyMembersModal from './FamilyMembersModal';
 import { BudgetManagement } from '../pages/BudgetManagement';
-import { budgetService } from '../services/budgetService';
 import { getUserFirstName } from '../utils/userHelpers';
 import { generateDummyTransactions, countDummyTransactions, isDummyTransaction } from '../utils/dummyData';
 import { useDashboardData } from '../hooks/useDashboardData';
@@ -26,7 +25,6 @@ const Dashboard: React.FC = () => {
   const { transactions, familyMembers, addTransaction, deleteTransaction } = useFinance();
   const { data: personalBudget } = useActiveBudget();
   const { user } = useAuth();
-  const navigate = useNavigate();
   const [searchParams, setSearchParams] = useSearchParams();
   const [activeMonthTab, setActiveMonthTab] = useState(0);
   const [direction, setDirection] = useState(0); // Track animation direction: -1 (left), 1 (right)
@@ -92,9 +90,6 @@ const Dashboard: React.FC = () => {
       currency: 'ILS',
     }).format(amount);
   };
-
-  // Get budget status for summary
-  const budgetStatus = budgetService.getBudgetStatusSummary(transactions);
 
   // Dummy data handlers
   const handleAddDummyData = async () => {
@@ -175,7 +170,7 @@ const Dashboard: React.FC = () => {
       <DashboardTabNavigation
         activeTab={activeTab}
         onTabChange={setActiveTab}
-        alertsCount={budgetStatus.alertsCount}
+        alertsCount={0}
       />
 
       {activeTab === 'dashboard' && (

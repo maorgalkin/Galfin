@@ -194,26 +194,6 @@ export class BudgetService {
 
     return alerts;
   }
-
-  /**
-   * Get budget status summary for dashboard
-   * Note: This is a deprecated method. Consider using analyzeBudgetPerformanceWithConfig instead.
-   */
-  getBudgetStatusSummary(transactions: Transaction[]): {
-    totalBudgeted: number;
-    totalSpent: number;
-    categoriesOverBudget: number;
-    alertsCount: number;
-  } {
-    // Return empty summary since we don't have budget config here
-    // Components should use PersonalBudget instead
-    return {
-      totalBudgeted: 0,
-      totalSpent: 0,
-      categoriesOverBudget: 0,
-      alertsCount: 0
-    };
-  }
 }
 
 // Export singleton instance
