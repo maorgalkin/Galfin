@@ -2,7 +2,7 @@ import React from 'react';
 import { createPortal } from 'react-dom';
 import { getCategoryColor } from '../utils/categoryColors';
 import { getCategoryIcon } from '../utils/categoryIcons';
-import { useFinance } from '../context/FinanceContext';
+import { useActiveBudget } from '../hooks/useBudgets';
 
 interface CategorySelectorProps {
   isOpen: boolean;
@@ -19,7 +19,7 @@ const CategorySelector: React.FC<CategorySelectorProps> = ({
   categories,
   type
 }) => {
-  const { budgetConfig } = useFinance();
+  const { data: personalBudget } = useActiveBudget();
   
   if (!isOpen) return null;
 

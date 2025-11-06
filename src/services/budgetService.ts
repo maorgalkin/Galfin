@@ -139,15 +139,15 @@ export class BudgetService {
   }
 
   /**
-   * Generate budget alerts based on current spending
+   * Generate budget alerts based on current spending with provided config
    */
-  generateBudgetAlerts(
+  generateBudgetAlertsWithConfig(
     comparisons: BudgetComparison[], 
     month: string, 
-    year: number
+    year: number,
+    config: BudgetConfiguration
   ): BudgetAlert[] {
     const alerts: BudgetAlert[] = [];
-    const config = this.getCurrentBudgetConfig();
 
     if (!config.globalSettings.warningNotifications) {
       return alerts;

@@ -3,7 +3,6 @@ import { useNavigate, useSearchParams } from 'react-router-dom';
 import { useFinance } from '../context/FinanceContext';
 import { useAuth } from '../contexts/AuthContext';
 import { useActiveBudget } from '../hooks/useBudgets';
-import { Clock } from 'lucide-react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { BudgetPerformanceCard } from './BudgetPerformanceCard';
 import EditTransactionModal from './EditTransactionModal';
