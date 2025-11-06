@@ -137,8 +137,22 @@ const Dashboard: React.FC = () => {
     }
   };
 
+  // Dynamic background based on active tab
+  const getBackgroundClass = () => {
+    switch (activeTab) {
+      case 'dashboard':
+        return 'bg-gradient-to-br from-purple-50 via-purple-50/50 to-white dark:from-purple-950/20 dark:via-purple-900/10 dark:to-gray-900';
+      case 'transactions':
+        return 'bg-gradient-to-br from-blue-50 via-blue-50/50 to-white dark:from-blue-950/20 dark:via-blue-900/10 dark:to-gray-900';
+      case 'budget':
+        return 'bg-gradient-to-br from-green-50 via-green-50/50 to-white dark:from-green-950/20 dark:via-green-900/10 dark:to-gray-900';
+      default:
+        return 'bg-white dark:bg-gray-900';
+    }
+  };
+
   return (
-    <div className="px-3 sm:px-4 lg:px-6 py-8 max-w-7xl mx-auto">
+    <div className={`px-3 sm:px-4 lg:px-6 py-8 max-w-7xl mx-auto transition-colors duration-500 ${getBackgroundClass()}`}>
       
       {/* Tab Navigation */}
       <DashboardTabNavigation
