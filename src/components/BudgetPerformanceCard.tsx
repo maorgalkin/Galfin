@@ -20,11 +20,13 @@ import type { BudgetConfiguration } from '../types';
 interface BudgetPerformanceCardProps {
   selectedMonth?: Date;
   isCompact?: boolean;
+  themeColor?: 'purple' | 'blue' | 'green';
 }
 
 export const BudgetPerformanceCard: React.FC<BudgetPerformanceCardProps> = ({ 
   selectedMonth, 
-  isCompact = false 
+  isCompact = false,
+  themeColor = 'purple'
 }) => {
   const navigate = useNavigate();
   const { transactions, budgetConfig: oldBudgetConfig } = useFinance();
@@ -32,6 +34,46 @@ export const BudgetPerformanceCard: React.FC<BudgetPerformanceCardProps> = ({
   const { data: monthlyBudget, isLoading: loadingMonthly } = useCurrentMonthBudget();
   const { data: adjustments } = useNextMonthAdjustments();
   const [showDetails, setShowDetails] = useState(false);
+
+  // Get gradient colors based on theme
+  const getHeaderGradient = () => {
+    switch (themeColor) {
+      case 'purple':
+        return 'bg-gradient-to-r from-purple-500 to-purple-600';
+      case 'blue':
+        return 'bg-gradient-to-r from-blue-500 to-blue-600';
+      case 'green':
+        return 'bg-gradient-to-r from-green-500 to-green-600';
+      default:
+        return 'bg-gradient-to-r from-purple-500 to-purple-600';
+    }
+  };
+
+  const getAccentColor = () => {
+    switch (themeColor) {
+      case 'purple':
+        return 'bg-purple-400/30';
+      case 'blue':
+        return 'bg-blue-400/30';
+      case 'green':
+        return 'bg-green-400/30';
+      default:
+        return 'bg-purple-400/30';
+    }
+  };
+
+  const getTextColor = () => {
+    switch (themeColor) {
+      case 'purple':
+        return 'text-purple-100';
+      case 'blue':
+        return 'text-blue-100';
+      case 'green':
+        return 'text-green-100';
+      default:
+        return 'text-purple-100';
+    }
+  };
 
   // Convert personal budget to BudgetConfiguration format
   const budgetConfig = useMemo((): BudgetConfiguration => {
@@ -108,9 +150,9 @@ export const BudgetPerformanceCard: React.FC<BudgetPerformanceCardProps> = ({
   if (!personalBudget && !monthlyBudget) {
     return (
       <div className="bg-white dark:bg-gray-800 rounded-lg shadow-md overflow-hidden">
-        <div className="px-6 py-4 bg-gradient-to-r from-blue-500 to-blue-600">
+        <div className={`px-6 py-4 ${getHeaderGradient()}`}>
           <h3 className="text-lg font-semibold text-white">Budget Performance</h3>
-          <p className="text-sm text-blue-100 mt-1">
+          <p className={`text-sm ${getTextColor()} mt-1`}>
             {monthName} {year}
           </p>
         </div>
@@ -143,16 +185,16 @@ export const BudgetPerformanceCard: React.FC<BudgetPerformanceCardProps> = ({
   return (
     <div className="bg-white dark:bg-gray-800 rounded-lg shadow-md overflow-hidden">
       {/* Header */}
-      <div className="px-6 py-4 bg-gradient-to-r from-blue-500 to-blue-600">
+      <div className={`px-6 py-4 ${getHeaderGradient()}`}>
         <div className="flex items-center justify-between">
           <div>
             <h3 className="text-lg font-semibold text-white">Budget Performance</h3>
-            <p className="text-sm text-blue-100 mt-1">
+            <p className={`text-sm ${getTextColor()} mt-1`}>
               {monthName} {year}
             </p>
           </div>
           {personalBudget && (
-            <span className="text-xs text-blue-100 bg-blue-400/30 px-2 py-1 rounded truncate max-w-[150px]">
+            <span className={`text-xs ${getTextColor()} ${getAccentColor()} px-2 py-1 rounded truncate max-w-[150px]`}>
               {personalBudget.name}
             </span>
           )}

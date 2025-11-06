@@ -155,9 +155,9 @@ const Dashboard: React.FC = () => {
     // Flat honeycomb hexagon pattern with white lines
     return {
       backgroundImage: `
-        repeating-linear-gradient(0deg, transparent, transparent 50px, rgba(255, 255, 255, 0.2) 50px, rgba(255, 255, 255, 0.2) 51px),
-        repeating-linear-gradient(60deg, transparent, transparent 50px, rgba(255, 255, 255, 0.2) 50px, rgba(255, 255, 255, 0.2) 51px),
-        repeating-linear-gradient(120deg, transparent, transparent 50px, rgba(255, 255, 255, 0.2) 50px, rgba(255, 255, 255, 0.2) 51px)
+        repeating-linear-gradient(0deg, transparent, transparent 50px, rgba(255, 255, 255, 0.2) 50px, rgba(255, 255, 255, 0.2) 52px),
+        repeating-linear-gradient(60deg, transparent, transparent 50px, rgba(255, 255, 255, 0.2) 50px, rgba(255, 255, 255, 0.2) 52px),
+        repeating-linear-gradient(120deg, transparent, transparent 50px, rgba(255, 255, 255, 0.2) 50px, rgba(255, 255, 255, 0.2) 52px)
       `,
       backgroundSize: '100% 100%',
     };
@@ -205,12 +205,12 @@ const Dashboard: React.FC = () => {
           <div className="mb-8">
             {/* Desktop version - compact grid layout */}
             <div className="max-md:hidden">
-              <BudgetPerformanceCard selectedMonth={selectedMonthDate} isCompact={true} />
+              <BudgetPerformanceCard selectedMonth={selectedMonthDate} isCompact={true} themeColor="purple" />
             </div>
             
             {/* Mobile/Tablet version - full layout */}
             <div className="md:hidden">
-              <BudgetPerformanceCard selectedMonth={selectedMonthDate} isCompact={false} />
+              <BudgetPerformanceCard selectedMonth={selectedMonthDate} isCompact={false} themeColor="purple" />
             </div>
           </div>
 
