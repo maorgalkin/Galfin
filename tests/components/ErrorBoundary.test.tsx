@@ -133,7 +133,7 @@ describe('ErrorBoundary', () => {
       );
 
       expect(screen.queryByText(/auto-reloading/i)).not.toBeInTheDocument();
-      expect(screen.getByText(/try again/i)).toBeInTheDocument();
+      expect(screen.getByText(/reload page now/i)).toBeInTheDocument();
     });
 
     it('does not auto-reload when autoReloadOnCriticalError is false', () => {
@@ -144,7 +144,7 @@ describe('ErrorBoundary', () => {
       );
 
       expect(screen.queryByText(/auto-reloading/i)).not.toBeInTheDocument();
-      expect(screen.getByText(/try again/i)).toBeInTheDocument();
+      expect(screen.getByText(/reload page now/i)).toBeInTheDocument();
     });
   });
 

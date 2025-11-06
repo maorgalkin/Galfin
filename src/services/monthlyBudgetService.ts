@@ -120,6 +120,11 @@ export class MonthlyBudgetService {
         throw error;
       }
 
+      // If no data returned, budget doesn't exist
+      if (!data) {
+        return null;
+      }
+
       // Sync with personal budget (don't add new categories to existing monthly budgets)
       return await this.syncWithPersonalBudget(data, false);
     } catch (error) {
