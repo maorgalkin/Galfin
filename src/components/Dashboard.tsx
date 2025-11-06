@@ -30,9 +30,9 @@ const Dashboard: React.FC = () => {
   const [direction, setDirection] = useState(0); // Track animation direction: -1 (left), 1 (right)
   const [transactionTypeFilter, setTransactionTypeFilter] = useState<'all' | 'income' | 'expense'>('all');
   const [isDarkMode, setIsDarkMode] = useState(() => {
-    // Initialize with actual dark mode state
-    if (typeof document !== 'undefined') {
-      return document.documentElement.classList.contains('dark');
+    // Check OS/browser dark mode preference
+    if (typeof window !== 'undefined') {
+      return window.matchMedia('(prefers-color-scheme: dark)').matches;
     }
     return false;
   });
@@ -50,23 +50,21 @@ const Dashboard: React.FC = () => {
   const [isCategoryModalOpen, setIsCategoryModalOpen] = useState(false);
   const [isCustomDateRangeModalOpen, setIsCustomDateRangeModalOpen] = useState(false);
 
-  // Track dark mode changes
+  // Track dark mode changes based on OS/browser preference
   useEffect(() => {
-    const checkDarkMode = () => {
-      setIsDarkMode(document.documentElement.classList.contains('dark'));
+    const mediaQuery = window.matchMedia('(prefers-color-scheme: dark)');
+    
+    const handleChange = (e: MediaQueryListEvent) => {
+      setIsDarkMode(e.matches);
     };
     
-    // Check initially
-    checkDarkMode();
+    // Set initial value
+    setIsDarkMode(mediaQuery.matches);
     
-    // Watch for changes to the class attribute on html element
-    const observer = new MutationObserver(checkDarkMode);
-    observer.observe(document.documentElement, {
-      attributes: true,
-      attributeFilter: ['class']
-    });
+    // Listen for changes
+    mediaQuery.addEventListener('change', handleChange);
     
-    return () => observer.disconnect();
+    return () => mediaQuery.removeEventListener('change', handleChange);
   }, []);
 
   // Listen to URL changes and update activeTab accordingly
@@ -176,6 +174,7 @@ const Dashboard: React.FC = () => {
 
   const getTextureStyle = (): React.CSSProperties => {
     // Flat honeycomb hexagon pattern with white lines (only in light mode, flat in dark mode)
+    console.log('getTextureStyle - isDarkMode:', isDarkMode);
     if (isDarkMode) {
       return {}; // No pattern in dark mode
     }
