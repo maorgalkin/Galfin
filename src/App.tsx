@@ -60,7 +60,7 @@ function AppContent() {
 
   return (
     <div 
-      className="min-h-screen bg-gray-100 dark:from-gray-950 dark:via-gray-900 dark:to-gray-950 dark:bg-gradient-to-br transition-colors duration-500"
+      className="min-h-screen dark:bg-gray-900 transition-colors duration-500"
       style={textureStyle}
     >
       <nav className="bg-white/80 dark:bg-gray-800/80 backdrop-blur-sm shadow-sm border-b border-gray-200 dark:border-gray-700">

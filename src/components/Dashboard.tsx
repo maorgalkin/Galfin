@@ -169,9 +169,10 @@ const Dashboard: React.FC = () => {
 
   return (
     <div 
-      className={`min-h-screen px-3 sm:px-4 lg:px-6 py-8 max-w-7xl mx-auto transition-all duration-500 ${getBackgroundClass()}`}
+      className={`min-h-screen transition-all duration-500 ${getBackgroundClass()}`}
       style={getTextureStyle()}
     >
+      <div className="px-3 sm:px-4 lg:px-6 py-8 max-w-7xl mx-auto">
       
       {/* Tab Navigation */}
       <DashboardTabNavigation
@@ -461,6 +462,7 @@ const Dashboard: React.FC = () => {
         isOpen={isCustomDateRangeModalOpen}
         onClose={() => setIsCustomDateRangeModalOpen(false)}
       />
+      </div>
     </div>
   );
 };
