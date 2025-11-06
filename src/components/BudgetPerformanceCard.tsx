@@ -369,7 +369,7 @@ export const BudgetPerformanceCard: React.FC<BudgetPerformanceCardProps> = ({
           </button>
           <button
             onClick={() => navigate('/?tab=budget')}
-            className={`flex-1 flex items-center justify-center px-4 py-2 ${getPrimaryButtonBg(themeColor)} text-white rounded-md ${getPrimaryButtonHoverBg(themeColor)} transition-colors text-sm font-medium`}
+            className={`flex-1 flex items-center justify-center px-4 py-2 text-white rounded-md transition-colors text-sm font-medium ${getPrimaryButtonBg(themeColor)} ${getPrimaryButtonHoverBg(themeColor)}`}
           >
             Manage Budget
             <ArrowRight className="h-4 w-4 ml-1" />
