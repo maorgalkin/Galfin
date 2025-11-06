@@ -151,14 +151,14 @@ const Dashboard: React.FC = () => {
     }
   };
 
-  const getTextureStyle = () => {
+  const getTextureStyle = (): React.CSSProperties => {
     // Flat honeycomb hexagon pattern with white lines
     return {
-      backgroundImage: `
-        repeating-linear-gradient(0deg, transparent, transparent 50px, rgba(255, 255, 255, 0.2) 50px, rgba(255, 255, 255, 0.2) 52px),
-        repeating-linear-gradient(60deg, transparent, transparent 50px, rgba(255, 255, 255, 0.2) 50px, rgba(255, 255, 255, 0.2) 52px),
-        repeating-linear-gradient(120deg, transparent, transparent 50px, rgba(255, 255, 255, 0.2) 50px, rgba(255, 255, 255, 0.2) 52px)
-      `,
+      backgroundImage: [
+        'repeating-linear-gradient(0deg, transparent 0px, transparent 50px, rgba(255, 255, 255, 0.2) 50px, rgba(255, 255, 255, 0.2) 52px)',
+        'repeating-linear-gradient(60deg, transparent 0px, transparent 50px, rgba(255, 255, 255, 0.2) 50px, rgba(255, 255, 255, 0.2) 52px)',
+        'repeating-linear-gradient(120deg, transparent 0px, transparent 50px, rgba(255, 255, 255, 0.2) 50px, rgba(255, 255, 255, 0.2) 52px)'
+      ].join(', '),
       backgroundSize: '100% 100%',
     };
   };
