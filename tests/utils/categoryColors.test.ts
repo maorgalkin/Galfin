@@ -4,7 +4,7 @@ import {
   getNextAvailableColor,
   getDistinctColor,
   isColorDistinct,
-} from '../utils/categoryColors';
+} from '../../src/utils/categoryColors';
 
 describe('Category Color System', () => {
   describe('CATEGORY_COLOR_PALETTE', () => {

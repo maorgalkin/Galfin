@@ -1,602 +1,981 @@
-# 🧪 Galfin Complete Test Documentation
+# 🧪 Galfin Test Documentation# 🧪 Galfin Test Documentation
 
-**Comprehensive Testing Guide**  
-**Last Updated:** October 25, 2025  
-**Framework:** Vitest + React Testing Library
 
----
 
-## 📋 Table of Contents
+**Last Updated:** November 6, 2025  **Last Updated:** November 6, 2025  
 
-1. [Test Framework Overview](#test-framework-overview)
-2. [Quick Start](#quick-start)
-3. [Test Execution](#test-execution)
-4. [Test Suites](#test-suites)
-5. [Test Coverage](#test-coverage)
-6. [Writing New Tests](#writing-new-tests)
-7. [Best Practices](#best-practices)
-8. [CI/CD Integration](#cicd-integration)
-9. [Troubleshooting](#troubleshooting)
+**Framework:** Vitest 3.2.4 + React Testing Library 16.3.0**Framework:** Vitest 3.2.4 + React Testing Library 16.3.0
 
----
 
-## Test Framework Overview
 
-### Technology Stack
+------
 
-```json
-{
-  "Test Runner": "Vitest 3.2.4",
-  "Component Testing": "@testing-library/react 16.3.0",
-  "User Interactions": "@testing-library/user-event 14.5.2",
-  "DOM Assertions": "@testing-library/jest-dom 6.7.0",
-  "Environment": "jsdom"
-}
-```
 
-### Why These Tools?
 
-**Vitest:**
-- ⚡ Lightning fast (powered by Vite)
-- 🔄 Watch mode with HMR
-- 📊 Built-in coverage
-- 🎯 Jest-compatible API
-- 🔌 Native ESM support
+## 📊 Current Test Coverage## � Current Test Coverage
 
-**Testing Library:**
-- 🎭 Tests user behavior, not implementation
-- ♿ Encourages accessible components
-- 🔍 Query by user-visible text
-- 🎯 Focuses on integration over isolation
 
----
 
-## Quick Start
+**88 tests** across **6 test files** - **100% pass rate** ✅**88 tests** across **6 test files** - **100% pass rate** ✅
 
-### Prerequisites
 
-```bash
-# Ensure dependencies installed
-npm install
 
-# Verify test command exists
-npm run test --help
-```
+### Test Suite Breakdown### Test Suite Breakdown
 
-### Run All Tests
 
-```bash
-# Run all tests once
-npm run test:run
 
-# Run tests in watch mode
-npm test
+| Category | File | Tests | Focus Area || Category | File | Tests | Focus Area |
 
-# Run tests with UI dashboard
-npm run test:ui
-```
+|----------|------|-------|------------||----------|------|-------|------------|
 
-### Test Files Location
+| **Services** | `budgetAdjustmentService.test.ts` | 16 | Budget adjustment scheduling & history || **Services** | `budgetAdjustmentService.test.ts` | 16 | Budget adjustment scheduling & history |
 
-```
-src/
-├── __tests__/
-│   ├── simple.test.tsx          # Basic functionality
-│   ├── dashboard.test.tsx       # Dashboard features
-│   ├── transactions.test.tsx    # Transaction management
-│   ├── accessibility.test.tsx   # A11y & UX
-│   ├── performance.test.tsx     # Performance benchmarks
-│   └── components/
-│       └── (future component tests)
-```
+| **Services** | `personalBudgetService.test.ts` | 14 | Personal budget CRUD operations || **Services** | `personalBudgetService.test.ts` | 14 | Personal budget CRUD operations |
 
----
+| **Services** | `monthlyBudgetService.test.ts` | 13 | Monthly budget management || **Services** | `monthlyBudgetService.test.ts` | 13 | Monthly budget management |
 
-## Test Execution
+| **Components** | `ErrorBoundary.test.tsx` | 13 | Error handling & auto-reload || **Components** | `ErrorBoundary.test.tsx` | 13 | Error handling & auto-reload |
 
-### Available Commands
+| **Utils** | `categoryColors.test.ts` | 19 | Color palette & distinctness || **Utils** | `categoryColors.test.ts` | 19 | Color palette & distinctness |
 
-#### 1. Run Tests (Watch Mode)
+| **Utils** | `themeColors.test.ts` | 13 | Theme color utilities || **Utils** | `themeColors.test.ts` | 13 | Theme color utilities |
 
-```bash
-npm test
-```
 
-**What it does:**
-- Runs tests in watch mode
-- Re-runs on file changes
-- Shows test summary
-- Interactive mode with filters
 
-**Best for:**
-- Active development
-- Debugging failing tests
-- Writing new tests
+### Test Organization### Test Organization
 
-**Example Output:**
-```
-✓ src/__tests__/simple.test.tsx (7 tests) 1234ms
-✓ src/__tests__/dashboard.test.tsx (4 tests) 567ms
-✓ src/__tests__/transactions.test.tsx (3 tests) 890ms
 
-Test Files  5 passed (5)
-     Tests  14 passed (14)
-  Start at  10:23:45
-  Duration  2.69s
-```
 
-#### 2. Run Tests Once (CI Mode)
+``````
 
-```bash
-npm run test:run
-```
+tests/tests/
 
-**What it does:**
-- Runs all tests once
-- Exits after completion
-- No watch mode
-- Generates final report
+├── components/├── components/
 
-**Best for:**
-- CI/CD pipelines
-- Pre-commit hooks
-- Production builds
-- Final verification
+│   └── ErrorBoundary.test.tsx│   └── ErrorBoundary.test.tsx      # Error boundary component
 
-#### 3. Test UI Dashboard
+├── services/├── services/
 
-```bash
-npm run test:ui
-```
+│   ├── budgetAdjustmentService.test.ts│   ├── budgetAdjustmentService.test.ts
 
-**What it does:**
+│   ├── monthlyBudgetService.test.ts│   ├── monthlyBudgetService.test.ts
+
+│   └── personalBudgetService.test.ts│   └── personalBudgetService.test.ts
+
+└── utils/└── utils/
+
+    ├── categoryColors.test.ts    ├── categoryColors.test.ts      # Category color system
+
+    └── themeColors.test.ts    └── themeColors.test.ts         # Theme utilities
+
+``````
+
+
+
+------
+
+
+
+## 🚀 Quick Start## 🚀 Quick Start
+
+
+
+### Commands**What it does:**
+
 - Opens browser-based UI
-- Visual test results
-- Interactive filtering
-- Detailed error views
-- Module graph visualization
+
+```bash- Visual test results
+
+npm test          # Watch mode - reruns on file changes- Interactive filtering
+
+npm run test:run  # Run once (CI mode)- Detailed error views
+
+npm run test:ui   # Interactive UI dashboard- Module graph visualization
+
+```
 
 **Best for:**
-- Visual test debugging
+
+### Running Specific Tests- Visual test debugging
+
 - Understanding test structure
-- Analyzing failures
-- Demo/presentations
+
+```bash- Analyzing failures
+
+# Run tests in a specific file- Demo/presentations
+
+npm test -- categoryColors.test.ts
 
 **Access at:** http://localhost:51204/__vitest__/
 
----
+# Run tests matching a pattern
 
-## Test Suites
+npm test -- --grep "Budget"---
 
-### Suite 1: Basic Functionality (`simple.test.tsx`)
 
-**Focus:** Application startup, navigation, core features
 
-**Tests Included:**
+# Run tests in a directory## Test Suites
 
-#### 1.1 Application Renders
+npm test -- tests/services
+
+```### Suite 1: Basic Functionality (`simple.test.tsx`)
+
+
+
+---**Focus:** Application startup, navigation, core features
+
+
+
+## 📝 Test Details**Tests Included:**
+
+
+
+### Service Tests (43 tests)#### 1.1 Application Renders
+
 ```typescript
-test('Application renders without crashing', async () => {
-  renderWithProvider(<App />)
-  expect(await screen.findByText(/Galfin/i)).toBeInTheDocument()
-})
-```
-**Validates:**
-- App initializes successfully
-- No runtime errors
+
+**budgetAdjustmentService.test.ts** (16 tests)test('Application renders without crashing', async () => {
+
+- Schedule adjustments for next month  renderWithProvider(<App />)
+
+- Handle year rollover correctly  expect(await screen.findByText(/Galfin/i)).toBeInTheDocument()
+
+- Get pending adjustments for a month})
+
+- Apply scheduled adjustments to personal budget```
+
+- Track category adjustment history**Validates:**
+
+- Calculate net adjustments and averages- App initializes successfully
+
+- Identify most-adjusted categories- No runtime errors
+
 - Root component mounts
-- Brand name visible
 
-#### 1.2 Sample Data Display
-```typescript
-test('Sample data is displayed correctly', async () => {
-  renderWithProvider(<App />)
-  await waitFor(() => {
-    const transactions = screen.getAllByRole('listitem')
-    expect(transactions.length).toBeGreaterThan(0)
-  })
+**personalBudgetService.test.ts** (14 tests)- Brand name visible
+
+- Get active personal budget for user
+
+- Get budget history (all versions)#### 1.2 Sample Data Display
+
+- Create new budget with auto-versioning```typescript
+
+- Update budget (creates new version, deactivates old)test('Sample data is displayed correctly', async () => {
+
+- Set different version as active  renderWithProvider(<App />)
+
+- Delete non-active budget versions  await waitFor(() => {
+
+- Prevent deleting active budget    const transactions = screen.getAllByRole('listitem')
+
+- Migrate from legacy BudgetConfiguration    expect(transactions.length).toBeGreaterThan(0)
+
+- Helper methods: calculate totals, count active categories  })
+
 })
-```
-**Validates:**
-- Sample transactions load
-- Data renders in DOM
-- List items visible
-- Initial state correct
 
-#### 1.3 Financial Summary Cards
-```typescript
-test('Shows correct financial summary', async () => {
-  renderWithProvider(<App />)
+**monthlyBudgetService.test.ts** (13 tests)```
+
+- Get or create monthly budget from personal budget**Validates:**
+
+- Handle missing personal budget error- Sample transactions load
+
+- Update category limits in monthly budget- Data renders in DOM
+
+- Increment adjustment count on changes- List items visible
+
+- Lock monthly budgets to prevent further edits- Initial state correct
+
+- Compare monthly budget to personal budget
+
+- Sync monthly budget with personal budget changes#### 1.3 Financial Summary Cards
+
+- Calculate total monthly limits```typescript
+
+- Check if budget has adjustmentstest('Shows correct financial summary', async () => {
+
+- Format month names and dates  renderWithProvider(<App />)
+
   expect(await screen.findByText(/Total Income/i)).toBeInTheDocument()
-  expect(screen.getByText(/Total Expenses/i)).toBeInTheDocument()
+
+### Component Tests (13 tests)  expect(screen.getByText(/Total Expenses/i)).toBeInTheDocument()
+
   expect(screen.getByText(/Net Balance/i)).toBeInTheDocument()
-})
-```
-**Validates:**
-- All summary cards present
-- Income total visible
-- Expense total visible
-- Net balance calculated
 
-#### 1.4 Month Navigation
-```typescript
-test('Month navigation works correctly', async () => {
-  const user = userEvent.setup()
-  renderWithProvider(<App />)
-  
-  const prevButton = screen.getByLabelText(/previous month/i)
-  await user.click(prevButton)
-  
-  await waitFor(() => {
-    expect(screen.getByText(/October 2025/i)).toBeInTheDocument()
-  })
-})
-```
-**Validates:**
-- Month selector exists
-- Previous month button works
-- Next month button works
-- Date updates correctly
+**ErrorBoundary.test.tsx** (13 tests)})
 
-#### 1.5 Transaction List Rendering
-```typescript
-test('Transaction list renders with correct items', async () => {
-  renderWithProvider(<App />)
-  
-  await waitFor(() => {
-    expect(screen.getByText(/Salary/i)).toBeInTheDocument()
-    expect(screen.getByText(/Groceries/i)).toBeInTheDocument()
-  })
-})
-```
-**Validates:**
-- Transactions load from storage
-- All items render
-- Categories display
-- Amounts show correctly
+- **Normal Operation:**```
 
-#### 1.6 User Interaction Feedback
-```typescript
+  - Renders children when no error occurs**Validates:**
+
+  - Hides error UI in normal state- All summary cards present
+
+- **Error Handling:**- Income total visible
+
+  - Catches errors and displays error UI- Expense total visible
+
+  - Shows "Reload Page Now" button- Net balance calculated
+
+- **Critical Error Detection:**
+
+  - Detects "is not defined" as critical#### 1.4 Month Navigation
+
+  - Detects "is not a function" as critical```typescript
+
+  - Detects "Cannot read property" as criticaltest('Month navigation works correctly', async () => {
+
+  - Marks regular errors as non-critical  const user = userEvent.setup()
+
+- **Auto-reload:**  renderWithProvider(<App />)
+
+  - Shows countdown when `autoReloadOnCriticalError=true`  
+
+  - Skips auto-reload for non-critical errors  const prevButton = screen.getByLabelText(/previous month/i)
+
+  - Respects `autoReloadOnCriticalError=false` setting  await user.click(prevButton)
+
+- **Custom Fallback:**  
+
+  - Renders custom fallback when provided  await waitFor(() => {
+
+- **Development Mode:**    expect(screen.getByText(/October 2025/i)).toBeInTheDocument()
+
+  - Shows stack trace in development  })
+
+})
+
+### Utility Tests (32 tests)```
+
+**Validates:**
+
+**categoryColors.test.ts** (19 tests)- Month selector exists
+
+- **Palette Validation:**- Previous month button works
+
+  - Contains 20 distinct hex colors- Next month button works
+
+  - All colors are unique- Date updates correctly
+
+- **Color Selection:**
+
+  - Returns first color when none are used#### 1.5 Transaction List Rendering
+
+  - Skips already-used colors```typescript
+
+  - Case-insensitive color matchingtest('Transaction list renders with correct items', async () => {
+
+  - Generates new colors when palette exhausted  renderWithProvider(<App />)
+
+  - Skips multiple used colors in sequence  
+
+- **Color Distinctness:**  await waitFor(() => {
+
+  - Returns true for colors far apart in hue (>30°)    expect(screen.getByText(/Salary/i)).toBeInTheDocument()
+
+  - Returns false for colors too close in hue    expect(screen.getByText(/Groceries/i)).toBeInTheDocument()
+
+  - Handles multiple existing colors  })
+
+  - Respects custom minimum hue difference})
+
+  - Handles circular hue space (0° = 360°)```
+
+- **Get Distinct Color:****Validates:**
+
+  - Returns preferred color if distinct- Transactions load from storage
+
+  - Returns next available if preferred not distinct- All items render
+
+  - Returns next available if no preference given- Categories display
+
+- **Real-world Scenarios:**- Amounts show correctly
+
+  - Creating 5 categories with distinct colors
+
+  - Editing category without color conflicts#### 1.6 User Interaction Feedback
+
+  - Deleting category makes color available again```typescript
+
 test('Buttons respond to user interaction', async () => {
-  const user = userEvent.setup()
-  renderWithProvider(<App />)
-  
-  const addButton = screen.getByText(/Add Transaction/i)
-  await user.click(addButton)
-  
-  expect(screen.getByRole('dialog')).toBeInTheDocument()
-})
-```
-**Validates:**
-- Buttons are clickable
-- Modal opens on click
-- Interactive elements work
-- UI responds to actions
 
-#### 1.7 Chart Rendering
-```typescript
-test('Charts render without errors', async () => {
-  renderWithProvider(<App />)
-  
+**themeColors.test.ts** (13 tests)  const user = userEvent.setup()
+
+- **Primary Button Colors:**  renderWithProvider(<App />)
+
+  - Returns correct background for each theme  
+
+  - Returns correct hover background (darker)  const addButton = screen.getByText(/Add Transaction/i)
+
+  - Defaults to purple for unknown theme  await user.click(addButton)
+
+- **Border and Text:**  
+
+  - Returns correct border color per theme  expect(screen.getByRole('dialog')).toBeInTheDocument()
+
+  - Returns correct text color per theme})
+
+- **Gradients and Accents:**```
+
+  - Returns correct header gradient per theme**Validates:**
+
+  - Returns accent color with opacity- Buttons are clickable
+
+- **Icon Colors:**- Modal opens on click
+
+  - Returns correct icon color per theme- Interactive elements work
+
+- **Type Safety:**- UI responds to actions
+
+  - Accepts valid theme color types
+
+  - Returns string type for all utilities#### 1.7 Chart Rendering
+
+- **Consistency:**```typescript
+
+  - Primary buttons use consistent shade across themestest('Charts render without errors', async () => {
+
+  - Hover states use darker shades than base  renderWithProvider(<App />)
+
+  - All functions provide defaults for invalid input  
+
   await waitFor(() => {
-    const charts = document.querySelectorAll('.recharts-wrapper')
+
+---    const charts = document.querySelectorAll('.recharts-wrapper')
+
     expect(charts.length).toBeGreaterThan(0)
-  })
+
+## ✍️ Writing New Tests  })
+
 })
-```
+
+### Basic Test Structure```
+
 **Validates:**
-- Recharts components render
-- Data visualizations present
+
+```typescript- Recharts components render
+
+import { describe, it, expect, vi, beforeEach } from 'vitest';- Data visualizations present
+
 - No chart errors
-- Canvas/SVG elements exist
 
-**Run This Suite:**
-```bash
-npm test -- simple.test.tsx
+describe('FeatureName or ComponentName', () => {- Canvas/SVG elements exist
+
+  beforeEach(() => {
+
+    // Setup before each test**Run This Suite:**
+
+    vi.clearAllMocks();```bash
+
+  });npm test -- simple.test.tsx
+
 ```
 
----
+  it('should do something specific', () => {
 
-### Suite 2: Dashboard Features (`dashboard.test.tsx`)
+    // Arrange---
 
-**Focus:** Filtering, navigation, dashboard interactions
+    const input = 'test data';
 
-**Tests Included:**
+    ### Suite 2: Dashboard Features (`dashboard.test.tsx`)
 
-#### 2.1 Month Filtering
-```typescript
-test('Filters transactions by selected month', async () => {
-  const user = userEvent.setup()
-  renderWithProvider(<App />)
-  
-  await user.click(screen.getByLabelText(/previous month/i))
-  
-  await waitFor(() => {
-    const visibleTransactions = screen.getAllByRole('listitem')
-    visibleTransactions.forEach(item => {
-      expect(item).toHaveTextContent(/Oct|October/i)
-    })
-  })
-})
-```
-**Validates:**
-- Month filter works
-- Transactions update
-- Date matching correct
-- UI updates immediately
+    // Act
 
-#### 2.2 Type Filtering (Hover Interaction)
-```typescript
-test('Filters by transaction type on summary card hover', async () => {
-  const user = userEvent.setup()
-  renderWithProvider(<App />)
-  
-  const expenseCard = screen.getByText(/Total Expenses/i).closest('div')
-  await user.hover(expenseCard!)
-  
-  await waitFor(() => {
-    const transactions = screen.getAllByRole('listitem')
-    transactions.forEach(item => {
-      expect(item).toHaveClass('expense')
-    })
-  })
-})
-```
-**Validates:**
-- Hover triggers filter
-- Only expenses show
-- Income hidden
-- Filter resets on unhover
+    const result = yourFunction(input);**Focus:** Filtering, navigation, dashboard interactions
 
-#### 2.3 Empty State Handling
-```typescript
-test('Shows empty state when no transactions exist', async () => {
-  // Clear localStorage
-  localStorage.removeItem('galfin-transactions')
-  
-  renderWithProvider(<App />)
-  
-  await waitFor(() => {
-    expect(screen.getByText(/no transactions yet/i)).toBeInTheDocument()
-  })
-})
-```
-**Validates:**
-- Empty state renders
-- Helpful message shown
-- No error thrown
-- Graceful degradation
-
-#### 2.4 Summary Calculations
-```typescript
-test('Calculates financial summary correctly', async () => {
-  renderWithProvider(<App />)
-  
-  await waitFor(() => {
-    const income = screen.getByText(/\$5,000/)
-    const expenses = screen.getByText(/\$2,345/)
-    const balance = screen.getByText(/\$2,655/)
     
-    expect(income).toBeInTheDocument()
-    expect(expenses).toBeInTheDocument()
-    expect(balance).toBeInTheDocument()
-  })
-})
-```
+
+    // Assert**Tests Included:**
+
+    expect(result).toBe('expected output');
+
+  });#### 2.1 Month Filtering
+
+});```typescript
+
+```test('Filters transactions by selected month', async () => {
+
+  const user = userEvent.setup()
+
+### Testing Services with Supabase  renderWithProvider(<App />)
+
+  
+
+```typescript  await user.click(screen.getByLabelText(/previous month/i))
+
+import { vi } from 'vitest';  
+
+import { supabase } from '../../src/lib/supabaseClient';  await waitFor(() => {
+
+    const visibleTransactions = screen.getAllByRole('listitem')
+
+// Mock Supabase at top of file (before describe)    visibleTransactions.forEach(item => {
+
+vi.mock('../../src/lib/supabaseClient', () => ({      expect(item).toHaveTextContent(/Oct|October/i)
+
+  supabase: {    })
+
+    from: vi.fn(),  })
+
+    auth: {})
+
+      getUser: vi.fn().mockResolvedValue({```
+
+        data: { user: { id: 'user-123' } }**Validates:**
+
+      })- Month filter works
+
+    }- Transactions update
+
+  }- Date matching correct
+
+}));- UI updates immediately
+
+
+
+describe('YourService', () => {#### 2.2 Type Filtering (Hover Interaction)
+
+  it('should fetch data successfully', async () => {```typescript
+
+    const mockData = { id: '1', name: 'Test' };test('Filters by transaction type on summary card hover', async () => {
+
+      const user = userEvent.setup()
+
+    // Setup mock chain  renderWithProvider(<App />)
+
+    vi.mocked(supabase.from).mockReturnValue({  
+
+      select: vi.fn().mockReturnValue({  const expenseCard = screen.getByText(/Total Expenses/i).closest('div')
+
+        eq: vi.fn().mockReturnValue({  await user.hover(expenseCard!)
+
+          single: vi.fn().mockResolvedValue({  
+
+            data: mockData,  await waitFor(() => {
+
+            error: null    const transactions = screen.getAllByRole('listitem')
+
+          })    transactions.forEach(item => {
+
+        })      expect(item).toHaveClass('expense')
+
+      })    })
+
+    } as any);  })
+
+    })
+
+    const result = await YourService.getData('1');```
+
+    **Validates:**
+
+    expect(result).toEqual(mockData);- Hover triggers filter
+
+    expect(supabase.from).toHaveBeenCalledWith('table_name');- Only expenses show
+
+  });- Income hidden
+
+  - Filter resets on unhover
+
+  it('should handle errors gracefully', async () => {
+
+    vi.mocked(supabase.from).mockReturnValue({#### 2.3 Empty State Handling
+
+      select: vi.fn().mockReturnValue({```typescript
+
+        single: vi.fn().mockResolvedValue({test('Shows empty state when no transactions exist', async () => {
+
+          data: null,  // Clear localStorage
+
+          error: { message: 'Record not found' }  localStorage.removeItem('galfin-transactions')
+
+        })  
+
+      })  renderWithProvider(<App />)
+
+    } as any);  
+
+      await waitFor(() => {
+
+    await expect(YourService.getData('bad-id'))    expect(screen.getByText(/no transactions yet/i)).toBeInTheDocument()
+
+      .rejects.toThrow('Record not found');  })
+
+  });})
+
+});```
+
+```**Validates:**
+
+- Empty state renders
+
+### Testing React Components- Helpful message shown
+
+- No error thrown
+
+```typescript- Graceful degradation
+
+import { render, screen, fireEvent } from '@testing-library/react';
+
+import { YourComponent } from './YourComponent';#### 2.4 Summary Calculations
+
+```typescript
+
+it('should handle button clicks', () => {test('Calculates financial summary correctly', async () => {
+
+  const handleClick = vi.fn();  renderWithProvider(<App />)
+
+    
+
+  render(<YourComponent onClick={handleClick} />);  await waitFor(() => {
+
+      const income = screen.getByText(/\$5,000/)
+
+  // Find by accessible role    const expenses = screen.getByText(/\$2,345/)
+
+  const button = screen.getByRole('button', { name: /submit/i });    const balance = screen.getByText(/\$2,655/)
+
+      
+
+  // Simulate click    expect(income).toBeInTheDocument()
+
+  fireEvent.click(button);    expect(expenses).toBeInTheDocument()
+
+      expect(balance).toBeInTheDocument()
+
+  // Verify callback  })
+
+  expect(handleClick).toHaveBeenCalledTimes(1);})
+
+});```
+
 **Validates:**
-- Income sum correct
-- Expense sum correct
-- Net balance = income - expenses
-- Currency formatting
+
+it('should display props correctly', () => {- Income sum correct
+
+  render(<YourComponent title="Hello World" />);- Expense sum correct
+
+  - Net balance = income - expenses
+
+  expect(screen.getByText(/hello world/i)).toBeInTheDocument();- Currency formatting
+
+});
 
 **Run This Suite:**
-```bash
-npm test -- dashboard.test.tsx
+
+it('should handle async operations', async () => {```bash
+
+  render(<AsyncComponent />);npm test -- dashboard.test.tsx
+
+  ```
+
+  // Wait for async content
+
+  const asyncText = await screen.findByText(/loaded data/i);---
+
+  expect(asyncText).toBeInTheDocument();
+
+});### Suite 3: Transaction Management (`transactions.test.tsx`)
+
 ```
-
----
-
-### Suite 3: Transaction Management (`transactions.test.tsx`)
 
 **Focus:** Adding, editing, deleting, importing transactions
 
-**Tests Included:**
-
-#### 3.1 Add Expense
-```typescript
-test('Can add new expense transaction', async () => {
-  const user = userEvent.setup()
-  renderWithProvider(<App />)
-  
-  // Open modal
-  await user.click(screen.getByText(/Add Transaction/i))
-  
-  // Fill form
-  await user.type(screen.getByLabelText(/description/i), 'Test Expense')
-  await user.type(screen.getByLabelText(/amount/i), '150.00')
-  await user.selectOptions(screen.getByLabelText(/category/i), 'Groceries')
-  await user.click(screen.getByLabelText(/expense/i))
-  
-  // Submit
-  await user.click(screen.getByText(/Add/i))
-  
-  // Verify
-  await waitFor(() => {
-    expect(screen.getByText('Test Expense')).toBeInTheDocument()
-    expect(screen.getByText('$150.00')).toBeInTheDocument()
-  })
-})
-```
-**Validates:**
-- Modal opens
-- Form inputs work
-- Category dropdown
-- Type selection (expense/income)
-- Form submission
-- Transaction appears in list
-- Amount formatting
-
-#### 3.2 Add Income
-```typescript
-test('Can add new income transaction', async () => {
-  const user = userEvent.setup()
-  renderWithProvider(<App />)
-  
-  await user.click(screen.getByText(/Add Transaction/i))
-  
-  await user.type(screen.getByLabelText(/description/i), 'Freelance Payment')
-  await user.type(screen.getByLabelText(/amount/i), '500')
-  await user.click(screen.getByLabelText(/income/i))
-  
-  await user.click(screen.getByText(/Add/i))
-  
-  await waitFor(() => {
-    expect(screen.getByText('Freelance Payment')).toBeInTheDocument()
-  })
-})
-```
-**Validates:**
-- Income type selection
-- Positive amount handling
-- Income displays with green color
-- Summary updates
-
-#### 3.3 Form Validation
-```typescript
-test('Validates required fields before submission', async () => {
-  const user = userEvent.setup()
-  renderWithProvider(<App />)
-  
-  await user.click(screen.getByText(/Add Transaction/i))
-  
-  // Try to submit empty form
-  const submitButton = screen.getByText(/Add/i)
-  await user.click(submitButton)
-  
-  // Should show validation errors
-  expect(screen.getByText(/description is required/i)).toBeInTheDocument()
-  expect(screen.getByText(/amount is required/i)).toBeInTheDocument()
-})
-```
-**Validates:**
-- Required field validation
-- Error messages display
-- Form prevents submission
-- User guidance
-
-#### 3.4 Modal Controls
-```typescript
-test('Modal can be opened and closed', async () => {
-  const user = userEvent.setup()
-  renderWithProvider(<App />)
-  
-  // Open modal
-  await user.click(screen.getByText(/Add Transaction/i))
-  expect(screen.getByRole('dialog')).toBeInTheDocument()
-  
-  // Close modal
-  await user.click(screen.getByLabelText(/close/i))
-  expect(screen.queryByRole('dialog')).not.toBeInTheDocument()
-})
-```
-**Validates:**
-- Modal opens
-- Modal closes
-- Backdrop click
-- Escape key
-- No memory leaks
-
-#### 3.5 JSON Import
-```typescript
-test('Can import transactions from JSON file', async () => {
-  const user = userEvent.setup()
-  renderWithProvider(<App />)
-  
-  // Open import modal
-  await user.click(screen.getByText(/Import/i))
-  
-  // Upload file
-  const file = new File([JSON.stringify([
-    { date: '2025-10-25', description: 'Import Test', amount: 99, category: 'Other', type: 'expense' }
-  ])], 'transactions.json', { type: 'application/json' })
-  
-  const input = screen.getByLabelText(/upload file/i)
-  await user.upload(input, file)
-  
-  await waitFor(() => {
-    expect(screen.getByText('Import Test')).toBeInTheDocument()
-  })
-})
-```
-**Validates:**
-- Import modal opens
-- File upload works
-- JSON parsing
-- Transactions merge
-- Duplicate handling
-
-#### 3.6 Data Persistence
-```typescript
-test('Transactions persist to localStorage', async () => {
-  const user = userEvent.setup()
-  renderWithProvider(<App />)
-  
-  // Add transaction
-  await user.click(screen.getByText(/Add Transaction/i))
-  await user.type(screen.getByLabelText(/description/i), 'Persistence Test')
-  await user.type(screen.getByLabelText(/amount/i), '25')
-  await user.click(screen.getByText(/Add/i))
-  
-  // Check localStorage
-  const stored = JSON.parse(localStorage.getItem('galfin-transactions') || '[]')
-  expect(stored).toContainEqual(
-    expect.objectContaining({
-      description: 'Persistence Test',
-      amount: 25
-    })
-  )
-})
-```
-**Validates:**
-- localStorage writes
-- Data format correct
-- Persistence immediate
-- No data loss
-
-**Run This Suite:**
-```bash
-npm test -- transactions.test.tsx
-```
-
 ---
 
-### Suite 4: Accessibility & UX (`accessibility.test.tsx`)
-
-**Focus:** Keyboard navigation, ARIA, responsive design, error handling
-
 **Tests Included:**
 
-#### 4.1 Keyboard Navigation
-```typescript
-test('Supports full keyboard navigation', async () => {
-  const user = userEvent.setup()
-  renderWithProvider(<App />)
-  
-  // Tab through interactive elements
-  await user.tab()
-  expect(document.activeElement).toHaveAttribute('role', 'button')
-  
-  await user.tab()
-  expect(document.activeElement).toHaveAttribute('tabindex', '0')
-})
-```
-**Validates:**
-- Tab order logical
-- All controls reachable
-- Focus visible
-- No keyboard traps
+## 🎯 Best Practices
 
-#### 4.2 Form Labels
+#### 3.1 Add Expense
+
+### 1. Test Behavior, Not Implementation```typescript
+
+```typescripttest('Can add new expense transaction', async () => {
+
+// ✅ Good - tests what user sees  const user = userEvent.setup()
+
+expect(screen.getByRole('button')).toHaveTextContent('Submit');  renderWithProvider(<App />)
+
+  
+
+// ❌ Bad - tests internal state  // Open modal
+
+expect(component.state.buttonText).toBe('Submit');  await user.click(screen.getByText(/Add Transaction/i))
+
+```  
+
+  // Fill form
+
+### 2. Use Descriptive Test Names  await user.type(screen.getByLabelText(/description/i), 'Test Expense')
+
+```typescript  await user.type(screen.getByLabelText(/amount/i), '150.00')
+
+// ✅ Good  await user.selectOptions(screen.getByLabelText(/category/i), 'Groceries')
+
+it('should reject email addresses without @ symbol');  await user.click(screen.getByLabelText(/expense/i))
+
+  
+
+// ❌ Bad  // Submit
+
+it('test email validation');  await user.click(screen.getByText(/Add/i))
+
+```  
+
+  // Verify
+
+### 3. Follow Arrange-Act-Assert Pattern  await waitFor(() => {
+
+```typescript    expect(screen.getByText('Test Expense')).toBeInTheDocument()
+
+it('should calculate total correctly', () => {    expect(screen.getByText('$150.00')).toBeInTheDocument()
+
+  // Arrange - setup test data  })
+
+  const items = [10, 20, 30];})
+
+  ```
+
+  // Act - perform the action**Validates:**
+
+  const total = calculateTotal(items);- Modal opens
+
+  - Form inputs work
+
+  // Assert - verify the result- Category dropdown
+
+  expect(total).toBe(60);- Type selection (expense/income)
+
+});- Form submission
+
+```- Transaction appears in list
+
+- Amount formatting
+
+### 4. Mock External Dependencies
+
+- Database calls (Supabase)#### 3.2 Add Income
+
+- API requests```typescript
+
+- Browser APIs (localStorage, navigator)test('Can add new income transaction', async () => {
+
+- Date/time for consistent tests  const user = userEvent.setup()
+
+  renderWithProvider(<App />)
+
+### 5. Test Edge Cases  
+
+```typescript  await user.click(screen.getByText(/Add Transaction/i))
+
+it('should handle empty arrays', () => {  
+
+  expect(processArray([])).toEqual([]);  await user.type(screen.getByLabelText(/description/i), 'Freelance Payment')
+
+});  await user.type(screen.getByLabelText(/amount/i), '500')
+
+  await user.click(screen.getByLabelText(/income/i))
+
+it('should handle null values', () => {  
+
+  expect(processValue(null)).toBe(0);  await user.click(screen.getByText(/Add/i))
+
+});  
+
+  await waitFor(() => {
+
+it('should handle boundary conditions', () => {    expect(screen.getByText('Freelance Payment')).toBeInTheDocument()
+
+  expect(validateAge(0)).toBe(false);  })
+
+  expect(validateAge(150)).toBe(false);})
+
+});```
+
+```**Validates:**
+
+- Income type selection
+
+### 6. Query by Accessible Roles- Positive amount handling
+
+```typescript- Income displays with green color
+
+// ✅ Preferred - accessible and user-focused- Summary updates
+
+screen.getByRole('button', { name: /submit/i })
+
+screen.getByLabelText(/email address/i)#### 3.3 Form Validation
+
+screen.getByText(/welcome/i)```typescript
+
+test('Validates required fields before submission', async () => {
+
+// ❌ Avoid - implementation detail  const user = userEvent.setup()
+
+screen.getByTestId('submit-button')  renderWithProvider(<App />)
+
+screen.getByClassName('btn-primary')  
+
+```  await user.click(screen.getByText(/Add Transaction/i))
+
+  
+
+### 7. Keep Tests Independent  // Try to submit empty form
+
+```typescript  const submitButton = screen.getByText(/Add/i)
+
+beforeEach(() => {  await user.click(submitButton)
+
+  // Reset state before each test  
+
+  vi.clearAllMocks();  // Should show validation errors
+
+  vi.resetModules();  expect(screen.getByText(/description is required/i)).toBeInTheDocument()
+
+});  expect(screen.getByText(/amount is required/i)).toBeInTheDocument()
+
+```})
+
+```
+
+---**Validates:**
+
+- Required field validation
+
+## 🔧 Configuration- Error messages display
+
+- Form prevents submission
+
+### vitest.config.ts- User guidance
+
+```typescript
+
+import { defineConfig } from 'vitest/config';#### 3.4 Modal Controls
+
+```typescript
+
+export default defineConfig({test('Modal can be opened and closed', async () => {
+
+  test: {  const user = userEvent.setup()
+
+    environment: 'jsdom',      // Browser-like environment  renderWithProvider(<App />)
+
+    globals: true,              // Global test functions  
+
+    setupFiles: ['./src/setupTests.ts'],  // Open modal
+
+  },  await user.click(screen.getByText(/Add Transaction/i))
+
+});  expect(screen.getByRole('dialog')).toBeInTheDocument()
+
+```  
+
+  // Close modal
+
+### src/setupTests.ts  await user.click(screen.getByLabelText(/close/i))
+
+```typescript  expect(screen.queryByRole('dialog')).not.toBeInTheDocument()
+
+import '@testing-library/jest-dom';})
+
+``````
+
+**Validates:**
+
+This imports DOM matchers:- Modal opens
+
+- `toBeInTheDocument()`- Modal closes
+
+- `toHaveTextContent()`- Backdrop click
+
+- `toBeVisible()`- Escape key
+
+- `toHaveAttribute()`- No memory leaks
+
+
+
+---#### 3.5 JSON Import
+
+```typescript
+
+## 🐛 Troubleshootingtest('Can import transactions from JSON file', async () => {
+
+  const user = userEvent.setup()
+
+### Import Path Errors  renderWithProvider(<App />)
+
+```  
+
+Error: Failed to resolve import "../../src/..."  // Open import modal
+
+```  await user.click(screen.getByText(/Import/i))
+
+**Solution:** Use correct relative paths from `tests/` folder  
+
+```typescript  // Upload file
+
+// ✅ Correct (from tests/ folder)  const file = new File([JSON.stringify([
+
+import { Service } from '../../src/services/service';    { date: '2025-10-25', description: 'Import Test', amount: 99, category: 'Other', type: 'expense' }
+
+  ])], 'transactions.json', { type: 'application/json' })
+
+// ❌ Wrong  
+
+import { Service } from '../services/service';  const input = screen.getByLabelText(/upload file/i)
+
+```  await user.upload(input, file)
+
+  
+
+### Mock Not Working  await waitFor(() => {
+
+```    expect(screen.getByText('Import Test')).toBeInTheDocument()
+
+TypeError: Cannot read property 'from' of undefined  })
+
+```})
+
+**Solution:** Place `vi.mock()` at top level, before describe blocks```
+
+```typescript**Validates:**
+
+import { vi } from 'vitest';- Import modal opens
+
+- File upload works
+
+vi.mock('../../src/lib/supabaseClient', () => ({- JSON parsing
+
+  supabase: { /* mock implementation */ }- Transactions merge
+
+}));- Duplicate handling
+
+
+
+describe('Tests', () => {#### 3.6 Data Persistence
+
+  // Tests here```typescript
+
+});test('Transactions persist to localStorage', async () => {
+
+```  const user = userEvent.setup()
+
+  renderWithProvider(<App />)
+
+### TypeScript Errors with Mocks  
+
+```  // Add transaction
+
+Type 'Mock' is not assignable to...  await user.click(screen.getByText(/Add Transaction/i))
+
+```  await user.type(screen.getByLabelText(/description/i), 'Persistence Test')
+
+**Solution:** Use `vi.mocked()` and type assertions  await user.type(screen.getByLabelText(/amount/i), '25')
+
+```typescript  await user.click(screen.getByText(/Add/i))
+
+vi.mocked(supabase.from).mockReturnValue({ ... } as any);  
+
+```  // Check localStorage
+
+  const stored = JSON.parse(localStorage.getItem('galfin-transactions') || '[]')
+
+### Async Tests Timing Out  expect(stored).toContainEqual(
+
+```    expect.objectContaining({
+
+Test timed out after 5000ms      description: 'Persistence Test',
+
+```      amount: 25
+
+**Solution:** Ensure you're using `await` or increase timeout    })
+
+```typescript  )
+
+it('async test', async () => {})
+
+  await asyncOperation();```
+
+  expect(result).toBeDefined();**Validates:**
+
+}, 10000); // 10 second timeout- localStorage writes
+
+```- Data format correct
+
+- Persistence immediate
+
+### Tests Affecting Each Other- No data loss
+
+```
+
+Test passes alone but fails in suite**Run This Suite:**
+
+``````bash
+
+**Solution:** Clear mocks and reset state in `beforeEach`npm test -- transactions.test.tsx
+
+```typescript```
+
+beforeEach(() => {
+
+  vi.clearAllMocks();---
+
+  vi.resetModules();
+
+  // Reset any global state### Suite 4: Accessibility & UX (`accessibility.test.tsx`)
+
+});
+
+```**Focus:** Keyboard navigation, ARIA, responsive design, error handling
+
+
+
+### Can't Find Element**Tests Included:**
+
+```
+
+Unable to find an element with the text: ...#### 4.1 Keyboard Navigation
+
+``````typescript
+
+**Solution:** Use debug() to see rendered HTMLtest('Supports full keyboard navigation', async () => {
+
+```typescript  const user = userEvent.setup()
+
+const { debug } = render(<Component />);  renderWithProvider(<App />)
+
+debug(); // Prints HTML to console  
+
+```  // Tab through interactive elements
+
+  await user.tab()
+
+---  expect(document.activeElement).toHaveAttribute('role', 'button')
+
+  
+
+## 📚 Additional Resources  await user.tab()
+
+  expect(document.activeElement).toHaveAttribute('tabindex', '0')
+
+- [Vitest Documentation](https://vitest.dev)})
+
+- [React Testing Library](https://testing-library.com/react)```
+
+- [Testing Library Queries](https://testing-library.com/docs/queries/about)**Validates:**
+
+- [Jest-DOM Matchers](https://github.com/testing-library/jest-dom)- Tab order logical
+
+- [Common Testing Mistakes](https://kentcdodds.com/blog/common-mistakes-with-react-testing-library)- All controls reachable
+
+- Focus visible
+
+---- No keyboard traps
+
+
+
+**Questions?** Check existing test files in `tests/` for real examples of all patterns described above.#### 4.2 Form Labels
+
 ```typescript
 test('All form inputs have accessible labels', async () => {
   const user = userEvent.setup()
