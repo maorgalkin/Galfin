@@ -51,17 +51,18 @@ function AppContent() {
   const { signOut, user } = useAuth();
 
   const textureStyle = {
-    backgroundImage: `
-      radial-gradient(circle at 20px 20px, rgba(0, 0, 0, 0.06) 2%, transparent 0),
-      radial-gradient(circle at 60px 60px, rgba(0, 0, 0, 0.04) 2%, transparent 0)
-    `,
+    backgroundImage: `url("data:image/svg+xml;base64,${btoa(`
+      <svg width="80" height="80" xmlns="http://www.w3.org/2000/svg">
+        <rect x="10" y="10" width="60" height="60" fill="none" stroke="rgba(255, 255, 255, 0.1)" stroke-width="1"/>
+        <circle cx="40" cy="40" r="25" fill="none" stroke="rgba(255, 255, 255, 0.08)" stroke-width="1"/>
+      </svg>
+    `)}")`,
     backgroundSize: '80px 80px',
-    backgroundPosition: '0 0, 40px 40px',
   };
 
   return (
     <div 
-      className="min-h-screen bg-gradient-to-br from-gray-100 via-gray-50 to-gray-100 dark:from-gray-950 dark:via-gray-900 dark:to-gray-950 transition-colors duration-500"
+      className="min-h-screen bg-gray-100 dark:from-gray-950 dark:via-gray-900 dark:to-gray-950 dark:bg-gradient-to-br transition-colors duration-500"
       style={textureStyle}
     >
       <nav className="bg-white/80 dark:bg-gray-800/80 backdrop-blur-sm shadow-sm border-b border-gray-200 dark:border-gray-700">

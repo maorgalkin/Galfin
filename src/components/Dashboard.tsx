@@ -141,44 +141,39 @@ const Dashboard: React.FC = () => {
   const getBackgroundClass = () => {
     switch (activeTab) {
       case 'dashboard':
-        return 'bg-gradient-to-br from-purple-100 via-purple-50 to-white dark:from-purple-950/30 dark:via-purple-900/20 dark:to-gray-900';
+        return 'bg-purple-100 dark:bg-purple-950/30';
       case 'transactions':
-        return 'bg-gradient-to-br from-blue-100 via-blue-50 to-white dark:from-blue-950/30 dark:via-blue-900/20 dark:to-gray-900';
+        return 'bg-blue-100 dark:bg-blue-950/30';
       case 'budget':
-        return 'bg-gradient-to-br from-green-100 via-green-50 to-white dark:from-green-950/30 dark:via-green-900/20 dark:to-gray-900';
+        return 'bg-green-100 dark:bg-green-950/30';
       default:
         return 'bg-white dark:bg-gray-900';
     }
   };
 
   const getTextureStyle = () => {
-    // Hexagon geometric pattern based on active tab
-    const getColor = () => {
-      switch (activeTab) {
-        case 'dashboard':
-          return 'rgba(147, 51, 234, 0.08)'; // purple
-        case 'transactions':
-          return 'rgba(59, 130, 246, 0.08)'; // blue
-        case 'budget':
-          return 'rgba(34, 197, 94, 0.08)'; // green
-        default:
-          return 'rgba(0, 0, 0, 0.05)';
-      }
-    };
+    // Hexagon pattern with white outlines
+    const hexagonPattern = `
+      <svg width="100" height="86.6" xmlns="http://www.w3.org/2000/svg">
+        <path d="M 50 0 L 93.3 25 L 93.3 75 L 50 100 L 6.7 75 L 6.7 25 Z" 
+              fill="none" 
+              stroke="rgba(255, 255, 255, 0.15)" 
+              stroke-width="1"/>
+      </svg>
+    `;
+    
+    const encodedPattern = `data:image/svg+xml;base64,${btoa(hexagonPattern)}`;
 
     return {
-      backgroundImage: `
-        radial-gradient(circle at 25px 25px, ${getColor()} 2%, transparent 0%),
-        radial-gradient(circle at 75px 75px, ${getColor()} 2%, transparent 0%)
-      `,
-      backgroundSize: '100px 100px',
-      backgroundPosition: '0 0, 50px 50px',
+      backgroundImage: `url("${encodedPattern}")`,
+      backgroundSize: '100px 86.6px',
+      backgroundPosition: '0 0, 50px 43.3px',
     };
   };
 
   return (
     <div 
-      className={`min-h-screen px-3 sm:px-4 lg:px-6 py-8 max-w-7xl mx-auto transition-colors duration-500 ${getBackgroundClass()}`}
+      className={`min-h-screen px-3 sm:px-4 lg:px-6 py-8 max-w-7xl mx-auto transition-all duration-500 ${getBackgroundClass()}`}
       style={getTextureStyle()}
     >
       
