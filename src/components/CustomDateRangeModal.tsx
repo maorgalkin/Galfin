@@ -2,7 +2,6 @@ import React, { useState, useMemo } from 'react';
 import { X, Calendar, Search } from 'lucide-react';
 import { useFinance } from '../context/FinanceContext';
 import { getCategoryColor } from '../utils/categoryColors';
-import type { Transaction } from '../types';
 
 interface CustomDateRangeModalProps {
   isOpen: boolean;

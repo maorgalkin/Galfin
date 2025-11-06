@@ -63,32 +63,84 @@ function AppContent() {
       className="min-h-screen dark:bg-gray-900 transition-colors duration-500"
       style={textureStyle}
     >
-      <nav className="bg-white/80 dark:bg-gray-800/80 backdrop-blur-sm shadow-sm border-b border-gray-200 dark:border-gray-700">
-        <div className="max-w-7xl mx-auto px-3 sm:px-4 lg:px-6">
+      <nav className="relative overflow-hidden shadow-md border-b border-gray-200/20">
+        {/* Diagonal color sections - clean cuts between colors */}
+        <div className="absolute inset-0">
+          {/* Purple section (left) */}
+          <div 
+            className="absolute inset-0 bg-purple-600/90"
+            style={{
+              clipPath: 'polygon(0 0, 35% 0, 25% 100%, 0 100%)'
+            }}
+          ></div>
+          {/* Blue section (middle) */}
+          <div 
+            className="absolute inset-0 bg-blue-600/90"
+            style={{
+              clipPath: 'polygon(25% 0, 70% 0, 60% 100%, 15% 100%)'
+            }}
+          ></div>
+          {/* Green section (right) */}
+          <div 
+            className="absolute inset-0 bg-green-600/90"
+            style={{
+              clipPath: 'polygon(60% 0, 100% 0, 100% 100%, 50% 100%)'
+            }}
+          ></div>
+        </div>
+        
+        <div className="max-w-7xl mx-auto px-3 sm:px-4 lg:px-6 relative z-10">
           <div className="h-16 flex items-center justify-between">
-            {/* Logo */}
-            <Link to="/" className="flex items-center hover:opacity-80 transition-opacity">
-              <h1 className="text-xl font-bold text-gray-900 dark:text-gray-100">Galfin</h1>
-              <span className="hidden sm:inline ml-2 text-sm text-gray-500 dark:text-gray-400">Family Finance Tracker</span>
+            {/* Logo in hexagon */}
+            <Link to="/" className="flex items-center gap-3 hover:opacity-90 transition-opacity group">
+              {/* Hexagon container for logo */}
+              <div className="relative">
+                <svg width="50" height="58" viewBox="0 0 50 58" className="drop-shadow-lg">
+                  {/* Hexagon shape */}
+                  <path 
+                    d="M25 0 L50 14.5 L50 43.5 L25 58 L0 43.5 L0 14.5 Z" 
+                    fill="rgba(255, 255, 255, 0.25)"
+                    stroke="rgba(255, 255, 255, 0.5)"
+                    strokeWidth="2"
+                    className="group-hover:fill-white/30 transition-all"
+                  />
+                  {/* Letter G in the center */}
+                  <text 
+                    x="25" 
+                    y="38" 
+                    textAnchor="middle" 
+                    fill="white" 
+                    fontSize="28" 
+                    fontWeight="bold"
+                    fontFamily="system-ui, -apple-system, sans-serif"
+                  >
+                    G
+                  </text>
+                </svg>
+              </div>
+              <div className="flex flex-col">
+                <h1 className="text-lg font-bold text-white drop-shadow-md leading-tight">Galfin</h1>
+                <span className="hidden sm:inline text-xs text-white/90 drop-shadow leading-tight">Family Finance</span>
+              </div>
               {user && (
-                <span className="hidden md:inline ml-4 text-xs text-gray-400 dark:text-gray-500">
+                <span className="hidden md:inline ml-2 text-xs text-white/70 drop-shadow">
                   {user.email}
                 </span>
               )}
             </Link>
             
-            {/* Desktop & Mobile Buttons - Always visible */}
+            {/* Desktop & Mobile Buttons - Glassy style */}
             <div className="flex items-center space-x-2 sm:space-x-3">
               <button
                 onClick={() => setIsAddTransactionOpen(true)}
-                className="flex items-center justify-center px-3 py-2 bg-blue-600 text-white rounded-md hover:bg-blue-700 transition-colors text-sm font-medium min-h-[38px]"
+                className="flex items-center justify-center px-3 py-2 bg-white/20 backdrop-blur-md text-white rounded-lg hover:bg-white/30 transition-all border border-white/40 text-sm font-medium min-h-[38px] shadow-lg hover:shadow-xl hover:scale-105"
               >
                 <Plus className="h-4 w-4 flex-shrink-0" />
                 <span className="ml-2 max-md:hidden">Add Transaction</span>
               </button>
               <button
                 onClick={signOut}
-                className="flex items-center justify-center px-3 py-2 bg-red-600 text-white rounded-md hover:bg-red-700 transition-colors text-sm font-medium min-h-[38px]"
+                className="flex items-center justify-center px-3 py-2 bg-red-500/30 backdrop-blur-md text-white rounded-lg hover:bg-red-500/40 transition-all border border-red-400/50 text-sm font-medium min-h-[38px] shadow-lg hover:shadow-xl hover:scale-105"
                 title="Sign Out"
               >
                 <LogOut className="h-4 w-4 flex-shrink-0" />

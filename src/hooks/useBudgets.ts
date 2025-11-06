@@ -2,14 +2,7 @@ import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { PersonalBudgetService } from '../services/personalBudgetService';
 import { MonthlyBudgetService } from '../services/monthlyBudgetService';
 import { BudgetAdjustmentService } from '../services/budgetAdjustmentService';
-import type { 
-  PersonalBudget, 
-  MonthlyBudget, 
-  BudgetAdjustment,
-  CategoryAdjustmentHistory,
-  BudgetComparisonSummary,
-  PendingAdjustmentsSummary
-} from '../types/budget';
+import type { PersonalBudget } from '../types/budget';
 
 /**
  * Hook to get the active personal budget
