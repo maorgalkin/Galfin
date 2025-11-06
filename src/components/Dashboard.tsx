@@ -29,6 +29,8 @@ const Dashboard: React.FC = () => {
   const [activeMonthTab, setActiveMonthTab] = useState(0);
   const [direction, setDirection] = useState(0); // Track animation direction: -1 (left), 1 (right)
   const [transactionTypeFilter, setTransactionTypeFilter] = useState<'all' | 'income' | 'expense'>('all');
+  const [isDarkMode, setIsDarkMode] = useState(false);
+  
   // Initialize activeTab from URL query parameter
   const tabParam = searchParams.get('tab');
   const initialTab = (tabParam === 'budget' || tabParam === 'transactions' || tabParam === 'dashboard') 
@@ -41,6 +43,25 @@ const Dashboard: React.FC = () => {
   const [selectedDesktopCategory, setSelectedDesktopCategory] = useState<string | null>(null);
   const [isCategoryModalOpen, setIsCategoryModalOpen] = useState(false);
   const [isCustomDateRangeModalOpen, setIsCustomDateRangeModalOpen] = useState(false);
+
+  // Track dark mode changes
+  useEffect(() => {
+    const checkDarkMode = () => {
+      setIsDarkMode(document.documentElement.classList.contains('dark'));
+    };
+    
+    // Check initially
+    checkDarkMode();
+    
+    // Watch for changes to the class attribute on html element
+    const observer = new MutationObserver(checkDarkMode);
+    observer.observe(document.documentElement, {
+      attributes: true,
+      attributeFilter: ['class']
+    });
+    
+    return () => observer.disconnect();
+  }, []);
 
   // Listen to URL changes and update activeTab accordingly
   useEffect(() => {
@@ -149,8 +170,7 @@ const Dashboard: React.FC = () => {
 
   const getTextureStyle = (): React.CSSProperties => {
     // Flat honeycomb hexagon pattern with white lines (1px in dark mode, 2px in light mode)
-    const isDark = document.documentElement.classList.contains('dark');
-    const lineWidth = isDark ? 1 : 2;
+    const lineWidth = isDarkMode ? 1 : 2;
     const lineStart = 50;
     const lineEnd = lineStart + lineWidth;
     
