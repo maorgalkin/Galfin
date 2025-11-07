@@ -155,8 +155,8 @@ export const BudgetPerformanceCard: React.FC<BudgetPerformanceCardProps> = ({
 
   return (
     <div className="bg-white dark:bg-gray-800 rounded-lg shadow-md overflow-hidden">
-      {/* Header */}
-      <div className={`px-6 py-4 ${getHeaderGradient(themeColor)}`}>
+      {/* Header - Hidden on mobile, shown on desktop */}
+      <div className={`max-md:hidden px-6 py-4 ${getHeaderGradient(themeColor)}`}>
         <div className="flex items-center justify-between">
           <div>
             <h3 className="text-lg font-semibold text-white">Budget Performance</h3>
@@ -300,10 +300,10 @@ export const BudgetPerformanceCard: React.FC<BudgetPerformanceCardProps> = ({
         )}
 
         {/* Detailed Category Breakdown */}
-        {showDetails && (
+        {(showDetails || !isCompact) && (
           <div className="mb-4 pt-4 border-t border-gray-200 dark:border-gray-700">
             <h4 className="text-sm font-semibold text-gray-900 dark:text-gray-100 mb-3">Category Breakdown</h4>
-            <div className="space-y-3 max-h-96 overflow-y-auto">
+            <div className={`space-y-3 ${isCompact ? 'max-h-96 overflow-y-auto' : ''}`}>
               {budgetAnalysis.categoryComparisons
                 .filter(comp => comp.budgeted > 0)
                 .sort((a, b) => b.budgeted - a.budgeted)
@@ -351,22 +351,25 @@ export const BudgetPerformanceCard: React.FC<BudgetPerformanceCardProps> = ({
 
         {/* Action Buttons */}
         <div className="flex gap-2">
-          <button
-            onClick={() => setShowDetails(!showDetails)}
-            className="flex-1 flex items-center justify-center px-4 py-2 bg-gray-100 dark:bg-gray-700 text-gray-700 dark:text-gray-300 rounded-md hover:bg-gray-200 dark:hover:bg-gray-600 transition-colors text-sm font-medium"
-          >
-            {showDetails ? (
-              <>
-                <ChevronUp className="h-4 w-4 mr-1" />
-                Show Less
-              </>
-            ) : (
-              <>
-                <ChevronDown className="h-4 w-4 mr-1" />
-                Show Details
-              </>
-            )}
-          </button>
+          {/* Show Details button - only visible on desktop/compact mode */}
+          {isCompact && (
+            <button
+              onClick={() => setShowDetails(!showDetails)}
+              className="flex-1 flex items-center justify-center px-4 py-2 bg-gray-100 dark:bg-gray-700 text-gray-700 dark:text-gray-300 rounded-md hover:bg-gray-200 dark:hover:bg-gray-600 transition-colors text-sm font-medium"
+            >
+              {showDetails ? (
+                <>
+                  <ChevronUp className="h-4 w-4 mr-1" />
+                  Show Less
+                </>
+              ) : (
+                <>
+                  <ChevronDown className="h-4 w-4 mr-1" />
+                  Show Details
+                </>
+              )}
+            </button>
+          )}
           <button
             onClick={() => navigate('/?tab=budget')}
             className={`flex-1 flex items-center justify-center px-4 py-2 text-white rounded-md transition-colors text-sm font-medium ${getPrimaryButtonBg(themeColor)} ${getPrimaryButtonHoverBg(themeColor)}`}

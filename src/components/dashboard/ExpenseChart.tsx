@@ -50,7 +50,7 @@ export const ExpenseChart: React.FC<ExpenseChartProps> = ({
 
   return (
     <div className="bg-white dark:bg-gray-800 rounded-lg shadow-sm border border-gray-200 dark:border-gray-700 p-4 sm:p-6">
-      <h2 className="text-xl font-semibold text-gray-900 dark:text-gray-100 mb-4">Expenses by Category</h2>
+      <h2 className="max-md:hidden text-xl font-semibold text-gray-900 dark:text-gray-100 mb-4">Expenses by Category</h2>
 
       {/* Desktop Layout - Chart slides left when category selected */}
       <div className="max-md:hidden">
@@ -185,7 +185,7 @@ export const ExpenseChart: React.FC<ExpenseChartProps> = ({
         </div>
       </div>
 
-      {/* Mobile Layout - Original tap behavior */}
+      {/* Mobile Layout - Pie chart with transaction list */}
       <div className="md:hidden">
         <ResponsiveContainer width="100%" height={300}>
           <PieChart>
@@ -232,30 +232,78 @@ export const ExpenseChart: React.FC<ExpenseChartProps> = ({
           </PieChart>
         </ResponsiveContainer>
       
-        {/* Mobile-only: Focused Category Display */}
+        {/* Mobile-only: Transaction list when category selected */}
         {focusedCategory ? (
-          <div className="mt-4 p-4 bg-gray-50 rounded-lg border">
-            <div className="text-center">
-              <div className="text-lg font-semibold text-gray-900">
-                {focusedCategory.category}
+          <div className="mt-4">
+            <div className="flex items-center justify-between mb-3">
+              <div>
+                <h3 className="text-lg font-semibold text-gray-900 dark:text-gray-100">
+                  {focusedCategory.category}
+                </h3>
+                <p className="text-sm text-gray-600 dark:text-gray-400">
+                  {focusedCategory.percentage}% of expenses • {formatCurrency(focusedCategory.amount)}
+                </p>
               </div>
-              <div className="text-sm text-gray-600 mt-1">
-                {focusedCategory.percentage}% of expenses
-              </div>
-              <div className="text-xl font-bold text-blue-600 mt-2">
-                {formatCurrency(focusedCategory.amount)}
-              </div>
+              <button
+                onClick={() => setFocusedCategory(null)}
+                className="text-gray-400 hover:text-gray-600 dark:hover:text-gray-300"
+              >
+                <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
+                </svg>
+              </button>
             </div>
-            <button
-              onClick={() => setFocusedCategory(null)}
-              className="mt-3 w-full text-sm text-gray-500 hover:text-gray-700"
-            >
-              Tap another category or click here to clear
-            </button>
+
+            {(() => {
+              const categoryTransactions = transactions
+                .filter(t => t.type === 'expense' && t.category === focusedCategory.category)
+                .sort((a, b) => new Date(b.date).getTime() - new Date(a.date).getTime());
+
+              return (
+                <>
+                  <div className="space-y-2">
+                    {categoryTransactions.map((transaction) => (
+                      <div
+                        key={transaction.id}
+                        className="flex items-center justify-between px-3 py-2 bg-gray-50 dark:bg-gray-700 rounded hover:bg-gray-100 dark:hover:bg-gray-600 transition-colors cursor-pointer"
+                        onClick={() => onEditTransaction(transaction)}
+                      >
+                        <div className="flex-1 min-w-0">
+                          <div className="text-sm font-medium text-gray-900 dark:text-gray-100 truncate">
+                            {transaction.description}
+                          </div>
+                          <div className="text-xs text-gray-500 dark:text-gray-400">
+                            {new Date(transaction.date).toLocaleDateString()}
+                          </div>
+                        </div>
+                        <div className="text-sm font-semibold text-gray-900 dark:text-gray-100 ml-3 flex-shrink-0">
+                          {formatCurrency(transaction.amount)}
+                        </div>
+                      </div>
+                    ))}
+                  </div>
+                  
+                  {categoryTransactions.length === 0 && (
+                    <p className="text-center text-gray-500 dark:text-gray-400 py-4">
+                      No transactions in this category
+                    </p>
+                  )}
+
+                  <div className="mt-3 text-center">
+                    <button
+                      onClick={() => setFocusedCategory(null)}
+                      className="text-sm text-gray-500 dark:text-gray-400 hover:text-gray-700 dark:hover:text-gray-300"
+                    >
+                      Tap another category or click here to close
+                    </button>
+                  </div>
+                </>
+              );
+            })()}
           </div>
         ) : (
-          <div className="mt-4 p-4 bg-gray-50 rounded-lg border text-center text-sm text-gray-500">
-            Tap on a category above to see details
+          <div className="mt-4 p-4 bg-gray-50 dark:bg-gray-700 rounded-lg border border-gray-200 dark:border-gray-600 text-center text-sm text-gray-500 dark:text-gray-400">
+            Tap on a category above to see all transactions
           </div>
         )}
       </div>

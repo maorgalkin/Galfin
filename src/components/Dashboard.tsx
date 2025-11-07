@@ -233,6 +233,11 @@ const Dashboard: React.FC = () => {
 
           {/* BUDGET PERFORMANCE - Unified Widget */}
           <div className="mb-8">
+            {/* Mobile Sticky Header */}
+            <div className="md:hidden sticky top-0 z-10 bg-purple-100 dark:bg-purple-950/30 -mx-3 px-3 py-3 mb-4 border-b-2 border-purple-300 dark:border-purple-700">
+              <h2 className="text-lg font-semibold text-purple-900 dark:text-purple-100">Budget Performance</h2>
+            </div>
+            
             {/* Desktop version - compact grid layout */}
             <div className="max-md:hidden">
               <BudgetPerformanceCard selectedMonth={selectedMonthDate} isCompact={true} themeColor="purple" />
@@ -246,6 +251,11 @@ const Dashboard: React.FC = () => {
 
           {/* 2. BUDGET CATEGORY BREAKDOWN - Second Priority */}
           <div className="mb-8">
+            {/* Mobile Sticky Header */}
+            <div className="md:hidden sticky top-0 z-10 bg-purple-100 dark:bg-purple-950/30 -mx-3 px-3 py-3 mb-4 border-b-2 border-purple-300 dark:border-purple-700">
+              <h2 className="text-lg font-semibold text-purple-900 dark:text-purple-100">Expenses by Category</h2>
+            </div>
+            
             <ExpenseChart
               categoryData={monthCategoryData}
               transactions={monthTransactions}
@@ -261,6 +271,11 @@ const Dashboard: React.FC = () => {
 
           {/* Family Members - Quick Access */}
           <div className="mb-8">
+            {/* Mobile Sticky Header */}
+            <div className="md:hidden sticky top-0 z-10 bg-purple-100 dark:bg-purple-950/30 -mx-3 px-3 py-3 mb-4 border-b-2 border-purple-300 dark:border-purple-700">
+              <h2 className="text-lg font-semibold text-purple-900 dark:text-purple-100">Family Members</h2>
+            </div>
+            
             <FamilyMembersCard
               familyMembersCount={familyMembers.length}
               onOpenModal={() => setIsFamilyMembersModalOpen(true)}
