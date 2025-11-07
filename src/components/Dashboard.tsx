@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useCallback } from 'react';
 import { useSearchParams } from 'react-router-dom';
 import { useFinance } from '../context/FinanceContext';
 import { useAuth } from '../contexts/AuthContext';
@@ -51,10 +51,10 @@ const Dashboard: React.FC = () => {
   const [isCustomDateRangeModalOpen, setIsCustomDateRangeModalOpen] = useState(false);
   const [showBreakdownInHeader, setShowBreakdownInHeader] = useState(false);
 
-  // Debug: Log when breakdown visibility changes
-  useEffect(() => {
-    console.log('showBreakdownInHeader changed:', showBreakdownInHeader);
-  }, [showBreakdownInHeader]);
+  // Memoize callback to prevent effect re-runs
+  const handleBreakdownVisible = useCallback((visible: boolean) => {
+    setShowBreakdownInHeader(visible);
+  }, []);
 
   // Track dark mode changes based on OS/browser preference
   useEffect(() => {
@@ -257,7 +257,7 @@ const Dashboard: React.FC = () => {
                 selectedMonth={selectedMonthDate} 
                 isCompact={false} 
                 themeColor="purple"
-                onBreakdownVisible={setShowBreakdownInHeader}
+                onBreakdownVisible={handleBreakdownVisible}
               />
             </div>
           </div>

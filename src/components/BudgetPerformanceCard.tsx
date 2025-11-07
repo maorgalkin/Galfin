@@ -41,17 +41,17 @@ export const BudgetPerformanceCard: React.FC<BudgetPerformanceCardProps> = ({
 
   // Intersection observer to detect when summary scrolls out of view (breakdown is visible)
   useEffect(() => {
-    if (!onBreakdownVisible || isCompact) return;
+    if (!onBreakdownVisible || isCompact || loadingActive || loadingMonthly) return;
 
-    // Wait for the element to be rendered
     const element = summaryRef.current;
-    if (!element) return;
+    if (!element) {
+      return;
+    }
 
     const observer = new IntersectionObserver(
       ([entry]) => {
         // When summary is NOT intersecting (scrolled out), breakdown is visible
         const breakdownVisible = !entry.isIntersecting;
-        console.log('Summary visible:', entry.isIntersecting, '-> Breakdown visible:', breakdownVisible);
         onBreakdownVisible(breakdownVisible);
       },
       {
@@ -63,7 +63,7 @@ export const BudgetPerformanceCard: React.FC<BudgetPerformanceCardProps> = ({
     observer.observe(element);
 
     return () => observer.disconnect();
-  }, [onBreakdownVisible, isCompact, showDetails]); // Add showDetails as dependency
+  }, [onBreakdownVisible, isCompact, loadingActive, loadingMonthly]);
 
   // Convert personal budget to BudgetConfiguration format for budgetService
   const budgetConfig = useMemo((): BudgetConfiguration => {
