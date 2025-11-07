@@ -1,4 +1,4 @@
-import React, { useState, useMemo } from 'react';
+import React, { useState, useMemo, useEffect, useRef } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useFinance } from '../context/FinanceContext';
 import { useActiveBudget, useCurrentMonthBudget, useNextMonthAdjustments } from '../hooks/useBudgets';
@@ -22,12 +22,14 @@ interface BudgetPerformanceCardProps {
   selectedMonth?: Date;
   isCompact?: boolean;
   themeColor?: ThemeColor;
+  onBreakdownVisible?: (visible: boolean) => void;
 }
 
 export const BudgetPerformanceCard: React.FC<BudgetPerformanceCardProps> = ({ 
   selectedMonth, 
   isCompact = false,
-  themeColor = 'purple'
+  themeColor = 'purple',
+  onBreakdownVisible
 }) => {
   const navigate = useNavigate();
   const { transactions } = useFinance();
@@ -35,6 +37,33 @@ export const BudgetPerformanceCard: React.FC<BudgetPerformanceCardProps> = ({
   const { data: monthlyBudget, isLoading: loadingMonthly } = useCurrentMonthBudget();
   const { data: adjustments } = useNextMonthAdjustments();
   const [showDetails, setShowDetails] = useState(false);
+  const summaryRef = useRef<HTMLDivElement>(null);
+
+  // Intersection observer to detect when summary scrolls out of view (breakdown is visible)
+  useEffect(() => {
+    if (!onBreakdownVisible || isCompact) return;
+
+    // Wait for the element to be rendered
+    const element = summaryRef.current;
+    if (!element) return;
+
+    const observer = new IntersectionObserver(
+      ([entry]) => {
+        // When summary is NOT intersecting (scrolled out), breakdown is visible
+        const breakdownVisible = !entry.isIntersecting;
+        console.log('Summary visible:', entry.isIntersecting, '-> Breakdown visible:', breakdownVisible);
+        onBreakdownVisible(breakdownVisible);
+      },
+      {
+        threshold: 0,
+        rootMargin: '-60px 0px 0px 0px' // Account for sticky header height
+      }
+    );
+
+    observer.observe(element);
+
+    return () => observer.disconnect();
+  }, [onBreakdownVisible, isCompact, showDetails]); // Add showDetails as dependency
 
   // Convert personal budget to BudgetConfiguration format for budgetService
   const budgetConfig = useMemo((): BudgetConfiguration => {
@@ -175,7 +204,7 @@ export const BudgetPerformanceCard: React.FC<BudgetPerformanceCardProps> = ({
       {/* Content */}
       <div className="p-6">
         {/* Summary Grid - Always Visible */}
-        <div className={`grid ${isCompact ? 'grid-cols-3' : 'grid-cols-2 md:grid-cols-3'} gap-4 mb-4`}>
+        <div ref={summaryRef} className={`grid ${isCompact ? 'grid-cols-3' : 'grid-cols-2 md:grid-cols-3'} gap-4 mb-4`}>
           {/* Income */}
           <div className="bg-green-50 dark:bg-green-900/20 rounded-lg p-4">
             <p className="text-xs font-medium text-gray-600 dark:text-gray-400 mb-1">Income</p>

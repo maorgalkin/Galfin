@@ -49,6 +49,12 @@ const Dashboard: React.FC = () => {
   const [selectedDesktopCategory, setSelectedDesktopCategory] = useState<string | null>(null);
   const [isCategoryModalOpen, setIsCategoryModalOpen] = useState(false);
   const [isCustomDateRangeModalOpen, setIsCustomDateRangeModalOpen] = useState(false);
+  const [showBreakdownInHeader, setShowBreakdownInHeader] = useState(false);
+
+  // Debug: Log when breakdown visibility changes
+  useEffect(() => {
+    console.log('showBreakdownInHeader changed:', showBreakdownInHeader);
+  }, [showBreakdownInHeader]);
 
   // Track dark mode changes based on OS/browser preference
   useEffect(() => {
@@ -235,7 +241,9 @@ const Dashboard: React.FC = () => {
           <div className="mb-8">
             {/* Mobile Sticky Header */}
             <div className="md:hidden sticky top-0 z-10 bg-purple-100 dark:bg-purple-950/30 -mx-3 px-3 py-3 mb-4 border-b-2 border-purple-300 dark:border-purple-700">
-              <h2 className="text-lg font-semibold text-purple-900 dark:text-purple-100">Budget Performance</h2>
+              <h2 className="text-lg font-semibold text-purple-900 dark:text-purple-100">
+                Budget Performance{showBreakdownInHeader && ' | Breakdown'}
+              </h2>
             </div>
             
             {/* Desktop version - compact grid layout */}
@@ -243,9 +251,14 @@ const Dashboard: React.FC = () => {
               <BudgetPerformanceCard selectedMonth={selectedMonthDate} isCompact={true} themeColor="purple" />
             </div>
             
-            {/* Mobile/Tablet version - full layout */}
+            {/* Mobile/Tablet version - full layout with breakdown observer */}
             <div className="md:hidden">
-              <BudgetPerformanceCard selectedMonth={selectedMonthDate} isCompact={false} themeColor="purple" />
+              <BudgetPerformanceCard 
+                selectedMonth={selectedMonthDate} 
+                isCompact={false} 
+                themeColor="purple"
+                onBreakdownVisible={setShowBreakdownInHeader}
+              />
             </div>
           </div>
 
