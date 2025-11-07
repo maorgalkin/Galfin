@@ -1,16 +1,24 @@
-import React, { useState, useMemo } from 'react';
+import React, { useState, useMemo, useRef, useEffect } from 'react';
+import { motion, useMotionValue, useAnimate } from 'framer-motion';
 import { useFinance } from '../../context/FinanceContext';
 import { useActiveBudget, useMonthlyBudgetsForDateRange } from '../../hooks/useBudgets';
 import { DateRangeFilter } from './DateRangeFilter';
 import { filterTransactionsByDateRange, getDateRange } from '../../utils/dateRangeFilters';
 import type { DateRangeType } from '../../utils/dateRangeFilters';
-import { AlertTriangle, TrendingUp, TrendingDown, Minus, Loader2, ChevronLeft, ChevronRight } from 'lucide-react';
+import { AlertTriangle, TrendingUp, TrendingDown, Minus, Loader2 } from 'lucide-react';
+
+const CATEGORY_WIDTH = 100; // Width of each category column
+const CATEGORY_GAP = 16; // Gap between categories
+const BAR_WIDTH = 80; // Width of individual bars
+const BAR_OVERLAP = 30; // Reduced from 85% for better clarity
 
 export const BudgetVsActual: React.FC = () => {
   const [dateRange, setDateRange] = useState<DateRangeType>('ytd');
-  const [currentPage, setCurrentPage] = useState(0);
-  const [isTransitioning, setIsTransitioning] = useState(false);
-  const [slideDirection, setSlideDirection] = useState<'left' | 'right'>('right');
+  const containerRef = useRef<HTMLDivElement>(null);
+  const [categoriesPerView, setCategoriesPerView] = useState(8);
+  const [scope, animate] = useAnimate();
+  const dragX = useMotionValue(0);
+  
   const { transactions } = useFinance();
   const { data: personalBudget, isLoading: loadingPersonal } = useActiveBudget();
   
@@ -84,17 +92,20 @@ export const BudgetVsActual: React.FC = () => {
     return data.sort((a, b) => b.actualSpending - a.actualSpending);
   }, [personalBudget, monthlyBudgets, filteredTransactions]);
 
-  // Pagination logic
-  const CATEGORIES_PER_PAGE = 13;
-  const totalPages = Math.ceil(categoryData.length / CATEGORIES_PER_PAGE);
-  const startIndex = currentPage * CATEGORIES_PER_PAGE;
-  const endIndex = startIndex + CATEGORIES_PER_PAGE;
-  const paginatedData = categoryData.slice(startIndex, endIndex);
+  // Calculate categories per view based on container width
+  useEffect(() => {
+    const updateCategoriesPerView = () => {
+      if (containerRef.current) {
+        const containerWidth = containerRef.current.offsetWidth;
+        const categoriesPerView = Math.floor(containerWidth / (CATEGORY_WIDTH + CATEGORY_GAP));
+        setCategoriesPerView(Math.max(3, categoriesPerView)); // Minimum 3 categories
+      }
+    };
 
-  // Reset to first page when date range changes
-  useMemo(() => {
-    setCurrentPage(0);
-  }, [dateRange]);
+    updateCategoriesPerView();
+    window.addEventListener('resize', updateCategoriesPerView);
+    return () => window.removeEventListener('resize', updateCategoriesPerView);
+  }, []);
 
   const summary = useMemo(() => {
     return categoryData.reduce(
@@ -254,20 +265,35 @@ export const BudgetVsActual: React.FC = () => {
               </div>
             </div>
 
-            {/* Column Chart - Overlapping Bars with Pagination */}
-            <div className="relative overflow-hidden">
-              <div 
-                className={`flex items-end gap-4 px-8 transition-all duration-300 ${
-                  isTransitioning 
-                    ? slideDirection === 'right'
-                      ? '-translate-x-full opacity-0' 
-                      : 'translate-x-full opacity-0'
-                    : 'translate-x-0 opacity-100'
-                }`}
-                style={{ height: '480px' }}
+            {/* Column Chart - Drag Scrollable */}
+            <div 
+              ref={containerRef} 
+              className="relative overflow-hidden cursor-grab active:cursor-grabbing"
+              style={{ height: '480px' }}
+            >
+              <motion.div
+                ref={scope}
+                drag="x"
+                dragConstraints={{
+                  left: Math.min(0, -(categoryData.length - categoriesPerView) * (CATEGORY_WIDTH + CATEGORY_GAP)),
+                  right: 0
+                }}
+                dragElastic={0.1}
+                style={{ x: dragX }}
+                onDragEnd={() => {
+                  // Snap to nearest category
+                  const categoryStep = CATEGORY_WIDTH + CATEGORY_GAP;
+                  const currentX = dragX.get();
+                  const snappedIndex = Math.round(-currentX / categoryStep);
+                  const snappedX = -snappedIndex * categoryStep;
+                  
+                  // Animate to snapped position
+                  animate(scope.current, { x: snappedX }, { type: 'spring', stiffness: 300, damping: 30 });
+                }}
+                className="flex items-end gap-4 px-8 h-full"
               >
-                {paginatedData.map((cat) => {
-                  // Find the maximum value across all categories (not just current page) to normalize the chart height
+                {categoryData.map((cat) => {
+                  // Find the maximum value across all categories to normalize chart height
                   const maxValue = Math.max(
                     ...categoryData.map(c => Math.max(c.originalBudget, c.currentBudget, c.actualSpending))
                   );
@@ -288,28 +314,28 @@ export const BudgetVsActual: React.FC = () => {
                     ? 'bg-yellow-400 dark:bg-yellow-600'
                     : 'bg-green-400 dark:bg-green-600';
 
-                  // Truncate category name if too long (max 18 chars for better readability)
+                  // Truncate category name if too long
                   const displayName = cat.category.length > 18 
                     ? cat.category.substring(0, 18) + '...' 
                     : cat.category;
 
-                  // Bar width: 32px, with 85% overlap means each bar shows 15% (4.8px) of itself
-                  // Total width = 32 + 4.8 + 4.8 = 41.6px per category
-                  const barWidth = 32;
-                  const overlapPercent = 85;
-                  const visibleWidth = barWidth * (1 - overlapPercent / 100);
+                  const visibleWidth = BAR_WIDTH * (BAR_OVERLAP / 100);
 
                   return (
-                    <div key={cat.category} className="flex flex-col items-center gap-2">
+                    <div 
+                      key={cat.category} 
+                      className="flex flex-col items-center gap-2 flex-shrink-0 pointer-events-none"
+                      style={{ width: `${CATEGORY_WIDTH}px` }}
+                    >
                       {/* Bar Container with 3 overlapping bars */}
-                      <div className="relative flex items-end" style={{ height: '350px', width: `${barWidth + visibleWidth * 2}px` }}>
+                      <div className="relative flex items-end" style={{ height: '350px', width: `${BAR_WIDTH + visibleWidth * 2}px` }}>
                         {/* Original Budget (Gray) - leftmost */}
                         <div
                           className="absolute bottom-0 left-0 bg-gray-400 dark:bg-gray-600 rounded-t transition-all duration-500 shadow-md border-r border-gray-500 dark:border-gray-700"
                           style={{ 
                             height: `${originalHeight}%`, 
                             minHeight: cat.originalBudget > 0 ? '4px' : '0',
-                            width: `${barWidth}px`,
+                            width: `${BAR_WIDTH}px`,
                             zIndex: 1
                           }}
                           title={`${cat.category} - Original: ${formatCurrency(cat.originalBudget)}`}
@@ -321,20 +347,20 @@ export const BudgetVsActual: React.FC = () => {
                           style={{ 
                             height: `${currentHeight}%`, 
                             minHeight: cat.currentBudget > 0 ? '4px' : '0',
-                            width: `${barWidth}px`,
+                            width: `${BAR_WIDTH}px`,
                             left: `${visibleWidth}px`,
                             zIndex: 2
                           }}
                           title={`${cat.category} - Current: ${formatCurrency(cat.currentBudget)}`}
                         />
 
-                        {/* Actual Spending (Green/Yellow/Red) - rightmost, overlaps purple */}
+                        {/* Actual Spending (Green/Yellow/Red) - rightmost */}
                         <div
                           className={`absolute bottom-0 rounded-t transition-all duration-500 shadow-md ${actualColor}`}
                           style={{ 
                             height: `${actualHeight}%`, 
                             minHeight: cat.actualSpending > 0 ? '4px' : '0',
-                            width: `${barWidth}px`,
+                            width: `${BAR_WIDTH}px`,
                             left: `${visibleWidth * 2}px`,
                             zIndex: 3
                           }}
@@ -344,7 +370,7 @@ export const BudgetVsActual: React.FC = () => {
 
                       {/* Category Name (Diagonal) and Utilization */}
                       <div className="flex flex-col items-center" style={{ height: '100px', width: '40px' }}>
-                        {/* Diagonal Label - positioned to be visible */}
+                        {/* Diagonal Label */}
                         <div className="relative" style={{ height: '80px', width: '40px' }}>
                           <div
                             className="absolute bottom-0 left-1/2 origin-bottom-left whitespace-nowrap"
@@ -358,7 +384,7 @@ export const BudgetVsActual: React.FC = () => {
                                 style={{ backgroundColor: cat.color }}
                               />
                               <span 
-                                className="text-xs font-medium text-gray-900 dark:text-gray-100"
+                                className="text-xs font-medium text-gray-900 dark:text-gray-100 pointer-events-auto"
                                 title={cat.category}
                               >
                                 {displayName}
@@ -376,42 +402,7 @@ export const BudgetVsActual: React.FC = () => {
                     </div>
                   );
                 })}
-              </div>
-
-              {/* Pagination Controls */}
-              {totalPages > 1 && (
-                <div className="flex items-center justify-center gap-4 mt-6">
-                  <button
-                    onClick={() => {
-                      setSlideDirection('left');
-                      setIsTransitioning(true);
-                      setTimeout(() => {
-                        setCurrentPage(prev => Math.max(0, prev - 1));
-                        setIsTransitioning(false);
-                      }, 150);
-                    }}
-                    disabled={currentPage === 0 || isTransitioning}
-                    className="flex items-center gap-2 px-4 py-2 rounded-lg bg-gray-100 dark:bg-gray-700 text-gray-700 dark:text-gray-300 hover:bg-gray-200 dark:hover:bg-gray-600 disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
-                  >
-                    <ChevronLeft className="h-5 w-5" />
-                  </button>
-                  
-                  <button
-                    onClick={() => {
-                      setSlideDirection('right');
-                      setIsTransitioning(true);
-                      setTimeout(() => {
-                        setCurrentPage(prev => Math.min(totalPages - 1, prev + 1));
-                        setIsTransitioning(false);
-                      }, 150);
-                    }}
-                    disabled={currentPage === totalPages - 1 || isTransitioning}
-                    className="flex items-center gap-2 px-4 py-2 rounded-lg bg-gray-100 dark:bg-gray-700 text-gray-700 dark:text-gray-300 hover:bg-gray-200 dark:hover:bg-gray-600 disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
-                  >
-                    <ChevronRight className="h-5 w-5" />
-                  </button>
-                </div>
-              )}
+              </motion.div>
             </div>
           </>
         )}
