@@ -326,8 +326,25 @@ const Dashboard: React.FC = () => {
                 </svg>
               </button>
 
-              {/* Month Carousel */}
-              <div className="relative w-full sm:w-[560px] h-20 sm:h-32 flex items-center justify-center overflow-visible">
+              {/* Month Carousel - Swipeable/Draggable */}
+              <motion.div 
+                className="relative w-full sm:w-[560px] h-20 sm:h-32 flex items-center justify-center overflow-visible cursor-grab active:cursor-grabbing"
+                drag="x"
+                dragConstraints={{ left: 0, right: 0 }}
+                dragElastic={0.2}
+                onDragEnd={(_event, info) => {
+                  const swipeThreshold = 50;
+                  const offsetX = info.offset.x;
+
+                  if (offsetX > swipeThreshold && activeMonthTab > 0) {
+                    setDirection(-1);
+                    setActiveMonthTab(activeMonthTab - 1);
+                  } else if (offsetX < -swipeThreshold && activeMonthTab < months.length - 1) {
+                    setDirection(1);
+                    setActiveMonthTab(activeMonthTab + 1);
+                  }
+                }}
+              >
                 <div className="flex items-center justify-center gap-0 sm:gap-2">
                   <AnimatePresence mode="popLayout">
                     {/* Dummy placeholder on the left */}
@@ -404,7 +421,7 @@ const Dashboard: React.FC = () => {
                     )}
                   </AnimatePresence>
                 </div>
-              </div>
+              </motion.div>
 
               {/* Right Arrow */}
               <button

@@ -56,6 +56,19 @@ export const MonthNavigator: React.FC<MonthNavigatorProps> = ({
     onMonthChange(activeMonthIndex + 1);
   };
 
+  const handleDragEnd = (_event: MouseEvent | TouchEvent | PointerEvent, info: { offset: { x: number } }) => {
+    const swipeThreshold = 50; // Minimum distance for a swipe
+    const offsetX = info.offset.x;
+
+    if (offsetX > swipeThreshold && activeMonthIndex > 0) {
+      // Swiped right - go to previous (newer) month
+      handlePrevious();
+    } else if (offsetX < -swipeThreshold && activeMonthIndex < months.length - 1) {
+      // Swiped left - go to next (older) month
+      handleNext();
+    }
+  };
+
   return (
     <div className="mb-8">
       <div className="flex justify-between items-center mb-6">
@@ -81,7 +94,13 @@ export const MonthNavigator: React.FC<MonthNavigatorProps> = ({
         </button>
 
         {/* Month Carousel - Scrolls LEFT to RIGHT (Current month at leftmost, oldest at rightmost) */}
-        <div className="relative w-full sm:w-[560px] h-20 sm:h-32 flex items-center justify-center overflow-visible">
+        <motion.div 
+          className="relative w-full sm:w-[560px] h-20 sm:h-32 flex items-center justify-center overflow-visible cursor-grab active:cursor-grabbing"
+          drag="x"
+          dragConstraints={{ left: 0, right: 0 }}
+          dragElastic={0.2}
+          onDragEnd={handleDragEnd}
+        >
           <div className="flex items-center justify-center gap-0 sm:gap-2">
             <AnimatePresence mode="popLayout">
               {/* Dummy placeholder on the left (when at current month) */}
@@ -162,7 +181,7 @@ export const MonthNavigator: React.FC<MonthNavigatorProps> = ({
               )}
             </AnimatePresence>
           </div>
-        </div>
+        </motion.div>
 
         {/* Right Arrow - Go to Next Month in Carousel (Older - Higher Index) */}
         <button
