@@ -268,8 +268,8 @@ export const BudgetVsActual: React.FC = () => {
             {/* Column Chart - Drag Scrollable */}
             <div 
               ref={containerRef} 
-              className="relative overflow-hidden cursor-grab active:cursor-grabbing"
-              style={{ height: '480px' }}
+              className="relative overflow-hidden"
+              style={{ height: '480px', touchAction: 'pan-y pinch-zoom' }}
             >
               <motion.div
                 ref={scope}
@@ -279,6 +279,7 @@ export const BudgetVsActual: React.FC = () => {
                   right: 0
                 }}
                 dragElastic={0.1}
+                dragMomentum={false}
                 style={{ x: dragX }}
                 onDragEnd={() => {
                   // Snap to nearest category
@@ -290,7 +291,7 @@ export const BudgetVsActual: React.FC = () => {
                   // Animate to snapped position
                   animate(scope.current, { x: snappedX }, { type: 'spring', stiffness: 300, damping: 30 });
                 }}
-                className="flex items-end gap-4 px-8 h-full"
+                className="flex items-end gap-4 px-8 h-full cursor-grab active:cursor-grabbing"
               >
                 {categoryData.map((cat) => {
                   // Find the maximum value across all categories to normalize chart height
@@ -328,7 +329,7 @@ export const BudgetVsActual: React.FC = () => {
                       style={{ width: `${CATEGORY_WIDTH}px` }}
                     >
                       {/* Bar Container with 3 overlapping bars */}
-                      <div className="relative flex items-end pointer-events-none" style={{ height: '350px', width: `${BAR_WIDTH + visibleWidth * 2}px` }}>
+                      <div className="relative flex items-end" style={{ height: '350px', width: `${BAR_WIDTH + visibleWidth * 2}px` }}>
                         {/* Original Budget (Gray) - leftmost */}
                         <div
                           className="absolute bottom-0 left-0 bg-gray-400 dark:bg-gray-600 rounded-t transition-all duration-500 shadow-md border-r border-gray-500 dark:border-gray-700"
@@ -369,7 +370,7 @@ export const BudgetVsActual: React.FC = () => {
                       </div>
 
                       {/* Category Name (Diagonal) and Utilization */}
-                      <div className="flex flex-col items-center pointer-events-none" style={{ height: '100px', width: '40px' }}>
+                      <div className="flex flex-col items-center" style={{ height: '100px', width: '40px' }}>
                         {/* Diagonal Label */}
                         <div className="relative" style={{ height: '80px', width: '40px' }}>
                           <div
