@@ -324,11 +324,11 @@ export const BudgetVsActual: React.FC = () => {
                   return (
                     <div 
                       key={cat.category} 
-                      className="flex flex-col items-center gap-2 flex-shrink-0 pointer-events-none"
+                      className="flex flex-col items-center gap-2 flex-shrink-0"
                       style={{ width: `${CATEGORY_WIDTH}px` }}
                     >
                       {/* Bar Container with 3 overlapping bars */}
-                      <div className="relative flex items-end" style={{ height: '350px', width: `${BAR_WIDTH + visibleWidth * 2}px` }}>
+                      <div className="relative flex items-end pointer-events-none" style={{ height: '350px', width: `${BAR_WIDTH + visibleWidth * 2}px` }}>
                         {/* Original Budget (Gray) - leftmost */}
                         <div
                           className="absolute bottom-0 left-0 bg-gray-400 dark:bg-gray-600 rounded-t transition-all duration-500 shadow-md border-r border-gray-500 dark:border-gray-700"
@@ -369,7 +369,7 @@ export const BudgetVsActual: React.FC = () => {
                       </div>
 
                       {/* Category Name (Diagonal) and Utilization */}
-                      <div className="flex flex-col items-center" style={{ height: '100px', width: '40px' }}>
+                      <div className="flex flex-col items-center pointer-events-none" style={{ height: '100px', width: '40px' }}>
                         {/* Diagonal Label */}
                         <div className="relative" style={{ height: '80px', width: '40px' }}>
                           <div
@@ -384,7 +384,7 @@ export const BudgetVsActual: React.FC = () => {
                                 style={{ backgroundColor: cat.color }}
                               />
                               <span 
-                                className="text-xs font-medium text-gray-900 dark:text-gray-100 pointer-events-auto"
+                                className="text-xs font-medium text-gray-900 dark:text-gray-100"
                                 title={cat.category}
                               >
                                 {displayName}
