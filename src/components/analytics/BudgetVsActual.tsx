@@ -321,15 +321,28 @@ export const BudgetVsActual: React.FC = () => {
                     : cat.category;
 
                   const visibleWidth = BAR_WIDTH * (BAR_OVERLAP / 100);
+                  const totalBarWidth = BAR_WIDTH + visibleWidth * 2;
 
                   return (
                     <div 
                       key={cat.category} 
-                      className="flex flex-col items-center gap-2 flex-shrink-0"
+                      className="relative flex flex-col items-center gap-2 flex-shrink-0"
                       style={{ width: `${CATEGORY_WIDTH}px` }}
                     >
+                      {/* Invisible drag overlay - covers full height */}
+                      <div 
+                        className="absolute inset-0 z-10"
+                        style={{ width: '100%', height: '100%' }}
+                      />
+                      
                       {/* Bar Container with 3 overlapping bars */}
-                      <div className="relative flex items-end pointer-events-none" style={{ height: '350px', width: `${BAR_WIDTH + visibleWidth * 2}px` }}>
+                      <div 
+                        className="relative flex items-end pointer-events-none" 
+                        style={{ 
+                          height: '350px', 
+                          width: `${totalBarWidth}px`
+                        }}
+                      >
                         {/* Original Budget (Gray) - leftmost */}
                         <div
                           className="absolute bottom-0 left-0 bg-gray-400 dark:bg-gray-600 rounded-t transition-all duration-500 shadow-md border-r border-gray-500 dark:border-gray-700 pointer-events-none"
