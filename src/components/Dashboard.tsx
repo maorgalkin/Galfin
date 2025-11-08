@@ -1,8 +1,9 @@
-import React, { useState, useEffect, useCallback } from 'react';
+import React, { useState, useEffect, useCallback, useMemo } from 'react';
 import { useSearchParams } from 'react-router-dom';
 import { useFinance } from '../context/FinanceContext';
 import { useAuth } from '../contexts/AuthContext';
 import { useActiveBudget } from '../hooks/useBudgets';
+import { budgetService } from '../services/budgetService';
 import { motion, AnimatePresence } from 'framer-motion';
 import { BudgetPerformanceCard } from './BudgetPerformanceCard';
 import EditTransactionModal from './EditTransactionModal';
@@ -19,7 +20,7 @@ import { FamilyMembersCard } from './dashboard/FamilyMembersCard';
 import { TransactionsList } from './dashboard/TransactionsList';
 import { CategoryTransactionsModal } from './dashboard/CategoryTransactionsModal';
 import CustomDateRangeModal from './CustomDateRangeModal';
-import type { Transaction } from '../types';
+import type { Transaction, BudgetConfiguration } from '../types';
 
 const Dashboard: React.FC = () => {
   const { transactions, familyMembers, addTransaction, deleteTransaction } = useFinance();
@@ -50,6 +51,32 @@ const Dashboard: React.FC = () => {
   const [isCategoryModalOpen, setIsCategoryModalOpen] = useState(false);
   const [isCustomDateRangeModalOpen, setIsCustomDateRangeModalOpen] = useState(false);
   const [showBreakdownInHeader, setShowBreakdownInHeader] = useState(false);
+  const [alertsViewed, setAlertsViewed] = useState(false);
+
+  // Calculate budget alerts for the current month
+  const currentAlertsCount = useMemo(() => {
+    if (!personalBudget || alertsViewed) return 0;
+    
+    const budgetConfig: BudgetConfiguration = {
+      version: "2.0.0",
+      lastUpdated: personalBudget.updated_at,
+      categories: personalBudget.categories,
+      globalSettings: personalBudget.global_settings
+    };
+    
+    const currentDate = new Date();
+    const monthName = currentDate.toLocaleDateString('en-US', { month: 'long' });
+    const year = currentDate.getFullYear();
+    
+    const analysis = budgetService.analyzeBudgetPerformanceWithConfig(
+      transactions,
+      monthName,
+      year,
+      budgetConfig
+    );
+    
+    return analysis.alerts.length;
+  }, [personalBudget, transactions, alertsViewed]);
 
   // Memoize callback to prevent effect re-runs
   const handleBreakdownVisible = useCallback((visible: boolean) => {
@@ -209,7 +236,7 @@ const Dashboard: React.FC = () => {
       <DashboardTabNavigation
         activeTab={activeTab}
         onTabChange={setActiveTab}
-        alertsCount={0}
+        alertsCount={currentAlertsCount}
       />
 
       {activeTab === 'dashboard' && (
@@ -248,7 +275,12 @@ const Dashboard: React.FC = () => {
             
             {/* Desktop version - compact grid layout */}
             <div className="max-md:hidden">
-              <BudgetPerformanceCard selectedMonth={selectedMonthDate} isCompact={true} themeColor="purple" />
+              <BudgetPerformanceCard 
+                selectedMonth={selectedMonthDate} 
+                isCompact={true} 
+                themeColor="purple"
+                onAlertsViewed={() => setAlertsViewed(true)}
+              />
             </div>
             
             {/* Mobile/Tablet version - full layout with breakdown observer */}
@@ -258,6 +290,7 @@ const Dashboard: React.FC = () => {
                 isCompact={false} 
                 themeColor="purple"
                 onBreakdownVisible={handleBreakdownVisible}
+                onAlertsViewed={() => setAlertsViewed(true)}
               />
             </div>
           </div>

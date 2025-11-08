@@ -23,13 +23,15 @@ interface BudgetPerformanceCardProps {
   isCompact?: boolean;
   themeColor?: ThemeColor;
   onBreakdownVisible?: (visible: boolean) => void;
+  onAlertsViewed?: () => void;
 }
 
 export const BudgetPerformanceCard: React.FC<BudgetPerformanceCardProps> = ({ 
   selectedMonth, 
   isCompact = false,
   themeColor = 'purple',
-  onBreakdownVisible
+  onBreakdownVisible,
+  onAlertsViewed
 }) => {
   const navigate = useNavigate();
   const { transactions } = useFinance();
@@ -37,6 +39,7 @@ export const BudgetPerformanceCard: React.FC<BudgetPerformanceCardProps> = ({
   const { data: monthlyBudget, isLoading: loadingMonthly } = useCurrentMonthBudget();
   const { data: adjustments } = useNextMonthAdjustments();
   const [showDetails, setShowDetails] = useState(false);
+  const [viewingAlerts, setViewingAlerts] = useState(false);
   const summaryRef = useRef<HTMLDivElement>(null);
 
   // Intersection observer to detect when summary scrolls out of view (breakdown is visible)
@@ -292,7 +295,7 @@ export const BudgetPerformanceCard: React.FC<BudgetPerformanceCardProps> = ({
         </div>
 
         {/* Alerts Preview */}
-        {budgetAnalysis.alerts.length > 0 && !showDetails && (
+        {budgetAnalysis.alerts.length > 0 && !showDetails && !viewingAlerts && (
           <div className="mb-4">
             <div className="flex items-center justify-between p-3 rounded-lg bg-orange-50 dark:bg-orange-900/20 border-l-4 border-orange-400">
               <div className="flex items-center">
@@ -302,8 +305,12 @@ export const BudgetPerformanceCard: React.FC<BudgetPerformanceCardProps> = ({
                 </span>
               </div>
               <button
-                onClick={() => setShowDetails(true)}
-                className="text-sm text-orange-700 dark:text-orange-300 hover:text-orange-800 dark:hover:text-orange-200"
+                onClick={() => {
+                  setViewingAlerts(true);
+                  setShowDetails(true);
+                  onAlertsViewed?.();
+                }}
+                className="text-sm text-orange-700 dark:text-orange-300 hover:text-orange-800 dark:hover:text-orange-200 font-medium"
               >
                 View
               </button>
@@ -331,10 +338,30 @@ export const BudgetPerformanceCard: React.FC<BudgetPerformanceCardProps> = ({
         {/* Detailed Category Breakdown */}
         {(showDetails || !isCompact) && (
           <div className="mb-4 pt-4 border-t border-gray-200 dark:border-gray-700">
-            <h4 className="text-sm font-semibold text-gray-900 dark:text-gray-100 mb-3">Category Breakdown</h4>
+            <div className="flex items-center justify-between mb-3">
+              <h4 className="text-sm font-semibold text-gray-900 dark:text-gray-100">
+                {viewingAlerts ? 'Alert Categories' : 'Category Breakdown'}
+              </h4>
+              {viewingAlerts && (
+                <button
+                  onClick={() => setViewingAlerts(false)}
+                  className="text-xs text-gray-600 dark:text-gray-400 hover:text-gray-800 dark:hover:text-gray-200"
+                >
+                  Show All
+                </button>
+              )}
+            </div>
             <div className={`space-y-3 ${isCompact ? 'max-h-96 overflow-y-auto' : ''}`}>
               {budgetAnalysis.categoryComparisons
-                .filter(comp => comp.budgeted > 0)
+                .filter(comp => {
+                  if (comp.budgeted === 0) return false;
+                  // If viewing alerts, only show categories with alerts
+                  if (viewingAlerts) {
+                    const hasAlert = budgetAnalysis.alerts.some(alert => alert.category === comp.category);
+                    return hasAlert;
+                  }
+                  return true;
+                })
                 .sort((a, b) => b.budgeted - a.budgeted)
                 .map((comparison) => {
                   const utilization = comparison.budgeted > 0 ? (comparison.actual / comparison.budgeted) * 100 : 0;

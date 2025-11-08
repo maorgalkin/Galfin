@@ -174,9 +174,8 @@ export class BudgetService {
           acknowledged: false
         });
       }
-
-      // Approaching limit alert
-      if (spentPercentage >= warningThreshold && 
+      // Approaching limit alert - only if NOT already over budget
+      else if (spentPercentage >= warningThreshold && 
           spentPercentage < 100) {
         alerts.push({
           id: `approaching-${comparison.category}-${month}-${year}`,
