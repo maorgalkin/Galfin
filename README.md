@@ -42,11 +42,12 @@ For comprehensive documentation, please refer to:
    ```
 
 3. Set up environment variables:
-   - Copy `.env.example` to `.env` (if available)
+   - Copy `.env.example` to `.env`
    - Add your Supabase credentials:
      ```env
      VITE_SUPABASE_URL=your_supabase_url
      VITE_SUPABASE_ANON_KEY=your_supabase_anon_key
+     VITE_SITE_URL=http://localhost:5173  # Use production URL in Vercel
      ```
    - See [Supabase Setup Guide](docs/SUPABASE_BRINGUP.md) for detailed instructions
 
