@@ -9,13 +9,15 @@ import { AlertTriangle, TrendingUp, TrendingDown, Minus, Loader2 } from 'lucide-
 
 const CATEGORY_WIDTH = 100; // Width of each category column
 const CATEGORY_GAP = 16; // Gap between categories
-const BAR_WIDTH = 80; // Width of individual bars
+const BAR_WIDTH_DESKTOP = 80; // Width of individual bars on desktop
+const BAR_WIDTH_MOBILE = 50; // Width of individual bars on mobile (thinner)
 const BAR_OVERLAP = 30; // Reduced from 85% for better clarity
 
 export const BudgetVsActual: React.FC = () => {
   const [dateRange, setDateRange] = useState<DateRangeType>('ytd');
   const containerRef = useRef<HTMLDivElement>(null);
   const [categoriesPerView, setCategoriesPerView] = useState(8);
+  const [barWidth, setBarWidth] = useState(BAR_WIDTH_DESKTOP);
   const [scope, animate] = useAnimate();
   const dragX = useMotionValue(0);
   
@@ -92,19 +94,23 @@ export const BudgetVsActual: React.FC = () => {
     return data.sort((a, b) => b.actualSpending - a.actualSpending);
   }, [personalBudget, monthlyBudgets, filteredTransactions]);
 
-  // Calculate categories per view based on container width
+  // Calculate categories per view and bar width based on container width
   useEffect(() => {
-    const updateCategoriesPerView = () => {
+    const updateLayout = () => {
       if (containerRef.current) {
         const containerWidth = containerRef.current.offsetWidth;
         const categoriesPerView = Math.floor(containerWidth / (CATEGORY_WIDTH + CATEGORY_GAP));
         setCategoriesPerView(Math.max(3, categoriesPerView)); // Minimum 3 categories
+        
+        // Use thinner bars on mobile (< 768px)
+        const isMobile = window.innerWidth < 768;
+        setBarWidth(isMobile ? BAR_WIDTH_MOBILE : BAR_WIDTH_DESKTOP);
       }
     };
 
-    updateCategoriesPerView();
-    window.addEventListener('resize', updateCategoriesPerView);
-    return () => window.removeEventListener('resize', updateCategoriesPerView);
+    updateLayout();
+    window.addEventListener('resize', updateLayout);
+    return () => window.removeEventListener('resize', updateLayout);
   }, []);
 
   const summary = useMemo(() => {
@@ -320,8 +326,8 @@ export const BudgetVsActual: React.FC = () => {
                     ? cat.category.substring(0, 18) + '...' 
                     : cat.category;
 
-                  const visibleWidth = BAR_WIDTH * (BAR_OVERLAP / 100);
-                  const totalBarWidth = BAR_WIDTH + visibleWidth * 2;
+                  const visibleWidth = barWidth * (BAR_OVERLAP / 100);
+                  const totalBarWidth = barWidth + visibleWidth * 2;
 
                   return (
                     <div 
@@ -349,7 +355,7 @@ export const BudgetVsActual: React.FC = () => {
                           style={{ 
                             height: `${originalHeight}%`, 
                             minHeight: cat.originalBudget > 0 ? '4px' : '0',
-                            width: `${BAR_WIDTH}px`,
+                            width: `${barWidth}px`,
                             zIndex: 1
                           }}
                           title={`${cat.category} - Original: ${formatCurrency(cat.originalBudget)}`}
@@ -361,7 +367,7 @@ export const BudgetVsActual: React.FC = () => {
                           style={{ 
                             height: `${currentHeight}%`, 
                             minHeight: cat.currentBudget > 0 ? '4px' : '0',
-                            width: `${BAR_WIDTH}px`,
+                            width: `${barWidth}px`,
                             left: `${visibleWidth}px`,
                             zIndex: 2
                           }}
@@ -374,7 +380,7 @@ export const BudgetVsActual: React.FC = () => {
                           style={{ 
                             height: `${actualHeight}%`, 
                             minHeight: cat.actualSpending > 0 ? '4px' : '0',
-                            width: `${BAR_WIDTH}px`,
+                            width: `${barWidth}px`,
                             left: `${visibleWidth * 2}px`,
                             zIndex: 3
                           }}
