@@ -312,132 +312,135 @@ export const BudgetVsActual: React.FC = () => {
                 }}
                 className="flex items-end h-full cursor-grab active:cursor-grabbing"
               >
-                {categoryData.map((cat) => {
-                  // Find the maximum value across all categories to normalize chart height
+                {(() => {
+                  // Calculate max value once for normalization
                   const maxValue = Math.max(
-                    ...categoryData.map(c => Math.max(c.originalBudget, c.currentBudget, c.actualSpending))
+                    ...categoryData.map(c => Math.max(c.originalBudget, c.currentBudget, c.actualSpending)),
+                    1 // Ensure at least 1 to avoid division by zero
                   );
-                  
-                  // Calculate heights as percentage of maxValue
-                  const originalHeight = maxValue > 0 ? (cat.originalBudget / maxValue) * 100 : 0;
-                  const currentHeight = maxValue > 0 ? (cat.currentBudget / maxValue) * 100 : 0;
-                  const actualHeight = maxValue > 0 ? (cat.actualSpending / maxValue) * 100 : 0;
-                  
-                  const utilizationPercent = cat.currentBudget > 0 
-                    ? (cat.actualSpending / cat.currentBudget) * 100 
-                    : 0;
 
-                  // Determine actual spending color based on comparison to current budget
-                  const actualColor = cat.actualSpending > cat.currentBudget
-                    ? 'bg-red-400 dark:bg-red-600'
-                    : utilizationPercent > 80
-                    ? 'bg-yellow-400 dark:bg-yellow-600'
-                    : 'bg-green-400 dark:bg-green-600';
+                  return categoryData.map((cat) => {
+                    // Calculate heights as percentage of maxValue (already calculated above)
+                    const originalHeight = maxValue > 0 ? (cat.originalBudget / maxValue) * 100 : 0;
+                    const currentHeight = maxValue > 0 ? (cat.currentBudget / maxValue) * 100 : 0;
+                    const actualHeight = maxValue > 0 ? (cat.actualSpending / maxValue) * 100 : 0;
+                    
+                    const utilizationPercent = cat.currentBudget > 0 
+                      ? (cat.actualSpending / cat.currentBudget) * 100 
+                      : 0;
 
-                  // Truncate category name if too long
-                  const displayName = cat.category.length > 18 
-                    ? cat.category.substring(0, 18) + '...' 
-                    : cat.category;
+                    // Determine actual spending color based on comparison to current budget
+                    const actualColor = cat.actualSpending > cat.currentBudget
+                      ? 'bg-red-400 dark:bg-red-600'
+                      : utilizationPercent > 80
+                      ? 'bg-yellow-400 dark:bg-yellow-600'
+                      : 'bg-green-400 dark:bg-green-600';
 
-                  const visibleWidth = barWidth * (BAR_OVERLAP / 100);
-                  const totalBarWidth = barWidth + visibleWidth * 2;
+                    // Truncate category name if too long
+                    const displayName = cat.category.length > 18 
+                      ? cat.category.substring(0, 18) + '...' 
+                      : cat.category;
 
-                  return (
-                    <div 
-                      key={cat.category} 
-                      className="relative flex flex-col items-center flex-shrink-0"
-                      style={{ 
-                        width: `${categoryWidth}px`,
-                        marginRight: `${categoryGap}px`
-                      }}
-                    >
-                      {/* Invisible drag overlay - covers full height */}
+                    const visibleWidth = barWidth * (BAR_OVERLAP / 100);
+                    const totalBarWidth = barWidth + visibleWidth * 2;
+
+                    return (
                       <div 
-                        className="absolute inset-0 z-10"
-                        style={{ width: '100%', height: '100%' }}
-                      />
-                      
-                      {/* Bar Container with 3 overlapping bars */}
-                      <div 
-                        className="relative flex items-end pointer-events-none" 
+                        key={cat.category} 
+                        className="relative flex flex-col items-center flex-shrink-0"
                         style={{ 
-                          height: '350px', 
-                          width: `${totalBarWidth}px`
+                          width: `${categoryWidth}px`,
+                          marginRight: `${categoryGap}px`
                         }}
                       >
-                        {/* Original Budget (Gray) - leftmost */}
-                        <div
-                          className="absolute bottom-0 left-0 bg-gray-400 dark:bg-gray-600 rounded-t transition-all duration-500 shadow-md border-r border-gray-500 dark:border-gray-700 pointer-events-none"
-                          style={{ 
-                            height: `${originalHeight}%`, 
-                            minHeight: cat.originalBudget > 0 ? '4px' : '0',
-                            width: `${barWidth}px`,
-                            zIndex: 1
-                          }}
-                          title={`${cat.category} - Original: ${formatCurrency(cat.originalBudget)}`}
+                        {/* Invisible drag overlay - covers full height */}
+                        <div 
+                          className="absolute inset-0 z-10"
+                          style={{ width: '100%', height: '100%' }}
                         />
-
-                        {/* Current Budget (Blue) - middle, overlaps gray */}
-                        <div
-                          className="absolute bottom-0 bg-blue-400 dark:bg-blue-600 rounded-t transition-all duration-500 shadow-md border-r border-blue-500 dark:border-blue-700 pointer-events-none"
+                        
+                        {/* Bar Container with 3 overlapping bars */}
+                        <div 
+                          className="relative flex items-end pointer-events-none" 
                           style={{ 
-                            height: `${currentHeight}%`, 
-                            minHeight: cat.currentBudget > 0 ? '4px' : '0',
-                            width: `${barWidth}px`,
-                            left: `${visibleWidth}px`,
-                            zIndex: 2
+                            height: '350px', 
+                            width: `${totalBarWidth}px`
                           }}
-                          title={`${cat.category} - Current: ${formatCurrency(cat.currentBudget)}`}
-                        />
-
-                        {/* Actual Spending (Green/Yellow/Red) - rightmost */}
-                        <div
-                          className={`absolute bottom-0 rounded-t transition-all duration-500 shadow-md pointer-events-none ${actualColor}`}
-                          style={{ 
-                            height: `${actualHeight}%`, 
-                            minHeight: cat.actualSpending > 0 ? '4px' : '0',
-                            width: `${barWidth}px`,
-                            left: `${visibleWidth * 2}px`,
-                            zIndex: 3
-                          }}
-                          title={`${cat.category} - Actual: ${formatCurrency(cat.actualSpending)}`}
-                        />
-                      </div>
-
-                      {/* Category Name (Diagonal) and Utilization */}
-                      <div className="flex flex-col items-center pointer-events-none" style={{ height: '100px', width: '40px' }}>
-                        {/* Diagonal Label */}
-                        <div className="relative" style={{ height: '80px', width: '40px' }}>
+                        >
+                          {/* Original Budget (Gray) - leftmost */}
                           <div
-                            className="absolute bottom-0 left-1/2 origin-bottom-left whitespace-nowrap"
+                            className="absolute bottom-0 left-0 bg-gray-400 dark:bg-gray-600 rounded-t transition-all duration-500 shadow-md border-r border-gray-500 dark:border-gray-700 pointer-events-none"
                             style={{ 
-                              transform: 'translateX(-50%) rotate(-45deg)',
+                              height: `${originalHeight}%`, 
+                              minHeight: cat.originalBudget > 0 ? '4px' : '0',
+                              width: `${barWidth}px`,
+                              zIndex: 1
                             }}
-                          >
-                            <div className="flex items-center gap-1">
-                              <div
-                                className="w-2 h-2 rounded-full flex-shrink-0"
-                                style={{ backgroundColor: cat.color }}
-                              />
-                              <span 
-                                className="text-xs font-medium text-gray-900 dark:text-gray-100"
-                                title={cat.category}
-                              >
-                                {displayName}
-                              </span>
+                            title={`${cat.category} - Original: ${formatCurrency(cat.originalBudget)}`}
+                          />
+
+                          {/* Current Budget (Blue) - middle, overlaps gray */}
+                          <div
+                            className="absolute bottom-0 bg-blue-400 dark:bg-blue-600 rounded-t transition-all duration-500 shadow-md border-r border-blue-500 dark:border-blue-700 pointer-events-none"
+                            style={{ 
+                              height: `${currentHeight}%`, 
+                              minHeight: cat.currentBudget > 0 ? '4px' : '0',
+                              width: `${barWidth}px`,
+                              left: `${visibleWidth}px`,
+                              zIndex: 2
+                            }}
+                            title={`${cat.category} - Current: ${formatCurrency(cat.currentBudget)}`}
+                          />
+
+                          {/* Actual Spending (Green/Yellow/Red) - rightmost */}
+                          <div
+                            className={`absolute bottom-0 rounded-t transition-all duration-500 shadow-md pointer-events-none ${actualColor}`}
+                            style={{ 
+                              height: `${actualHeight}%`, 
+                              minHeight: cat.actualSpending > 0 ? '4px' : '0',
+                              width: `${barWidth}px`,
+                              left: `${visibleWidth * 2}px`,
+                              zIndex: 3
+                            }}
+                            title={`${cat.category} - Actual: ${formatCurrency(cat.actualSpending)}`}
+                          />
+                        </div>
+
+                        {/* Category Name (Diagonal) and Utilization */}
+                        <div className="flex flex-col items-center pointer-events-none" style={{ height: '100px', width: '40px' }}>
+                          {/* Diagonal Label */}
+                          <div className="relative" style={{ height: '80px', width: '40px' }}>
+                            <div
+                              className="absolute bottom-0 left-1/2 origin-bottom-left whitespace-nowrap"
+                              style={{ 
+                                transform: 'translateX(-50%) rotate(-45deg)',
+                              }}
+                            >
+                              <div className="flex items-center gap-1">
+                                <div
+                                  className="w-2 h-2 rounded-full flex-shrink-0"
+                                  style={{ backgroundColor: cat.color }}
+                                />
+                                <span 
+                                  className="text-xs font-medium text-gray-900 dark:text-gray-100"
+                                  title={cat.category}
+                                >
+                                  {displayName}
+                                </span>
+                              </div>
                             </div>
                           </div>
-                        </div>
-                        
-                        {/* Utilization */}
-                        <div className={`flex items-center justify-center gap-0.5 text-[10px] font-medium mt-1 ${getUtilizationColor(cat.actualSpending, cat.currentBudget)}`}>
-                          <span className="scale-75">{getUtilizationIcon(cat.actualSpending, cat.currentBudget)}</span>
-                          <span>{utilizationPercent.toFixed(0)}%</span>
+                          
+                          {/* Utilization */}
+                          <div className={`flex items-center justify-center gap-0.5 text-[10px] font-medium mt-1 ${getUtilizationColor(cat.actualSpending, cat.currentBudget)}`}>
+                            <span className="scale-75">{getUtilizationIcon(cat.actualSpending, cat.currentBudget)}</span>
+                            <span>{utilizationPercent.toFixed(0)}%</span>
+                          </div>
                         </div>
                       </div>
-                    </div>
-                  );
-                })}
+                    );
+                  });
+                })()}
               </motion.div>
             </div>
           </>
