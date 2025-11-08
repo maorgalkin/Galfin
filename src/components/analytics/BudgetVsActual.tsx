@@ -293,25 +293,35 @@ export const BudgetVsActual: React.FC = () => {
             {/* Column Chart with Y-Axis - Drag Scrollable */}
             <div className="flex gap-2">
               {/* Y-Axis */}
-              <div className="flex flex-col justify-between text-xs text-gray-500 dark:text-gray-400" style={{ height: '480px', width: '60px' }}>
+              <div className="relative text-xs text-gray-500 dark:text-gray-400" style={{ height: '480px', width: '60px' }}>
                 {(() => {
                   const maxVal = Math.max(...categoryData.map(c => Math.max(c.originalBudget, c.currentBudget, c.actualSpending)));
-                  const midVal = maxVal / 2;
+                  
+                  // Calculate logarithmic midpoint value
+                  // If visual middle is 50% on log scale: log(1 + midVal) / log(1 + maxVal) = 0.5
+                  // Therefore: log(1 + midVal) = 0.5 * log(1 + maxVal)
+                  // midVal = 10^(0.5 * log10(1 + maxVal)) - 1
+                  const logMidVal = Math.pow(10, 0.5 * Math.log10(1 + maxVal)) - 1;
                   
                   return (
                     <>
-                      <div className="flex flex-col items-end pr-2">
+                      {/* Max - aligned with top of bars */}
+                      <div className="absolute top-0 right-0 flex flex-col items-end pr-2">
                         <div className="flex items-center gap-1">
                           <TrendingUp className="h-3 w-3" />
                           <span className="font-medium">{formatCurrencyRounded(maxVal)}</span>
                         </div>
                         <span className="text-[10px] text-gray-400 dark:text-gray-500">Max</span>
                       </div>
-                      <div className="flex flex-col items-end pr-2">
-                        <span className="font-medium">{formatCurrencyRounded(midVal)}</span>
+                      
+                      {/* Mid - at visual middle of bar area (175px from top) */}
+                      <div className="absolute right-0 flex flex-col items-end pr-2" style={{ top: '175px' }}>
+                        <span className="font-medium">{formatCurrencyRounded(logMidVal)}</span>
                         <span className="text-[10px] text-gray-400 dark:text-gray-500">Mid</span>
                       </div>
-                      <div className="flex flex-col items-end pr-2">
+                      
+                      {/* Min - aligned with bottom of bars (350px from top) */}
+                      <div className="absolute right-0 flex flex-col items-end pr-2" style={{ top: '350px' }}>
                         <span className="font-medium">$0</span>
                         <span className="text-[10px] text-gray-400 dark:text-gray-500">Min</span>
                       </div>
