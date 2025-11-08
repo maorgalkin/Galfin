@@ -6,6 +6,7 @@ import { useActiveBudget } from '../hooks/useBudgets';
 import { budgetService } from '../services/budgetService';
 import { motion, AnimatePresence } from 'framer-motion';
 import { BudgetPerformanceCard } from './BudgetPerformanceCard';
+import { TransactionDetailsModal } from './TransactionDetailsModal';
 import EditTransactionModal from './EditTransactionModal';
 import FamilyMembersModal from './FamilyMembersModal';
 import { BudgetManagement } from '../pages/BudgetManagement';
@@ -52,6 +53,8 @@ const Dashboard: React.FC = () => {
   const [isCustomDateRangeModalOpen, setIsCustomDateRangeModalOpen] = useState(false);
   const [showBreakdownInHeader, setShowBreakdownInHeader] = useState(false);
   const [alertsViewed, setAlertsViewed] = useState(false);
+  const [viewingTransactionDetails, setViewingTransactionDetails] = useState<Transaction | null>(null);
+  const expenseChartRef = React.useRef<HTMLDivElement>(null);
 
   // Calculate budget alerts for the current month
   const currentAlertsCount = useMemo(() => {
@@ -81,6 +84,17 @@ const Dashboard: React.FC = () => {
   // Memoize callback to prevent effect re-runs
   const handleBreakdownVisible = useCallback((visible: boolean) => {
     setShowBreakdownInHeader(visible);
+  }, []);
+
+  // Handle category click from Budget Performance Card
+  const handleCategoryClick = useCallback((category: string) => {
+    // Set the selected category
+    setSelectedDesktopCategory(category);
+    
+    // Scroll to expense chart
+    if (expenseChartRef.current) {
+      expenseChartRef.current.scrollIntoView({ behavior: 'smooth', block: 'start' });
+    }
   }, []);
 
   // Track dark mode changes based on OS/browser preference
@@ -280,6 +294,7 @@ const Dashboard: React.FC = () => {
                 isCompact={true} 
                 themeColor="purple"
                 onAlertsViewed={() => setAlertsViewed(true)}
+                onCategoryClick={handleCategoryClick}
               />
             </div>
             
@@ -291,12 +306,13 @@ const Dashboard: React.FC = () => {
                 themeColor="purple"
                 onBreakdownVisible={handleBreakdownVisible}
                 onAlertsViewed={() => setAlertsViewed(true)}
+                onCategoryClick={handleCategoryClick}
               />
             </div>
           </div>
 
           {/* 2. BUDGET CATEGORY BREAKDOWN - Second Priority */}
-          <div className="mb-8">
+          <div ref={expenseChartRef} className="mb-8">
             {/* Mobile Sticky Header */}
             <div className="md:hidden sticky top-0 z-10 bg-purple-100 dark:bg-purple-950/30 -mx-3 px-3 py-3 mb-4 border-b-2 border-purple-300 dark:border-purple-700">
               <h2 className="text-lg font-semibold text-purple-900 dark:text-purple-100">Expenses by Category</h2>
@@ -307,7 +323,8 @@ const Dashboard: React.FC = () => {
               transactions={monthTransactions}
               personalBudget={personalBudget}
               formatCurrency={formatCurrency}
-              onEditTransaction={setEditingTransaction}
+              selectedCategory={selectedDesktopCategory}
+              onEditTransaction={setViewingTransactionDetails}
               onViewAllTransactions={(category) => {
                 setSelectedDesktopCategory(category);
                 setIsCategoryModalOpen(true);
@@ -558,13 +575,21 @@ const Dashboard: React.FC = () => {
           setIsCategoryModalOpen(false);
           setSelectedDesktopCategory(null);
         }}
-        onEditTransaction={setEditingTransaction}
+        onEditTransaction={setViewingTransactionDetails}
       />
 
       {/* Custom Date Range Modal */}
       <CustomDateRangeModal
         isOpen={isCustomDateRangeModalOpen}
         onClose={() => setIsCustomDateRangeModalOpen(false)}
+      />
+
+      {/* Transaction Details Modal */}
+      <TransactionDetailsModal
+        transaction={viewingTransactionDetails}
+        isOpen={viewingTransactionDetails !== null}
+        onClose={() => setViewingTransactionDetails(null)}
+        formatCurrency={formatCurrency}
       />
       </div>
     </div>

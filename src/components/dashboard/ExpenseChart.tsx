@@ -15,6 +15,7 @@ interface ExpenseChartProps {
   transactions: Transaction[];
   personalBudget: PersonalBudget | null | undefined;
   formatCurrency: (amount: number) => string;
+  selectedCategory?: string | null;
   onEditTransaction: (transaction: Transaction) => void;
   onViewAllTransactions: (category: string) => void;
 }
@@ -29,15 +30,23 @@ export const ExpenseChart: React.FC<ExpenseChartProps> = ({
   transactions,
   personalBudget,
   formatCurrency,
+  selectedCategory,
   onEditTransaction,
   onViewAllTransactions,
 }) => {
-  const [selectedDesktopCategory, setSelectedDesktopCategory] = useState<string | null>(null);
+  const [selectedDesktopCategory, setSelectedDesktopCategory] = useState<string | null>(selectedCategory || null);
   const [focusedCategory, setFocusedCategory] = useState<{
     category: string;
     amount: number;
     percentage: string;
   } | null>(null);
+
+  // Update selected category when prop changes
+  React.useEffect(() => {
+    if (selectedCategory) {
+      setSelectedDesktopCategory(selectedCategory);
+    }
+  }, [selectedCategory]);
 
   if (categoryData.length === 0) {
     return (

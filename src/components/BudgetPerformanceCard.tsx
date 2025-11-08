@@ -24,6 +24,7 @@ interface BudgetPerformanceCardProps {
   themeColor?: ThemeColor;
   onBreakdownVisible?: (visible: boolean) => void;
   onAlertsViewed?: () => void;
+  onCategoryClick?: (category: string) => void;
 }
 
 export const BudgetPerformanceCard: React.FC<BudgetPerformanceCardProps> = ({ 
@@ -31,7 +32,8 @@ export const BudgetPerformanceCard: React.FC<BudgetPerformanceCardProps> = ({
   isCompact = false,
   themeColor = 'purple',
   onBreakdownVisible,
-  onAlertsViewed
+  onAlertsViewed,
+  onCategoryClick
 }) => {
   const navigate = useNavigate();
   const { transactions } = useFinance();
@@ -367,8 +369,13 @@ export const BudgetPerformanceCard: React.FC<BudgetPerformanceCardProps> = ({
                   const utilization = comparison.budgeted > 0 ? (comparison.actual / comparison.budgeted) * 100 : 0;
                   
                   return (
-                    <div key={comparison.category} className="border border-gray-200 dark:border-gray-700 rounded-lg p-3">
-                      <div className="flex justify-between items-center mb-2">
+                    <div 
+                      key={comparison.category} 
+                      className={`border border-gray-200 dark:border-gray-700 rounded-lg p-3 ${
+                        onCategoryClick ? 'cursor-pointer hover:bg-gray-50 dark:hover:bg-gray-700/50 transition-colors' : ''
+                      }`}
+                      onClick={() => onCategoryClick?.(comparison.category)}
+                    >                      <div className="flex justify-between items-center mb-2">
                         <div className="flex items-center">
                           {getStatusIcon(comparison.status)}
                           <span className="ml-2 text-sm font-medium text-gray-900 dark:text-gray-100">{comparison.category}</span>
