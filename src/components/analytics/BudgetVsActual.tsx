@@ -145,6 +145,16 @@ export const BudgetVsActual: React.FC = () => {
     }).format(amount);
   };
 
+  const formatCurrencyRounded = (amount: number) => {
+    const currency = personalBudget?.global_settings?.currency || 'USD';
+    return new Intl.NumberFormat('en-US', {
+      style: 'currency',
+      currency: currency,
+      minimumFractionDigits: 0,
+      maximumFractionDigits: 0,
+    }).format(Math.round(amount));
+  };
+
   const getUtilizationColor = (spent: number, budget: number) => {
     if (budget === 0) return 'text-gray-500';
     const percentage = (spent / budget) * 100;
@@ -278,30 +288,36 @@ export const BudgetVsActual: React.FC = () => {
                 </div>
                 <span className="text-gray-700 dark:text-gray-300">Actual Spending (Good / Warning / Over)</span>
               </div>
-              <div className="flex items-center gap-2 ml-auto text-xs italic text-gray-500 dark:text-gray-400">
-                <TrendingUp className="h-3 w-3" />
-                <span>Logarithmic scale for better visibility</span>
-              </div>
             </div>
 
             {/* Column Chart with Y-Axis - Drag Scrollable */}
             <div className="flex gap-2">
               {/* Y-Axis */}
               <div className="flex flex-col justify-between text-xs text-gray-500 dark:text-gray-400" style={{ height: '480px', width: '60px' }}>
-                <div className="flex flex-col items-end pr-2">
-                  <div className="flex items-center gap-1">
-                    <TrendingUp className="h-3 w-3" />
-                    <span className="font-medium">{formatCurrency(Math.max(...categoryData.map(c => Math.max(c.originalBudget, c.currentBudget, c.actualSpending))))}</span>
-                  </div>
-                  <span className="text-[10px] text-gray-400 dark:text-gray-500">Max</span>
-                </div>
-                <div className="flex items-end pr-2 pb-28">
-                  <span className="text-[10px] text-gray-400 dark:text-gray-500 whitespace-nowrap">Log scale</span>
-                </div>
-                <div className="flex flex-col items-end pr-2">
-                  <span className="font-medium">$0</span>
-                  <span className="text-[10px] text-gray-400 dark:text-gray-500">Min</span>
-                </div>
+                {(() => {
+                  const maxVal = Math.max(...categoryData.map(c => Math.max(c.originalBudget, c.currentBudget, c.actualSpending)));
+                  const midVal = maxVal / 2;
+                  
+                  return (
+                    <>
+                      <div className="flex flex-col items-end pr-2">
+                        <div className="flex items-center gap-1">
+                          <TrendingUp className="h-3 w-3" />
+                          <span className="font-medium">{formatCurrencyRounded(maxVal)}</span>
+                        </div>
+                        <span className="text-[10px] text-gray-400 dark:text-gray-500">Max</span>
+                      </div>
+                      <div className="flex flex-col items-end pr-2">
+                        <span className="font-medium">{formatCurrencyRounded(midVal)}</span>
+                        <span className="text-[10px] text-gray-400 dark:text-gray-500">Mid</span>
+                      </div>
+                      <div className="flex flex-col items-end pr-2">
+                        <span className="font-medium">$0</span>
+                        <span className="text-[10px] text-gray-400 dark:text-gray-500">Min</span>
+                      </div>
+                    </>
+                  );
+                })()}
               </div>
 
               {/* Chart Container */}
@@ -476,6 +492,12 @@ export const BudgetVsActual: React.FC = () => {
                 })()}
               </motion.div>
             </div>
+            </div>
+
+            {/* Scale Note */}
+            <div className="flex items-center gap-2 mt-2 text-xs italic text-gray-500 dark:text-gray-400">
+              <TrendingUp className="h-3 w-3" />
+              <span>Logarithmic scale for better visibility</span>
             </div>
           </>
         )}
