@@ -264,32 +264,52 @@ export const BudgetVsActual: React.FC = () => {
             <div className="flex flex-wrap gap-4 mb-6 text-sm">
               <div className="flex items-center gap-2">
                 <div className="w-4 h-4 rounded bg-gray-400 dark:bg-gray-600" />
-                <span className="text-gray-700 dark:text-gray-300">Original</span>
+                <span className="text-gray-700 dark:text-gray-300">Original Budget</span>
               </div>
               <div className="flex items-center gap-2">
                 <div className="w-4 h-4 rounded bg-blue-400 dark:bg-blue-600" />
-                <span className="text-gray-700 dark:text-gray-300">Current</span>
+                <span className="text-gray-700 dark:text-gray-300">Current Budget</span>
               </div>
               <div className="flex items-center gap-2">
-                <div className="w-4 h-4 rounded bg-green-400 dark:bg-green-600" />
-                <span className="text-gray-700 dark:text-gray-300">Actual (Good)</span>
+                <div className="flex gap-1">
+                  <div className="w-4 h-4 rounded bg-green-400 dark:bg-green-600" />
+                  <div className="w-4 h-4 rounded bg-yellow-400 dark:bg-yellow-600" />
+                  <div className="w-4 h-4 rounded bg-red-400 dark:bg-red-600" />
+                </div>
+                <span className="text-gray-700 dark:text-gray-300">Actual Spending (Good / Warning / Over)</span>
               </div>
-              <div className="flex items-center gap-2">
-                <div className="w-4 h-4 rounded bg-yellow-400 dark:bg-yellow-600" />
-                <span className="text-gray-700 dark:text-gray-300">Actual (Warning)</span>
-              </div>
-              <div className="flex items-center gap-2">
-                <div className="w-4 h-4 rounded bg-red-400 dark:bg-red-600" />
-                <span className="text-gray-700 dark:text-gray-300">Actual (Over)</span>
+              <div className="flex items-center gap-2 ml-auto text-xs italic text-gray-500 dark:text-gray-400">
+                <TrendingUp className="h-3 w-3" />
+                <span>Logarithmic scale for better visibility</span>
               </div>
             </div>
 
-            {/* Column Chart - Drag Scrollable */}
-            <div 
-              ref={containerRef} 
-              className="relative overflow-hidden"
-              style={{ height: '480px', touchAction: 'pan-y pinch-zoom' }}
-            >
+            {/* Column Chart with Y-Axis - Drag Scrollable */}
+            <div className="flex gap-2">
+              {/* Y-Axis */}
+              <div className="flex flex-col justify-between text-xs text-gray-500 dark:text-gray-400" style={{ height: '480px', width: '60px' }}>
+                <div className="flex flex-col items-end pr-2">
+                  <div className="flex items-center gap-1">
+                    <TrendingUp className="h-3 w-3" />
+                    <span className="font-medium">{formatCurrency(Math.max(...categoryData.map(c => Math.max(c.originalBudget, c.currentBudget, c.actualSpending))))}</span>
+                  </div>
+                  <span className="text-[10px] text-gray-400 dark:text-gray-500">Max</span>
+                </div>
+                <div className="flex items-end pr-2 pb-28">
+                  <span className="text-[10px] text-gray-400 dark:text-gray-500 whitespace-nowrap">Log scale</span>
+                </div>
+                <div className="flex flex-col items-end pr-2">
+                  <span className="font-medium">$0</span>
+                  <span className="text-[10px] text-gray-400 dark:text-gray-500">Min</span>
+                </div>
+              </div>
+
+              {/* Chart Container */}
+              <div 
+                ref={containerRef} 
+                className="relative overflow-hidden flex-1"
+                style={{ height: '480px', touchAction: 'pan-y pinch-zoom' }}
+              >
               <motion.div
                 ref={scope}
                 drag="x"
@@ -455,6 +475,7 @@ export const BudgetVsActual: React.FC = () => {
                   });
                 })()}
               </motion.div>
+            </div>
             </div>
           </>
         )}
