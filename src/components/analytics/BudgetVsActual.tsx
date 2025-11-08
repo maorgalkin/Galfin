@@ -7,8 +7,10 @@ import { filterTransactionsByDateRange, getDateRange } from '../../utils/dateRan
 import type { DateRangeType } from '../../utils/dateRangeFilters';
 import { AlertTriangle, TrendingUp, TrendingDown, Minus, Loader2 } from 'lucide-react';
 
-const CATEGORY_WIDTH = 100; // Width of each category column
-const CATEGORY_GAP = 16; // Gap between categories
+const CATEGORY_WIDTH_DESKTOP = 100; // Width of each category column on desktop
+const CATEGORY_WIDTH_MOBILE = 70; // Width of each category column on mobile
+const CATEGORY_GAP_DESKTOP = 16; // Gap between categories on desktop
+const CATEGORY_GAP_MOBILE = 8; // Gap between categories on mobile (tighter)
 const BAR_WIDTH_DESKTOP = 80; // Width of individual bars on desktop
 const BAR_WIDTH_MOBILE = 50; // Width of individual bars on mobile (thinner)
 const BAR_OVERLAP = 30; // Reduced from 85% for better clarity
@@ -18,6 +20,8 @@ export const BudgetVsActual: React.FC = () => {
   const containerRef = useRef<HTMLDivElement>(null);
   const [categoriesPerView, setCategoriesPerView] = useState(8);
   const [barWidth, setBarWidth] = useState(BAR_WIDTH_DESKTOP);
+  const [categoryWidth, setCategoryWidth] = useState(CATEGORY_WIDTH_DESKTOP);
+  const [categoryGap, setCategoryGap] = useState(CATEGORY_GAP_DESKTOP);
   const [scope, animate] = useAnimate();
   const dragX = useMotionValue(0);
   
@@ -98,13 +102,22 @@ export const BudgetVsActual: React.FC = () => {
   useEffect(() => {
     const updateLayout = () => {
       if (containerRef.current) {
-        const containerWidth = containerRef.current.offsetWidth;
-        const categoriesPerView = Math.floor(containerWidth / (CATEGORY_WIDTH + CATEGORY_GAP));
-        setCategoriesPerView(Math.max(3, categoriesPerView)); // Minimum 3 categories
-        
-        // Use thinner bars on mobile (< 768px)
+        // Determine if mobile based on window width
         const isMobile = window.innerWidth < 768;
-        setBarWidth(isMobile ? BAR_WIDTH_MOBILE : BAR_WIDTH_DESKTOP);
+        
+        // Set responsive dimensions
+        const currentCategoryWidth = isMobile ? CATEGORY_WIDTH_MOBILE : CATEGORY_WIDTH_DESKTOP;
+        const currentCategoryGap = isMobile ? CATEGORY_GAP_MOBILE : CATEGORY_GAP_DESKTOP;
+        const currentBarWidth = isMobile ? BAR_WIDTH_MOBILE : BAR_WIDTH_DESKTOP;
+        
+        setCategoryWidth(currentCategoryWidth);
+        setCategoryGap(currentCategoryGap);
+        setBarWidth(currentBarWidth);
+        
+        // Calculate how many categories fit
+        const containerWidth = containerRef.current.offsetWidth;
+        const categoriesPerView = Math.floor(containerWidth / (currentCategoryWidth + currentCategoryGap));
+        setCategoriesPerView(Math.max(3, categoriesPerView)); // Minimum 3 categories
       }
     };
 
@@ -281,15 +294,15 @@ export const BudgetVsActual: React.FC = () => {
                 ref={scope}
                 drag="x"
                 dragConstraints={{
-                  left: Math.min(0, -(categoryData.length - categoriesPerView) * (CATEGORY_WIDTH + CATEGORY_GAP)),
+                  left: Math.min(0, -(categoryData.length - categoriesPerView) * (categoryWidth + categoryGap)),
                   right: 0
                 }}
                 dragElastic={0.1}
                 dragMomentum={false}
-                style={{ x: dragX }}
+                style={{ x: dragX, paddingLeft: '8px', paddingRight: '8px' }}
                 onDragEnd={() => {
                   // Snap to nearest category
-                  const categoryStep = CATEGORY_WIDTH + CATEGORY_GAP;
+                  const categoryStep = categoryWidth + categoryGap;
                   const currentX = dragX.get();
                   const snappedIndex = Math.round(-currentX / categoryStep);
                   const snappedX = -snappedIndex * categoryStep;
@@ -297,7 +310,7 @@ export const BudgetVsActual: React.FC = () => {
                   // Animate to snapped position
                   animate(scope.current, { x: snappedX }, { type: 'spring', stiffness: 300, damping: 30 });
                 }}
-                className="flex items-end gap-4 px-8 h-full cursor-grab active:cursor-grabbing"
+                className="flex items-end h-full cursor-grab active:cursor-grabbing"
               >
                 {categoryData.map((cat) => {
                   // Find the maximum value across all categories to normalize chart height
@@ -332,8 +345,11 @@ export const BudgetVsActual: React.FC = () => {
                   return (
                     <div 
                       key={cat.category} 
-                      className="relative flex flex-col items-center gap-2 flex-shrink-0"
-                      style={{ width: `${CATEGORY_WIDTH}px` }}
+                      className="relative flex flex-col items-center flex-shrink-0"
+                      style={{ 
+                        width: `${categoryWidth}px`,
+                        marginRight: `${categoryGap}px`
+                      }}
                     >
                       {/* Invisible drag overlay - covers full height */}
                       <div 
