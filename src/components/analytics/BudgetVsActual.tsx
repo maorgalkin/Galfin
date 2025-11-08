@@ -319,11 +319,24 @@ export const BudgetVsActual: React.FC = () => {
                     1 // Ensure at least 1 to avoid division by zero
                   );
 
+                  // Logarithmic scale helper function
+                  // This compresses large values and expands small values for better visualization
+                  const getLogScaledHeight = (value: number, max: number): number => {
+                    if (value === 0 || max === 0) return 0;
+                    
+                    // Use log scale: log(1 + value) / log(1 + max)
+                    // The +1 ensures log(0) doesn't occur
+                    const logValue = Math.log10(1 + value);
+                    const logMax = Math.log10(1 + max);
+                    
+                    return (logValue / logMax) * 100;
+                  };
+
                   return categoryData.map((cat) => {
-                    // Calculate heights as percentage of maxValue (already calculated above)
-                    const originalHeight = maxValue > 0 ? (cat.originalBudget / maxValue) * 100 : 0;
-                    const currentHeight = maxValue > 0 ? (cat.currentBudget / maxValue) * 100 : 0;
-                    const actualHeight = maxValue > 0 ? (cat.actualSpending / maxValue) * 100 : 0;
+                    // Calculate heights using logarithmic scale for better visual balance
+                    const originalHeight = getLogScaledHeight(cat.originalBudget, maxValue);
+                    const currentHeight = getLogScaledHeight(cat.currentBudget, maxValue);
+                    const actualHeight = getLogScaledHeight(cat.actualSpending, maxValue);
                     
                     const utilizationPercent = cat.currentBudget > 0 
                       ? (cat.actualSpending / cat.currentBudget) * 100 
