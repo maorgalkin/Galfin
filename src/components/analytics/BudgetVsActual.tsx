@@ -329,10 +329,10 @@ export const BudgetVsActual: React.FC = () => {
                       style={{ width: `${CATEGORY_WIDTH}px` }}
                     >
                       {/* Bar Container with 3 overlapping bars */}
-                      <div className="relative flex items-end" style={{ height: '350px', width: `${BAR_WIDTH + visibleWidth * 2}px` }}>
+                      <div className="relative flex items-end pointer-events-none" style={{ height: '350px', width: `${BAR_WIDTH + visibleWidth * 2}px` }}>
                         {/* Original Budget (Gray) - leftmost */}
                         <div
-                          className="absolute bottom-0 left-0 bg-gray-400 dark:bg-gray-600 rounded-t transition-all duration-500 shadow-md border-r border-gray-500 dark:border-gray-700"
+                          className="absolute bottom-0 left-0 bg-gray-400 dark:bg-gray-600 rounded-t transition-all duration-500 shadow-md border-r border-gray-500 dark:border-gray-700 pointer-events-none"
                           style={{ 
                             height: `${originalHeight}%`, 
                             minHeight: cat.originalBudget > 0 ? '4px' : '0',
@@ -344,7 +344,7 @@ export const BudgetVsActual: React.FC = () => {
 
                         {/* Current Budget (Blue) - middle, overlaps gray */}
                         <div
-                          className="absolute bottom-0 bg-blue-400 dark:bg-blue-600 rounded-t transition-all duration-500 shadow-md border-r border-blue-500 dark:border-blue-700"
+                          className="absolute bottom-0 bg-blue-400 dark:bg-blue-600 rounded-t transition-all duration-500 shadow-md border-r border-blue-500 dark:border-blue-700 pointer-events-none"
                           style={{ 
                             height: `${currentHeight}%`, 
                             minHeight: cat.currentBudget > 0 ? '4px' : '0',
@@ -357,7 +357,7 @@ export const BudgetVsActual: React.FC = () => {
 
                         {/* Actual Spending (Green/Yellow/Red) - rightmost */}
                         <div
-                          className={`absolute bottom-0 rounded-t transition-all duration-500 shadow-md ${actualColor}`}
+                          className={`absolute bottom-0 rounded-t transition-all duration-500 shadow-md pointer-events-none ${actualColor}`}
                           style={{ 
                             height: `${actualHeight}%`, 
                             minHeight: cat.actualSpending > 0 ? '4px' : '0',
@@ -370,7 +370,7 @@ export const BudgetVsActual: React.FC = () => {
                       </div>
 
                       {/* Category Name (Diagonal) and Utilization */}
-                      <div className="flex flex-col items-center" style={{ height: '100px', width: '40px' }}>
+                      <div className="flex flex-col items-center pointer-events-none" style={{ height: '100px', width: '40px' }}>
                         {/* Diagonal Label */}
                         <div className="relative" style={{ height: '80px', width: '40px' }}>
                           <div
