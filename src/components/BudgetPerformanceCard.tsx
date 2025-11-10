@@ -368,31 +368,21 @@ export const BudgetPerformanceCard: React.FC<BudgetPerformanceCardProps> = ({
                 .map((comparison) => {
                   const utilization = comparison.budgeted > 0 ? (comparison.actual / comparison.budgeted) * 100 : 0;
                   
-                  const handleCategorySelect = () => {
-                    if (onCategoryClick) {
-                      onCategoryClick(comparison.category);
-                    }
-                  };
-
                   return (
-                    <div
+                    <a
                       key={comparison.category}
+                      href="#"
                       role="button"
-                      tabIndex={0}
                       aria-label={`View details for ${comparison.category}`}
-                      className="w-full border border-gray-200 dark:border-gray-700 rounded-lg p-3 cursor-pointer select-none active:bg-gray-100 dark:active:bg-gray-700/50 transition-colors"
+                      className="block w-full border border-gray-200 dark:border-gray-700 rounded-lg p-3 no-underline active:bg-gray-100 dark:active:bg-gray-700/50 transition-colors"
                       style={{ 
                         WebkitTapHighlightColor: 'rgba(0,0,0,0.1)',
-                        touchAction: 'manipulation',
-                        userSelect: 'none',
-                        WebkitUserSelect: 'none'
+                        touchAction: 'manipulation'
                       }}
-                      onPointerDown={handleCategorySelect}
-                      onKeyDown={(e) => {
-                        if (e.key === 'Enter' || e.key === ' ') {
-                          e.preventDefault();
-                          handleCategorySelect();
-                        }
+                      onClick={(e) => {
+                        e.preventDefault();
+                        console.log('Category clicked:', comparison.category);
+                        onCategoryClick?.(comparison.category);
                       }}
                     >                      <div className="flex justify-between items-center mb-2">
                         <div className="flex items-center">
@@ -424,7 +414,7 @@ export const BudgetPerformanceCard: React.FC<BudgetPerformanceCardProps> = ({
                           </span>
                         )}
                       </div>
-                    </div>
+                    </a>
                   );
                 })}
             </div>
