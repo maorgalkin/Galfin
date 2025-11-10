@@ -368,37 +368,30 @@ export const BudgetPerformanceCard: React.FC<BudgetPerformanceCardProps> = ({
                 .map((comparison) => {
                   const utilization = comparison.budgeted > 0 ? (comparison.actual / comparison.budgeted) * 100 : 0;
                   
+                  const handleCategorySelect = () => {
+                    if (onCategoryClick) {
+                      onCategoryClick(comparison.category);
+                    }
+                  };
+
                   return (
-                    <button
+                    <div
                       key={comparison.category}
-                      type="button"
+                      role="button"
+                      tabIndex={0}
                       aria-label={`View details for ${comparison.category}`}
-                      className="w-full border border-gray-200 dark:border-gray-700 rounded-lg p-3 text-left active:bg-gray-100 dark:active:bg-gray-700/50 transition-colors"
+                      className="w-full border border-gray-200 dark:border-gray-700 rounded-lg p-3 cursor-pointer select-none active:bg-gray-100 dark:active:bg-gray-700/50 transition-colors"
                       style={{ 
-                        WebkitTapHighlightColor: 'transparent',
-                        touchAction: 'manipulation'
+                        WebkitTapHighlightColor: 'rgba(0,0,0,0.1)',
+                        touchAction: 'manipulation',
+                        userSelect: 'none',
+                        WebkitUserSelect: 'none'
                       }}
-                      onTouchStart={(e) => {
-                        // Immediately handle touch on mobile without waiting for click
-                        if (onCategoryClick) {
-                          e.currentTarget.style.backgroundColor = 'rgba(0, 0, 0, 0.05)';
-                        }
-                      }}
-                      onTouchEnd={(e) => {
-                        if (onCategoryClick) {
-                          e.currentTarget.style.backgroundColor = '';
-                          // Prevent the subsequent click event
+                      onPointerDown={handleCategorySelect}
+                      onKeyDown={(e) => {
+                        if (e.key === 'Enter' || e.key === ' ') {
                           e.preventDefault();
-                          onCategoryClick(comparison.category);
-                        }
-                      }}
-                      onTouchCancel={(e) => {
-                        e.currentTarget.style.backgroundColor = '';
-                      }}
-                      onClick={() => {
-                        // This will only fire on desktop/mouse clicks since we preventDefault on touch
-                        if (onCategoryClick) {
-                          onCategoryClick(comparison.category);
+                          handleCategorySelect();
                         }
                       }}
                     >                      <div className="flex justify-between items-center mb-2">
@@ -431,7 +424,7 @@ export const BudgetPerformanceCard: React.FC<BudgetPerformanceCardProps> = ({
                           </span>
                         )}
                       </div>
-                    </button>
+                    </div>
                   );
                 })}
             </div>
