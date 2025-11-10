@@ -373,10 +373,34 @@ export const BudgetPerformanceCard: React.FC<BudgetPerformanceCardProps> = ({
                       key={comparison.category}
                       type="button"
                       aria-label={`View details for ${comparison.category}`}
-                      className={`w-full border border-gray-200 dark:border-gray-700 rounded-lg p-3 text-left ${
-                        onCategoryClick ? 'cursor-pointer active:bg-gray-100 dark:active:bg-gray-700/50 md:hover:bg-gray-50 md:dark:hover:bg-gray-700/50 transition-colors' : ''
-                      }`}
-                      onClick={() => onCategoryClick?.(comparison.category)}
+                      className="w-full border border-gray-200 dark:border-gray-700 rounded-lg p-3 text-left active:bg-gray-100 dark:active:bg-gray-700/50 transition-colors"
+                      style={{ 
+                        WebkitTapHighlightColor: 'transparent',
+                        touchAction: 'manipulation'
+                      }}
+                      onTouchStart={(e) => {
+                        // Immediately handle touch on mobile without waiting for click
+                        if (onCategoryClick) {
+                          e.currentTarget.style.backgroundColor = 'rgba(0, 0, 0, 0.05)';
+                        }
+                      }}
+                      onTouchEnd={(e) => {
+                        if (onCategoryClick) {
+                          e.currentTarget.style.backgroundColor = '';
+                          // Prevent the subsequent click event
+                          e.preventDefault();
+                          onCategoryClick(comparison.category);
+                        }
+                      }}
+                      onTouchCancel={(e) => {
+                        e.currentTarget.style.backgroundColor = '';
+                      }}
+                      onClick={() => {
+                        // This will only fire on desktop/mouse clicks since we preventDefault on touch
+                        if (onCategoryClick) {
+                          onCategoryClick(comparison.category);
+                        }
+                      }}
                     >                      <div className="flex justify-between items-center mb-2">
                         <div className="flex items-center">
                           {getStatusIcon(comparison.status)}
