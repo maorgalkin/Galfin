@@ -372,9 +372,13 @@ export const BudgetPerformanceCard: React.FC<BudgetPerformanceCardProps> = ({
                     <div 
                       key={comparison.category} 
                       className={`border border-gray-200 dark:border-gray-700 rounded-lg p-3 ${
-                        onCategoryClick ? 'cursor-pointer hover:bg-gray-50 dark:hover:bg-gray-700/50 transition-colors' : ''
+                        onCategoryClick ? 'cursor-pointer active:bg-gray-100 dark:active:bg-gray-700/50 md:hover:bg-gray-50 md:dark:hover:bg-gray-700/50 transition-colors' : ''
                       }`}
                       onClick={() => onCategoryClick?.(comparison.category)}
+                      onTouchEnd={(e) => {
+                        e.preventDefault();
+                        onCategoryClick?.(comparison.category);
+                      }}
                     >                      <div className="flex justify-between items-center mb-2">
                         <div className="flex items-center">
                           {getStatusIcon(comparison.status)}

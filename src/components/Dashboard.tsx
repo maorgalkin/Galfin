@@ -91,10 +91,15 @@ const Dashboard: React.FC = () => {
     // Set the selected category
     setSelectedDesktopCategory(category);
     
-    // Scroll to expense chart
-    if (expenseChartRef.current) {
-      expenseChartRef.current.scrollIntoView({ behavior: 'smooth', block: 'start' });
-    }
+    // Scroll to expense chart with a small delay to ensure state updates
+    setTimeout(() => {
+      if (expenseChartRef.current) {
+        expenseChartRef.current.scrollIntoView({ 
+          behavior: 'smooth', 
+          block: 'start' 
+        });
+      }
+    }, 100);
   }, []);
 
   // Track dark mode changes based on OS/browser preference

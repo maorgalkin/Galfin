@@ -45,8 +45,20 @@ export const ExpenseChart: React.FC<ExpenseChartProps> = ({
   React.useEffect(() => {
     if (selectedCategory) {
       setSelectedDesktopCategory(selectedCategory);
+      
+      // For mobile: also set focusedCategory
+      const categoryItem = categoryData.find(c => c.category === selectedCategory);
+      if (categoryItem) {
+        const totalAmount = categoryData.reduce((sum, cat) => sum + cat.amount, 0);
+        const percentage = ((categoryItem.amount / totalAmount) * 100).toFixed(1);
+        setFocusedCategory({
+          category: categoryItem.category,
+          amount: categoryItem.amount,
+          percentage
+        });
+      }
     }
-  }, [selectedCategory]);
+  }, [selectedCategory, categoryData]);
 
   if (categoryData.length === 0) {
     return (
