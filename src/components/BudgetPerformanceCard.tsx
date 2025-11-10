@@ -369,16 +369,14 @@ export const BudgetPerformanceCard: React.FC<BudgetPerformanceCardProps> = ({
                   const utilization = comparison.budgeted > 0 ? (comparison.actual / comparison.budgeted) * 100 : 0;
                   
                   return (
-                    <div 
-                      key={comparison.category} 
-                      className={`border border-gray-200 dark:border-gray-700 rounded-lg p-3 ${
+                    <button
+                      key={comparison.category}
+                      type="button"
+                      aria-label={`View details for ${comparison.category}`}
+                      className={`w-full border border-gray-200 dark:border-gray-700 rounded-lg p-3 text-left ${
                         onCategoryClick ? 'cursor-pointer active:bg-gray-100 dark:active:bg-gray-700/50 md:hover:bg-gray-50 md:dark:hover:bg-gray-700/50 transition-colors' : ''
                       }`}
                       onClick={() => onCategoryClick?.(comparison.category)}
-                      onTouchEnd={(e) => {
-                        e.preventDefault();
-                        onCategoryClick?.(comparison.category);
-                      }}
                     >                      <div className="flex justify-between items-center mb-2">
                         <div className="flex items-center">
                           {getStatusIcon(comparison.status)}
@@ -409,7 +407,7 @@ export const BudgetPerformanceCard: React.FC<BudgetPerformanceCardProps> = ({
                           </span>
                         )}
                       </div>
-                    </div>
+                    </button>
                   );
                 })}
             </div>
