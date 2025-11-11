@@ -82,10 +82,33 @@ CREATE POLICY "Owners can update members"
 -- Success!
 -- ============================================================================
 
+-- Now fix family_members policies to use the same function
+DROP POLICY IF EXISTS "Users can view household family members" ON family_members;
+DROP POLICY IF EXISTS "Users can insert household family members" ON family_members;
+DROP POLICY IF EXISTS "Users can update household family members" ON family_members;
+DROP POLICY IF EXISTS "Users can delete household family members" ON family_members;
+
+CREATE POLICY "Users can view household family members"
+  ON family_members FOR SELECT
+  USING (user_is_in_household(household_id));
+
+CREATE POLICY "Users can insert household family members"
+  ON family_members FOR INSERT
+  WITH CHECK (user_is_in_household(household_id));
+
+CREATE POLICY "Users can update household family members"
+  ON family_members FOR UPDATE
+  USING (user_is_in_household(household_id));
+
+CREATE POLICY "Users can delete household family members"
+  ON family_members FOR DELETE
+  USING (user_is_in_household(household_id));
+
 DO $$
 BEGIN
   RAISE NOTICE '==========================================';
   RAISE NOTICE 'Fixed household_members RLS with SECURITY DEFINER!';
+  RAISE NOTICE 'Fixed family_members RLS to use same function!';
   RAISE NOTICE 'Policies now use elevated functions to avoid recursion';
   RAISE NOTICE 'Refresh your app - data should load now!';
   RAISE NOTICE '==========================================';

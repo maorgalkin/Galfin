@@ -15,6 +15,7 @@ export interface HouseholdMember {
   role: 'owner' | 'admin' | 'member';
   joined_at: string;
   invited_by: string | null;
+  email?: string;  // Added from auth.users join
 }
 
 // Helper to get current user ID
@@ -77,19 +78,22 @@ export const getHouseholdMembers = async (): Promise<HouseholdMember[]> => {
     return [];
   }
 
-  // Get all members of this household
+  // Get all members of this household with emails using RPC
   const { data, error } = await supabase
-    .from('household_members')
-    .select('*')
-    .eq('household_id', memberData.household_id)
-    .order('joined_at', { ascending: true });
+    .rpc('get_household_members_with_emails', {
+      p_household_id: memberData.household_id
+    });
 
   if (error) {
     console.error('Error fetching household members:', error);
     throw error;
   }
 
-  return data || [];
+  // Cast role from TEXT back to the proper type
+  return (data || []).map((member: any) => ({
+    ...member,
+    role: member.role as 'owner' | 'admin' | 'member',
+  }));
 };
 
 /**

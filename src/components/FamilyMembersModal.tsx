@@ -1,7 +1,9 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { createPortal } from 'react-dom';
-import { X, Plus, Users } from 'lucide-react';
+import { X, Plus, Users, Link as LinkIcon } from 'lucide-react';
 import { useFinance } from '../context/FinanceContext';
+import * as HouseholdService from '../services/householdService';
+import type { HouseholdMember } from '../services/householdService';
 
 interface FamilyMembersModalProps {
   isOpen: boolean;
@@ -23,7 +25,29 @@ const FamilyMembersModal: React.FC<FamilyMembersModalProps> = ({ isOpen, onClose
   const { familyMembers, addFamilyMember } = useFinance();
   const [newMemberName, setNewMemberName] = useState('');
   const [selectedColor, setSelectedColor] = useState(PRESET_COLORS[0]);
+  const [selectedHouseholdMember, setSelectedHouseholdMember] = useState<string>('');
+  const [householdMembers, setHouseholdMembers] = useState<HouseholdMember[]>([]);
   const [isAdding, setIsAdding] = useState(false);
+
+  useEffect(() => {
+    if (isOpen) {
+      loadHouseholdMembers();
+    }
+  }, [isOpen]);
+
+  const loadHouseholdMembers = async () => {
+    try {
+      const members = await HouseholdService.getHouseholdMembers();
+      setHouseholdMembers(members);
+    } catch (error) {
+      console.error('Error loading household members:', error);
+    }
+  };
+
+  // Get household members not already linked to a family member
+  const availableHouseholdMembers = householdMembers.filter(hm => 
+    !familyMembers.some(fm => fm.household_member_id === hm.id)
+  );
 
   if (!isOpen) return null;
 
@@ -38,9 +62,11 @@ const FamilyMembersModal: React.FC<FamilyMembersModalProps> = ({ isOpen, onClose
       await addFamilyMember({
         name: newMemberName.trim(),
         color: selectedColor,
+        household_member_id: selectedHouseholdMember || null,
       });
       
       setNewMemberName('');
+      setSelectedHouseholdMember('');
       // Rotate to next color
       const currentIndex = PRESET_COLORS.indexOf(selectedColor);
       const nextIndex = (currentIndex + 1) % PRESET_COLORS.length;
@@ -115,6 +141,32 @@ const FamilyMembersModal: React.FC<FamilyMembersModalProps> = ({ isOpen, onClose
               </div>
             </div>
 
+            {/* Link to Household Member (Optional) */}
+            {availableHouseholdMembers.length > 0 && (
+              <div className="mb-3">
+                <label className="block text-sm font-medium text-gray-700 mb-2 flex items-center">
+                  <LinkIcon className="h-4 w-4 mr-1" />
+                  Link to App User (Optional)
+                </label>
+                <select
+                  value={selectedHouseholdMember}
+                  onChange={(e) => setSelectedHouseholdMember(e.target.value)}
+                  className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
+                  disabled={isAdding}
+                >
+                  <option value="">None (regular family member)</option>
+                  {availableHouseholdMembers.map((hm) => (
+                    <option key={hm.id} value={hm.id}>
+                      {hm.email || hm.user_id.substring(0, 8)} ({hm.role})
+                    </option>
+                  ))}
+                </select>
+                <p className="text-xs text-gray-500 mt-1">
+                  Link this family member to an app user for future features (notifications, filtering)
+                </p>
+              </div>
+            )}
+
             <button
               onClick={handleAddMember}
               disabled={isAdding || !newMemberName.trim()}
@@ -137,21 +189,35 @@ const FamilyMembersModal: React.FC<FamilyMembersModalProps> = ({ isOpen, onClose
               </div>
             ) : (
               <div className="space-y-2">
-                {familyMembers.map((member) => (
-                  <div
-                    key={member.id}
-                    className="flex items-center justify-between p-3 bg-white border border-gray-200 rounded-lg hover:shadow-sm transition-shadow"
-                  >
-                    <div className="flex items-center">
-                      <div
-                        className="w-8 h-8 rounded-full mr-3 flex-shrink-0"
-                        style={{ backgroundColor: member.color }}
-                      />
-                      <span className="font-medium text-gray-900">{member.name}</span>
+                {familyMembers.map((member) => {
+                  const linkedHouseholdMember = member.household_member_id 
+                    ? householdMembers.find(hm => hm.id === member.household_member_id)
+                    : null;
+
+                  return (
+                    <div
+                      key={member.id}
+                      className="flex items-center justify-between p-3 bg-white border border-gray-200 rounded-lg hover:shadow-sm transition-shadow"
+                    >
+                      <div className="flex items-center flex-1">
+                        <div
+                          className="w-8 h-8 rounded-full mr-3 flex-shrink-0"
+                          style={{ backgroundColor: member.color }}
+                        />
+                        <div className="flex-1">
+                          <span className="font-medium text-gray-900">{member.name}</span>
+                          {linkedHouseholdMember && (
+                            <div className="flex items-center text-xs text-gray-500 mt-1">
+                              <LinkIcon className="h-3 w-3 mr-1" />
+                              Linked to {linkedHouseholdMember.email || 'user'}
+                            </div>
+                          )}
+                        </div>
+                      </div>
+                      {/* Note: Delete functionality could be added here in the future */}
                     </div>
-                    {/* Note: Delete functionality could be added here in the future */}
-                  </div>
-                ))}
+                  );
+                })}
               </div>
             )}
           </div>

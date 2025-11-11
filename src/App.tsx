@@ -5,7 +5,6 @@ import { FinanceProvider } from './context/FinanceContext';
 import { AuthProvider, useAuth } from './contexts/AuthContext';
 import Dashboard from './components/Dashboard';
 import AddTransaction from './components/AddTransaction';
-import FamilyMembersModal from './components/FamilyMembersModal';
 import { BuildInfo } from './components/BuildInfo';
 import Login from './pages/auth/Login';
 import Register from './pages/auth/Register';
@@ -48,7 +47,6 @@ function ProtectedRoute({ children }: { children: React.ReactNode }) {
 
 function AppContent() {
   const [isAddTransactionOpen, setIsAddTransactionOpen] = useState(false);
-  const [isFamilyMembersOpen, setIsFamilyMembersOpen] = useState(false);
   const { signOut, user } = useAuth();
 
   return (
@@ -149,10 +147,6 @@ function AppContent() {
       <AddTransaction
         isOpen={isAddTransactionOpen}
         onClose={() => setIsAddTransactionOpen(false)}
-      />
-      <FamilyMembersModal
-        isOpen={isFamilyMembersOpen}
-        onClose={() => setIsFamilyMembersOpen(false)}
       />
       <BuildInfo />
     </div>

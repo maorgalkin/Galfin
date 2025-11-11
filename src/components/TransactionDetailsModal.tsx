@@ -1,12 +1,13 @@
 import React from 'react';
 import { X, Calendar, User, Tag, FileText, DollarSign } from 'lucide-react';
-import type { Transaction } from '../types';
+import type { Transaction, FamilyMember } from '../types';
 
 interface TransactionDetailsModalProps {
   transaction: Transaction | null;
   isOpen: boolean;
   onClose: () => void;
   formatCurrency: (amount: number) => string;
+  familyMembers: FamilyMember[];
 }
 
 export const TransactionDetailsModal: React.FC<TransactionDetailsModalProps> = ({
@@ -14,6 +15,7 @@ export const TransactionDetailsModal: React.FC<TransactionDetailsModalProps> = (
   isOpen,
   onClose,
   formatCurrency,
+  familyMembers,
 }) => {
   if (!isOpen || !transaction) return null;
 
@@ -24,6 +26,13 @@ export const TransactionDetailsModal: React.FC<TransactionDetailsModalProps> = (
       month: 'long', 
       day: 'numeric' 
     });
+  };
+
+  // Look up family member name by ID
+  const getFamilyMemberName = (id: string | undefined) => {
+    if (!id) return null;
+    const member = familyMembers.find(m => m.id === id);
+    return member?.name || id;
   };
 
   return (
@@ -111,7 +120,7 @@ export const TransactionDetailsModal: React.FC<TransactionDetailsModalProps> = (
               <div className="flex-1">
                 <p className="text-sm text-gray-600 dark:text-gray-400">Family Member</p>
                 <p className="text-base font-medium text-gray-900 dark:text-gray-100">
-                  {transaction.familyMember}
+                  {getFamilyMemberName(transaction.familyMember)}
                 </p>
               </div>
             </div>

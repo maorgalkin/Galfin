@@ -21,6 +21,7 @@ export interface FamilyMember {
   id: string;
   name: string;
   color: string;
+  household_member_id?: string | null;  // Optional link to household_member (app user)
 }
 
 export interface CategorySummary {

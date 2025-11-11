@@ -7,6 +7,26 @@ import type {
   BudgetComparisonSummary
 } from '../types/budget';
 
+// Helper to get current user's household ID
+const getHouseholdId = async (): Promise<string> => {
+  const { data: { user }, error: userError } = await supabase.auth.getUser();
+  if (userError || !user) {
+    throw new Error('User not authenticated');
+  }
+
+  const { data, error } = await supabase
+    .from('household_members')
+    .select('household_id')
+    .eq('user_id', user.id)
+    .single();
+
+  if (error || !data) {
+    throw new Error('User is not part of a household');
+  }
+
+  return data.household_id;
+};
+
 /**
  * Monthly Budget Service
  * Manages budgets for specific months
@@ -99,16 +119,12 @@ export class MonthlyBudgetService {
     month: number
   ): Promise<MonthlyBudget | null> {
     try {
-      const { data: { user } } = await supabase.auth.getUser();
-      
-      if (!user) {
-        throw new Error('User not authenticated');
-      }
+      const householdId = await getHouseholdId();
 
       const { data, error } = await supabase
         .from('monthly_budgets')
         .select('*')
-        .eq('user_id', user.id)
+        .eq('household_id', householdId)
         .eq('year', year)
         .eq('month', month)
         .single();
@@ -153,16 +169,12 @@ export class MonthlyBudgetService {
    */
   static async getYearBudgets(year: number): Promise<MonthlyBudget[]> {
     try {
-      const { data: { user } } = await supabase.auth.getUser();
-      
-      if (!user) {
-        throw new Error('User not authenticated');
-      }
+      const householdId = await getHouseholdId();
 
       const { data, error } = await supabase
         .from('monthly_budgets')
         .select('*')
-        .eq('user_id', user.id)
+        .eq('household_id', householdId)
         .eq('year', year)
         .order('month', { ascending: true });
 
@@ -180,16 +192,12 @@ export class MonthlyBudgetService {
    */
   static async getAllMonthlyBudgets(limit: number = 12): Promise<MonthlyBudget[]> {
     try {
-      const { data: { user } } = await supabase.auth.getUser();
-      
-      if (!user) {
-        throw new Error('User not authenticated');
-      }
+      const householdId = await getHouseholdId();
 
       const { data, error } = await supabase
         .from('monthly_budgets')
         .select('*')
-        .eq('user_id', user.id)
+        .eq('household_id', householdId)
         .order('year', { ascending: false })
         .order('month', { ascending: false })
         .limit(limit);
@@ -213,14 +221,8 @@ export class MonthlyBudgetService {
   ): Promise<MonthlyBudget[]> {
     try {
       console.log('getMonthlyBudgetsForDateRange called:', { startDate, endDate });
-      
-      const { data: { user } } = await supabase.auth.getUser();
-      
-      if (!user) {
-        throw new Error('User not authenticated');
-      }
 
-      // Get all months in the range
+      const householdId = await getHouseholdId();      // Get all months in the range
       const monthsInRange: { year: number; month: number }[] = [];
       const current = new Date(startDate);
       while (current <= endDate) {
@@ -246,7 +248,7 @@ export class MonthlyBudgetService {
       let query = supabase
         .from('monthly_budgets')
         .select('*')
-        .eq('user_id', user.id);
+        .eq('household_id', householdId);
 
       if (startYear === endYear) {
         // Same year, simple range
@@ -305,7 +307,7 @@ export class MonthlyBudgetService {
         let refreshQuery = supabase
           .from('monthly_budgets')
           .select('*')
-          .eq('user_id', user.id);
+          .eq('household_id', householdId);
 
         if (startYear === endYear) {
           refreshQuery = refreshQuery
@@ -357,10 +359,11 @@ export class MonthlyBudgetService {
   ): Promise<MonthlyBudget> {
     try {
       const { data: { user } } = await supabase.auth.getUser();
-      
       if (!user) {
         throw new Error('User not authenticated');
       }
+
+      const householdId = await getHouseholdId();
 
       // Get active personal budget
       const personalBudget = await PersonalBudgetService.getActiveBudget();
@@ -371,6 +374,7 @@ export class MonthlyBudgetService {
 
       const newMonthlyBudget: Omit<MonthlyBudget, 'id' | 'created_at' | 'updated_at'> = {
         user_id: user.id,
+        household_id: householdId,
         personal_budget_id: personalBudget.id,
         year,
         month,
@@ -405,23 +409,17 @@ export class MonthlyBudgetService {
     categoryName: string,
     newLimit: number,
     notes?: string
-  ): Promise<MonthlyBudget> {
+    ): Promise<MonthlyBudget> {
     try {
-      const { data: { user } } = await supabase.auth.getUser();
-      
-      if (!user) {
-        throw new Error('User not authenticated');
-      }
+      const householdId = await getHouseholdId();
 
       // Get current monthly budget
       const { data: currentBudget, error: fetchError } = await supabase
         .from('monthly_budgets')
         .select('*')
         .eq('id', monthlyBudgetId)
-        .eq('user_id', user.id)
-        .single();
-
-      if (fetchError) throw fetchError;
+        .eq('household_id', householdId)
+        .single();      if (fetchError) throw fetchError;
       if (!currentBudget) throw new Error('Monthly budget not found');
 
       if (currentBudget.is_locked) {
@@ -450,7 +448,7 @@ export class MonthlyBudgetService {
           notes: notes || currentBudget.notes
         })
         .eq('id', monthlyBudgetId)
-        .eq('user_id', user.id)
+        .eq('household_id', householdId)
         .select()
         .single();
 
@@ -472,16 +470,12 @@ export class MonthlyBudgetService {
     month: number
   ): Promise<MonthlyBudget> {
     try {
-      const { data: { user } } = await supabase.auth.getUser();
-      
-      if (!user) {
-        throw new Error('User not authenticated');
-      }
+      const householdId = await getHouseholdId();
 
       const { data, error } = await supabase
         .from('monthly_budgets')
         .update({ is_locked: true })
-        .eq('user_id', user.id)
+        .eq('household_id', householdId)
         .eq('year', year)
         .eq('month', month)
         .select()
@@ -504,16 +498,12 @@ export class MonthlyBudgetService {
     month: number
   ): Promise<MonthlyBudget> {
     try {
-      const { data: { user } } = await supabase.auth.getUser();
-      
-      if (!user) {
-        throw new Error('User not authenticated');
-      }
+      const householdId = await getHouseholdId();
 
       const { data, error } = await supabase
         .from('monthly_budgets')
         .update({ is_locked: false })
-        .eq('user_id', user.id)
+        .eq('household_id', householdId)
         .eq('year', year)
         .eq('month', month)
         .select()

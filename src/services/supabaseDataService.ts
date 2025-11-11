@@ -171,6 +171,7 @@ export const getFamilyMembers = async (): Promise<FamilyMember[]> => {
     id: row.id,
     name: row.name,
     color: row.color,
+    household_member_id: row.household_member_id,
   }));
 };
 
@@ -185,6 +186,7 @@ export const addFamilyMember = async (member: Omit<FamilyMember, 'id'>): Promise
       household_id: householdId,
       name: member.name,
       color: member.color,
+      household_member_id: member.household_member_id,
     })
     .select()
     .single();
@@ -198,6 +200,7 @@ export const addFamilyMember = async (member: Omit<FamilyMember, 'id'>): Promise
     id: data.id,
     name: data.name,
     color: data.color,
+    household_member_id: data.household_member_id,
   };
 };
 
@@ -209,6 +212,7 @@ export const updateFamilyMember = async (id: string, member: Omit<FamilyMember, 
     .update({
       name: member.name,
       color: member.color,
+      household_member_id: member.household_member_id,
     })
     .eq('id', id)
     .eq('user_id', userId)
@@ -224,6 +228,7 @@ export const updateFamilyMember = async (id: string, member: Omit<FamilyMember, 
     id: data.id,
     name: data.name,
     color: data.color,
+    household_member_id: data.household_member_id,
   };
 };
 

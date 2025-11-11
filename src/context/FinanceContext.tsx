@@ -13,6 +13,7 @@ interface FinanceContextType {
   deleteTransaction: (id: string) => Promise<void>;
   updateBudget: (budget: Budget) => void;
   addFamilyMember: (member: Omit<FamilyMember, 'id'>) => Promise<void>;
+  updateFamilyMember: (id: string, member: Omit<FamilyMember, 'id'>) => Promise<void>;
   getTotalIncome: () => number;
   getTotalExpenses: () => number;
   getBalance: () => number;
@@ -178,6 +179,25 @@ export const FinanceProvider: React.FC<{ children: React.ReactNode }> = ({ child
     }
   };
 
+  const updateFamilyMember = async (id: string, member: Omit<FamilyMember, 'id'>) => {
+    try {
+      if (user) {
+        const updatedMember = await SupabaseService.updateFamilyMember(id, member);
+        setFamilyMembers(prev => prev.map(m => m.id === id ? updatedMember : m));
+      } else {
+        // Fallback to localStorage
+        setFamilyMembers(prev => {
+          const updated = prev.map(m => m.id === id ? { ...member, id } : m);
+          localStorage.setItem('galfin-members', JSON.stringify(updated));
+          return updated;
+        });
+      }
+    } catch (error) {
+      console.error('Error updating family member:', error);
+      throw error;
+    }
+  };
+
   const getTotalIncome = () => {
     return transactions
       .filter(t => t.type === 'income')
@@ -205,6 +225,7 @@ export const FinanceProvider: React.FC<{ children: React.ReactNode }> = ({ child
       deleteTransaction,
       updateBudget,
       addFamilyMember,
+      updateFamilyMember,
       getTotalIncome,
       getTotalExpenses,
       getBalance,

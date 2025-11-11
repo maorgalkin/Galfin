@@ -595,6 +595,7 @@ const Dashboard: React.FC = () => {
         isOpen={viewingTransactionDetails !== null}
         onClose={() => setViewingTransactionDetails(null)}
         formatCurrency={formatCurrency}
+        familyMembers={familyMembers}
       />
       </div>
     </div>
