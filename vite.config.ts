@@ -1,10 +1,28 @@
 /// <reference types="vitest" />
 import { defineConfig } from 'vite'
 import react from '@vitejs/plugin-react'
+import { execSync } from 'child_process'
+
+function getGitInfo() {
+  try {
+    const commit = execSync('git rev-parse --short HEAD').toString().trim()
+    const branch = execSync('git rev-parse --abbrev-ref HEAD').toString().trim()
+    return { commit, branch }
+  } catch {
+    return { commit: 'unknown', branch: 'unknown' }
+  }
+}
+
+const gitInfo = getGitInfo()
 
 // https://vite.dev/config/
 export default defineConfig({
   plugins: [react()],
+  define: {
+    'import.meta.env.VITE_GIT_COMMIT': JSON.stringify(gitInfo.commit),
+    'import.meta.env.VITE_GIT_BRANCH': JSON.stringify(gitInfo.branch),
+    'import.meta.env.VITE_BUILD_TIME': JSON.stringify(new Date().toISOString()),
+  },
   server: {
     host: '0.0.0.0',
     port: 5173,

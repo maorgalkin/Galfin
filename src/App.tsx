@@ -6,6 +6,7 @@ import { AuthProvider, useAuth } from './contexts/AuthContext';
 import Dashboard from './components/Dashboard';
 import AddTransaction from './components/AddTransaction';
 import FamilyMembersModal from './components/FamilyMembersModal';
+import { BuildInfo } from './components/BuildInfo';
 import Login from './pages/auth/Login';
 import Register from './pages/auth/Register';
 import { DevTools } from './pages/DevTools';
@@ -153,6 +154,7 @@ function AppContent() {
         isOpen={isFamilyMembersOpen}
         onClose={() => setIsFamilyMembersOpen(false)}
       />
+      <BuildInfo />
     </div>
   );
 }
