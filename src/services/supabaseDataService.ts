@@ -14,15 +14,32 @@ const getCurrentUserId = async (): Promise<string> => {
   return user.id;
 };
 
+// Helper to get current user's household ID
+const getHouseholdId = async (): Promise<string> => {
+  const userId = await getCurrentUserId();
+  
+  const { data, error } = await supabase
+    .from('household_members')
+    .select('household_id')
+    .eq('user_id', userId)
+    .single();
+
+  if (error || !data) {
+    throw new Error('User is not part of a household');
+  }
+
+  return data.household_id;
+};
+
 // ==================== TRANSACTIONS ====================
 
 export const getTransactions = async (): Promise<Transaction[]> => {
-  const userId = await getCurrentUserId();
+  const householdId = await getHouseholdId();
   
   const { data, error } = await supabase
     .from('transactions')
     .select('*')
-    .eq('user_id', userId)
+    .eq('household_id', householdId)
     .order('date', { ascending: false });
 
   if (error) {
@@ -43,14 +60,16 @@ export const getTransactions = async (): Promise<Transaction[]> => {
 
 export const addTransaction = async (transaction: Omit<Transaction, 'id'>): Promise<Transaction> => {
   const userId = await getCurrentUserId();
+  const householdId = await getHouseholdId();
   
-  console.log('SupabaseService: Adding transaction for user:', userId);
+  console.log('SupabaseService: Adding transaction for household:', householdId);
   console.log('Transaction data:', transaction);
 
   const { data, error } = await supabase
     .from('transactions')
     .insert({
       user_id: userId,
+      household_id: householdId,
       date: transaction.date,
       description: transaction.description,
       amount: transaction.amount,
@@ -83,7 +102,7 @@ export const addTransaction = async (transaction: Omit<Transaction, 'id'>): Prom
 };
 
 export const updateTransaction = async (id: string, transaction: Omit<Transaction, 'id'>): Promise<Transaction> => {
-  const userId = await getCurrentUserId();
+  const householdId = await getHouseholdId();
 
   const { data, error } = await supabase
     .from('transactions')
@@ -97,7 +116,7 @@ export const updateTransaction = async (id: string, transaction: Omit<Transactio
       updated_at: new Date().toISOString(),
     })
     .eq('id', id)
-    .eq('user_id', userId) // RLS will enforce this, but good practice
+    .eq('household_id', householdId) // Ensure user can only update household transactions
     .select()
     .single();
 
@@ -135,12 +154,12 @@ export const deleteTransaction = async (id: string): Promise<void> => {
 // ==================== FAMILY MEMBERS ====================
 
 export const getFamilyMembers = async (): Promise<FamilyMember[]> => {
-  const userId = await getCurrentUserId();
+  const householdId = await getHouseholdId();
 
   const { data, error } = await supabase
     .from('family_members')
     .select('*')
-    .eq('user_id', userId)
+    .eq('household_id', householdId)
     .order('created_at', { ascending: true });
 
   if (error) {
@@ -157,11 +176,13 @@ export const getFamilyMembers = async (): Promise<FamilyMember[]> => {
 
 export const addFamilyMember = async (member: Omit<FamilyMember, 'id'>): Promise<FamilyMember> => {
   const userId = await getCurrentUserId();
+  const householdId = await getHouseholdId();
 
   const { data, error } = await supabase
     .from('family_members')
     .insert({
       user_id: userId,
+      household_id: householdId,
       name: member.name,
       color: member.color,
     })
