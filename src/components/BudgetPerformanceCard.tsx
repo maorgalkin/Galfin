@@ -376,13 +376,8 @@ export const BudgetPerformanceCard: React.FC<BudgetPerformanceCardProps> = ({
                       tabIndex={0}
                       aria-label={`View details for ${comparison.category}`}
                       className="block w-full border border-gray-200 dark:border-gray-700 rounded-lg p-3 cursor-pointer active:bg-gray-100 dark:active:bg-gray-700/50 transition-colors"
-                      style={{ 
-                        WebkitTapHighlightColor: 'rgba(0,0,0,0.1)',
-                        touchAction: 'manipulation',
-                        userSelect: 'none'
-                      }}
-                      onPointerDown={() => {
-                        console.log('Category pressed:', comparison.category);
+                      onClick={() => {
+                        console.log('Category clicked:', comparison.category);
                         onCategoryClick?.(comparison.category);
                       }}
                       onKeyDown={(e) => {
