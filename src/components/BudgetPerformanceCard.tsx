@@ -43,6 +43,24 @@ export const BudgetPerformanceCard: React.FC<BudgetPerformanceCardProps> = ({
   const [showDetails, setShowDetails] = useState(false);
   const [viewingAlerts, setViewingAlerts] = useState(false);
   const summaryRef = useRef<HTMLDivElement>(null);
+  const categoryBreakdownRef = useRef<HTMLDivElement>(null);
+
+  // Auto-scroll to category breakdown on mobile when data loads
+  useEffect(() => {
+    if (isCompact || loadingActive || loadingMonthly) return;
+    
+    const isMobile = window.innerWidth < 768; // md breakpoint
+    if (isMobile && categoryBreakdownRef.current && !loadingActive && !loadingMonthly) {
+      // Small delay to ensure rendering is complete
+      const timer = setTimeout(() => {
+        categoryBreakdownRef.current?.scrollIntoView({ 
+          behavior: 'smooth', 
+          block: 'start' 
+        });
+      }, 300);
+      return () => clearTimeout(timer);
+    }
+  }, [isCompact, loadingActive, loadingMonthly]);
 
   // Intersection observer to detect when summary scrolls out of view (breakdown is visible)
   useEffect(() => {
@@ -339,7 +357,7 @@ export const BudgetPerformanceCard: React.FC<BudgetPerformanceCardProps> = ({
 
         {/* Detailed Category Breakdown */}
         {(showDetails || !isCompact) && (
-          <div className="mb-4 pt-4 border-t border-gray-200 dark:border-gray-700">
+          <div ref={categoryBreakdownRef} className="mb-4 pt-4 border-t border-gray-200 dark:border-gray-700">
             <div className="flex items-center justify-between mb-3">
               <h4 className="text-sm font-semibold text-gray-900 dark:text-gray-100">
                 {viewingAlerts ? 'Alert Categories' : 'Category Breakdown'}
