@@ -378,15 +378,11 @@ export const BudgetPerformanceCard: React.FC<BudgetPerformanceCardProps> = ({
                       className="block w-full border border-gray-200 dark:border-gray-700 rounded-lg p-3 cursor-pointer active:bg-gray-100 dark:active:bg-gray-700/50 transition-colors"
                       style={{ 
                         WebkitTapHighlightColor: 'rgba(0,0,0,0.1)',
-                        touchAction: 'manipulation'
+                        touchAction: 'manipulation',
+                        userSelect: 'none'
                       }}
-                      onTouchStart={() => {
-                        console.log('Category touched:', comparison.category);
-                        onCategoryClick?.(comparison.category);
-                      }}
-                      onClick={() => {
-                        // For desktop/non-touch devices
-                        console.log('Category clicked:', comparison.category);
+                      onPointerDown={() => {
+                        console.log('Category pressed:', comparison.category);
                         onCategoryClick?.(comparison.category);
                       }}
                       onKeyDown={(e) => {
