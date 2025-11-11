@@ -370,20 +370,32 @@ export const BudgetPerformanceCard: React.FC<BudgetPerformanceCardProps> = ({
                   const utilization = comparison.budgeted > 0 ? (comparison.actual / comparison.budgeted) * 100 : 0;
                   
                   return (
-                    <a
+                    <div
                       key={comparison.category}
-                      href="#"
                       role="button"
+                      tabIndex={0}
                       aria-label={`View details for ${comparison.category}`}
-                      className="block w-full border border-gray-200 dark:border-gray-700 rounded-lg p-3 no-underline active:bg-gray-100 dark:active:bg-gray-700/50 transition-colors"
+                      className="block w-full border border-gray-200 dark:border-gray-700 rounded-lg p-3 cursor-pointer active:bg-gray-100 dark:active:bg-gray-700/50 transition-colors"
                       style={{ 
                         WebkitTapHighlightColor: 'rgba(0,0,0,0.1)',
                         touchAction: 'manipulation'
                       }}
-                      onClick={(e) => {
+                      onTouchEnd={(e) => {
                         e.preventDefault();
+                        e.stopPropagation();
+                        console.log('Category touched:', comparison.category);
+                        onCategoryClick?.(comparison.category);
+                      }}
+                      onClick={(e) => {
+                        // For desktop/non-touch devices
                         console.log('Category clicked:', comparison.category);
                         onCategoryClick?.(comparison.category);
+                      }}
+                      onKeyDown={(e) => {
+                        if (e.key === 'Enter' || e.key === ' ') {
+                          e.preventDefault();
+                          onCategoryClick?.(comparison.category);
+                        }
                       }}
                     >                      <div className="flex justify-between items-center mb-2">
                         <div className="flex items-center">
@@ -415,7 +427,7 @@ export const BudgetPerformanceCard: React.FC<BudgetPerformanceCardProps> = ({
                           </span>
                         )}
                       </div>
-                    </a>
+                    </div>
                   );
                 })}
             </div>
