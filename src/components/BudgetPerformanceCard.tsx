@@ -45,23 +45,6 @@ export const BudgetPerformanceCard: React.FC<BudgetPerformanceCardProps> = ({
   const summaryRef = useRef<HTMLDivElement>(null);
   const categoryBreakdownRef = useRef<HTMLDivElement>(null);
 
-  // Auto-scroll to category breakdown on mobile when data loads
-  useEffect(() => {
-    if (isCompact || loadingActive || loadingMonthly) return;
-    
-    const isMobile = window.innerWidth < 768; // md breakpoint
-    if (isMobile && categoryBreakdownRef.current && !loadingActive && !loadingMonthly) {
-      // Small delay to ensure rendering is complete
-      const timer = setTimeout(() => {
-        categoryBreakdownRef.current?.scrollIntoView({ 
-          behavior: 'smooth', 
-          block: 'start' 
-        });
-      }, 300);
-      return () => clearTimeout(timer);
-    }
-  }, [isCompact, loadingActive, loadingMonthly]);
-
   // Intersection observer to detect when summary scrolls out of view (breakdown is visible)
   useEffect(() => {
     if (!onBreakdownVisible || isCompact || loadingActive || loadingMonthly) return;
