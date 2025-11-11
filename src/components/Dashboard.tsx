@@ -8,7 +8,7 @@ import { motion, AnimatePresence } from 'framer-motion';
 import { BudgetPerformanceCard } from './BudgetPerformanceCard';
 import { TransactionDetailsModal } from './TransactionDetailsModal';
 import EditTransactionModal from './EditTransactionModal';
-import FamilyMembersModal from './FamilyMembersModal';
+import HouseholdSettingsModal from './HouseholdSettingsModal';
 import { BudgetManagement } from '../pages/BudgetManagement';
 import { getUserFirstName } from '../utils/userHelpers';
 import { generateDummyTransactions, countDummyTransactions, isDummyTransaction } from '../utils/dummyData';
@@ -47,7 +47,7 @@ const Dashboard: React.FC = () => {
   const [activeTab, setActiveTab] = useState<'dashboard' | 'transactions' | 'budget'>(initialTab);
   
   const [editingTransaction, setEditingTransaction] = useState<Transaction | null>(null);
-  const [isFamilyMembersModalOpen, setIsFamilyMembersModalOpen] = useState(false);
+  const [isHouseholdSettingsModalOpen, setIsHouseholdSettingsModalOpen] = useState(false);
   const [selectedDesktopCategory, setSelectedDesktopCategory] = useState<string | null>(null);
   const [isCategoryModalOpen, setIsCategoryModalOpen] = useState(false);
   const [isCustomDateRangeModalOpen, setIsCustomDateRangeModalOpen] = useState(false);
@@ -346,7 +346,7 @@ const Dashboard: React.FC = () => {
             
             <FamilyMembersCard
               familyMembersCount={familyMembers.length}
-              onOpenModal={() => setIsFamilyMembersModalOpen(true)}
+              onOpenModal={() => setIsHouseholdSettingsModalOpen(true)}
             />
           </div>
         </div>
@@ -561,10 +561,10 @@ const Dashboard: React.FC = () => {
         />
       )}
 
-      {/* Family Members Modal */}
-      <FamilyMembersModal
-        isOpen={isFamilyMembersModalOpen}
-        onClose={() => setIsFamilyMembersModalOpen(false)}
+      {/* Household Settings Modal */}
+      <HouseholdSettingsModal
+        isOpen={isHouseholdSettingsModalOpen}
+        onClose={() => setIsHouseholdSettingsModalOpen(false)}
       />
 
       {/* Category Expenses Modal */}
