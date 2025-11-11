@@ -380,13 +380,11 @@ export const BudgetPerformanceCard: React.FC<BudgetPerformanceCardProps> = ({
                         WebkitTapHighlightColor: 'rgba(0,0,0,0.1)',
                         touchAction: 'manipulation'
                       }}
-                      onTouchEnd={(e) => {
-                        e.preventDefault();
-                        e.stopPropagation();
+                      onTouchStart={() => {
                         console.log('Category touched:', comparison.category);
                         onCategoryClick?.(comparison.category);
                       }}
-                      onClick={(e) => {
+                      onClick={() => {
                         // For desktop/non-touch devices
                         console.log('Category clicked:', comparison.category);
                         onCategoryClick?.(comparison.category);
