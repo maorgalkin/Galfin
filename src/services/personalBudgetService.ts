@@ -6,6 +6,26 @@ import type {
 } from '../types/budget';
 import type { BudgetConfiguration } from '../types';
 
+// Helper to get current user's household ID
+const getHouseholdId = async (): Promise<string> => {
+  const { data: { user }, error: userError } = await supabase.auth.getUser();
+  if (userError || !user) {
+    throw new Error('User not authenticated');
+  }
+
+  const { data, error } = await supabase
+    .from('household_members')
+    .select('household_id')
+    .eq('user_id', user.id)
+    .single();
+
+  if (error || !data) {
+    throw new Error('User is not part of a household');
+  }
+
+  return data.household_id;
+};
+
 /**
  * Personal Budget Service
  * Manages user's baseline/ideal budget configuration
@@ -17,16 +37,12 @@ export class PersonalBudgetService {
    */
   static async getActiveBudget(): Promise<PersonalBudget | null> {
     try {
-      const { data: { user } } = await supabase.auth.getUser();
-      
-      if (!user) {
-        throw new Error('User not authenticated');
-      }
+      const householdId = await getHouseholdId();
 
       const { data, error } = await supabase
         .from('personal_budgets')
         .select('*')
-        .eq('user_id', user.id)
+        .eq('household_id', householdId)
         .eq('is_active', true)
         .single();
 
@@ -51,17 +67,13 @@ export class PersonalBudgetService {
    */
   static async getBudgetHistory(): Promise<PersonalBudget[]> {
     try {
-      const { data: { user } } = await supabase.auth.getUser();
-      
-      if (!user) {
-        throw new Error('User not authenticated');
-      }
+      const householdId = await getHouseholdId();
 
       const { data, error } = await supabase
         .from('personal_budgets')
         .select('*')
-        .eq('user_id', user.id)
-        .order('version', { ascending: false });
+        .eq('household_id', householdId)
+        .order('version', { ascending: false});
 
       if (error) throw error;
 
@@ -77,17 +89,13 @@ export class PersonalBudgetService {
    */
   static async getBudgetById(budgetId: string): Promise<PersonalBudget | null> {
     try {
-      const { data: { user } } = await supabase.auth.getUser();
-      
-      if (!user) {
-        throw new Error('User not authenticated');
-      }
+      const householdId = await getHouseholdId();
 
       const { data, error } = await supabase
         .from('personal_budgets')
         .select('*')
         .eq('id', budgetId)
-        .eq('user_id', user.id)
+        .eq('household_id', householdId)
         .single();
 
       if (error) {
@@ -109,14 +117,15 @@ export class PersonalBudgetService {
    * This is typically done during onboarding or when creating a new baseline
    */
   static async createBudget(
-    budget: Omit<PersonalBudget, 'id' | 'user_id' | 'version' | 'created_at' | 'updated_at' | 'is_active'>
+    budget: Omit<PersonalBudget, 'id' | 'user_id' | 'version' | 'created_at' | 'updated_at' | 'is_active' | 'household_id'>
   ): Promise<PersonalBudget> {
     try {
       const { data: { user } } = await supabase.auth.getUser();
-      
       if (!user) {
         throw new Error('User not authenticated');
       }
+
+      const householdId = await getHouseholdId();
 
       // Deactivate any existing active budget
       await this.deactivateAllBudgets();
@@ -126,6 +135,7 @@ export class PersonalBudgetService {
 
       const newBudget: Omit<PersonalBudget, 'id' | 'created_at' | 'updated_at'> = {
         user_id: user.id,
+        household_id: householdId,
         version: nextVersion,
         name: budget.name,
         categories: budget.categories,
@@ -159,10 +169,11 @@ export class PersonalBudgetService {
   ): Promise<PersonalBudget> {
     try {
       const { data: { user } } = await supabase.auth.getUser();
-      
       if (!user) {
         throw new Error('User not authenticated');
       }
+
+      const householdId = await getHouseholdId();
 
       // Get the existing budget
       const existingBudget = await this.getBudgetById(budgetId);
@@ -180,6 +191,7 @@ export class PersonalBudgetService {
       // Create new version with updates
       const newBudget: Omit<PersonalBudget, 'id' | 'created_at' | 'updated_at'> = {
         user_id: user.id,
+        household_id: householdId,
         version: nextVersion,
         name: updates.name ?? existingBudget.name,
         categories: updates.categories ?? existingBudget.categories,
@@ -214,17 +226,13 @@ export class PersonalBudgetService {
     }
   ): Promise<PersonalBudget> {
     try {
-      const { data: { user } } = await supabase.auth.getUser();
-      
-      if (!user) {
-        throw new Error('User not authenticated');
-      }
+      const householdId = await getHouseholdId();
 
       const { data, error } = await supabase
         .from('personal_budgets')
         .update(updates)
         .eq('id', budgetId)
-        .eq('user_id', user.id)
+        .eq('household_id', householdId)
         .select()
         .single();
 
@@ -243,11 +251,7 @@ export class PersonalBudgetService {
    */
   static async setActiveBudget(budgetId: string): Promise<PersonalBudget> {
     try {
-      const { data: { user } } = await supabase.auth.getUser();
-      
-      if (!user) {
-        throw new Error('User not authenticated');
-      }
+      const householdId = await getHouseholdId();
 
       // Deactivate all budgets
       await this.deactivateAllBudgets();
@@ -257,7 +261,7 @@ export class PersonalBudgetService {
         .from('personal_budgets')
         .update({ is_active: true })
         .eq('id', budgetId)
-        .eq('user_id', user.id)
+        .eq('household_id', householdId)
         .select()
         .single();
 
@@ -276,11 +280,7 @@ export class PersonalBudgetService {
    */
   static async deleteBudget(budgetId: string): Promise<void> {
     try {
-      const { data: { user } } = await supabase.auth.getUser();
-      
-      if (!user) {
-        throw new Error('User not authenticated');
-      }
+      const householdId = await getHouseholdId();
 
       // Check if this is the only budget
       const allBudgets = await this.getBudgetHistory();
@@ -302,7 +302,7 @@ export class PersonalBudgetService {
         .from('personal_budgets')
         .delete()
         .eq('id', budgetId)
-        .eq('user_id', user.id);
+        .eq('household_id', householdId);
 
       if (error) throw error;
     } catch (error) {
@@ -343,16 +343,12 @@ export class PersonalBudgetService {
    */
   private static async getNextVersion(): Promise<number> {
     try {
-      const { data: { user } } = await supabase.auth.getUser();
-      
-      if (!user) {
-        throw new Error('User not authenticated');
-      }
+      const householdId = await getHouseholdId();
 
       const { data, error } = await supabase
         .from('personal_budgets')
         .select('version')
-        .eq('user_id', user.id)
+        .eq('household_id', householdId)
         .order('version', { ascending: false })
         .limit(1)
         .single();
@@ -377,16 +373,12 @@ export class PersonalBudgetService {
    */
   private static async deactivateAllBudgets(): Promise<void> {
     try {
-      const { data: { user } } = await supabase.auth.getUser();
-      
-      if (!user) {
-        throw new Error('User not authenticated');
-      }
+      const householdId = await getHouseholdId();
 
       const { error } = await supabase
         .from('personal_budgets')
         .update({ is_active: false })
-        .eq('user_id', user.id)
+        .eq('household_id', householdId)
         .eq('is_active', true);
 
       if (error) throw error;

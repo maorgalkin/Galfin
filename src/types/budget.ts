@@ -151,6 +151,7 @@ import type { Budget } from './index';
 export interface PersonalBudget {
   id: string;
   user_id: string;
+  household_id: string;
   version: number;
   name: string;
   categories: Record<string, CategoryConfig>;
@@ -168,6 +169,7 @@ export interface PersonalBudget {
 export interface MonthlyBudget {
   id: string;
   user_id: string;
+  household_id: string;
   personal_budget_id: string | null;
   year: number;
   month: number; // 1-12
