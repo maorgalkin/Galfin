@@ -10,8 +10,27 @@ import type { PersonalBudget } from '../types/budget';
 export function useActiveBudget() {
   return useQuery({
     queryKey: ['personalBudget', 'active'],
-    queryFn: () => PersonalBudgetService.getActiveBudget(),
+    queryFn: async () => {
+      try {
+        return await PersonalBudgetService.getActiveBudget();
+      } catch (error: any) {
+        // Handle "not part of household" error gracefully
+        // This can happen for brand new users before migration 009 is applied
+        if (error?.message?.includes('User is not part of a household')) {
+          console.warn('User has no household yet - they may need to create one');
+          return null;
+        }
+        throw error;
+      }
+    },
     staleTime: 5 * 60 * 1000, // 5 minutes
+    retry: (failureCount, error: any) => {
+      // Don't retry if the user simply doesn't have a household
+      if (error?.message?.includes('User is not part of a household')) {
+        return false;
+      }
+      return failureCount < 3;
+    },
   });
 }
 
@@ -21,8 +40,25 @@ export function useActiveBudget() {
 export function usePersonalBudgetHistory() {
   return useQuery({
     queryKey: ['personalBudget', 'history'],
-    queryFn: () => PersonalBudgetService.getBudgetHistory(),
+    queryFn: async () => {
+      try {
+        return await PersonalBudgetService.getBudgetHistory();
+      } catch (error: any) {
+        // Handle "not part of household" error gracefully
+        if (error?.message?.includes('User is not part of a household')) {
+          console.warn('User has no household yet');
+          return [];
+        }
+        throw error;
+      }
+    },
     staleTime: 5 * 60 * 1000,
+    retry: (failureCount, error: any) => {
+      if (error?.message?.includes('User is not part of a household')) {
+        return false;
+      }
+      return failureCount < 3;
+    },
   });
 }
 

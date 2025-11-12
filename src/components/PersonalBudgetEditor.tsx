@@ -67,17 +67,19 @@ export const PersonalBudgetEditor: React.FC<PersonalBudgetEditorProps> = ({
 
   // Auto-open create mode if autoCreate prop is true
   useEffect(() => {
-    if (autoCreate && !isCreating && !editingBudgetId && !activeBudget) {
+    // Wait for loading to complete before checking
+    if (autoCreate && !loadingActive && !loadingHistory && !isCreating && !editingBudgetId && !activeBudget) {
       handleStartCreate();
     }
-  }, [autoCreate]); // Only run on mount or when autoCreate changes
+  }, [autoCreate, loadingActive, loadingHistory, activeBudget]); // Include loading states
 
   // Auto-open edit mode if autoEdit prop is true and there's an active budget
   useEffect(() => {
-    if (autoEdit && !isCreating && !editingBudgetId && activeBudget) {
+    // Wait for loading to complete before checking
+    if (autoEdit && !loadingActive && !isCreating && !editingBudgetId && activeBudget) {
       handleStartEdit(activeBudget);
     }
-  }, [autoEdit, activeBudget]); // Only run on mount or when autoEdit/activeBudget changes
+  }, [autoEdit, loadingActive, activeBudget]); // Include loading state
 
   const formatCurrency = (amount: number): string => {
     return new Intl.NumberFormat('en-US', {
