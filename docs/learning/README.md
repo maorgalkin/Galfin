@@ -23,6 +23,18 @@ Complete step-by-step walkthrough of how data flows from user action to database
 - Authentication and Row Level Security (RLS)
 - React Query cache invalidation
 
+### 🔒 [RLS Recursion and SECURITY DEFINER Functions](./RLS_RECURSION_AND_SECURITY_DEFINER.md)
+Deep dive into PostgreSQL Row Level Security (RLS) infinite recursion bugs and how to fix them with SECURITY DEFINER functions.
+
+**Topics Covered:**
+- What causes RLS infinite recursion
+- How policies trigger themselves
+- SECURITY DEFINER functions explained (like sudo for SQL)
+- Breaking recursion with elevated functions
+- Security best practices (search_path)
+- Real household system implementation
+- Debugging RLS issues
+
 ### 🎨 [Tailwind Responsive Grid Issue & Solution](./TAILWIND_RESPONSIVE_GRID_ISSUE.md)
 Real-world debugging of Tailwind responsive grid utilities not working, and the custom CSS solution that fixed it.
 
