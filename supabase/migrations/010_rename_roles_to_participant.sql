@@ -95,6 +95,9 @@ EXECUTE FUNCTION auto_create_family_member_tag();
 -- 4. BACKFILL: Create family_member tags for existing participants without tags
 -- ============================================================================
 
+-- Temporarily disable the trigger during backfill to avoid conflicts
+ALTER TABLE household_members DISABLE TRIGGER trigger_auto_create_family_member_tag;
+
 DO $$
 DECLARE
   member_record RECORD;
@@ -140,6 +143,9 @@ BEGIN
   
   RAISE NOTICE 'Created % family_member tags for existing participants', tag_count;
 END $$;
+
+-- Re-enable the trigger after backfill
+ALTER TABLE household_members ENABLE TRIGGER trigger_auto_create_family_member_tag;
 
 -- ============================================================================
 -- 5. UPDATE COMMENTS
