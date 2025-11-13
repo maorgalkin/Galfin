@@ -9,6 +9,7 @@ import { BudgetPerformanceCard } from './BudgetPerformanceCard';
 import { TransactionDetailsModal } from './TransactionDetailsModal';
 import EditTransactionModal from './EditTransactionModal';
 import HouseholdSettingsModal from './HouseholdSettingsModal';
+import { JoinHouseholdModal } from './JoinHouseholdModal';
 import { BudgetManagement } from '../pages/BudgetManagement';
 import { getUserFirstName } from '../utils/userHelpers';
 import { generateDummyTransactions, countDummyTransactions, isDummyTransaction } from '../utils/dummyData';
@@ -48,6 +49,7 @@ const Dashboard: React.FC = () => {
   
   const [editingTransaction, setEditingTransaction] = useState<Transaction | null>(null);
   const [isHouseholdSettingsModalOpen, setIsHouseholdSettingsModalOpen] = useState(false);
+  const [isJoinHouseholdModalOpen, setIsJoinHouseholdModalOpen] = useState(false);
   const [selectedDesktopCategory, setSelectedDesktopCategory] = useState<string | null>(null);
   const [isCategoryModalOpen, setIsCategoryModalOpen] = useState(false);
   const [isCustomDateRangeModalOpen, setIsCustomDateRangeModalOpen] = useState(false);
@@ -348,6 +350,19 @@ const Dashboard: React.FC = () => {
               familyMembersCount={familyMembers.length}
               onOpenModal={() => setIsHouseholdSettingsModalOpen(true)}
             />
+            
+            {/* Join Household Button */}
+            <div className="mt-4">
+              <button
+                onClick={() => setIsJoinHouseholdModalOpen(true)}
+                className="w-full px-4 py-3 bg-gradient-to-r from-blue-600 to-indigo-600 text-white rounded-lg hover:from-blue-700 hover:to-indigo-700 transition-all shadow-md hover:shadow-lg flex items-center justify-center gap-2 font-medium"
+              >
+                <svg className="h-5 w-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M17 20h5v-2a3 3 0 00-5.356-1.857M17 20H7m10 0v-2c0-.656-.126-1.283-.356-1.857M7 20H2v-2a3 3 0 015.356-1.857M7 20v-2c0-.656.126-1.283.356-1.857m0 0a5.002 5.002 0 019.288 0M15 7a3 3 0 11-6 0 3 3 0 016 0zm6 3a2 2 0 11-4 0 2 2 0 014 0zM7 10a2 2 0 11-4 0 2 2 0 014 0z" />
+                </svg>
+                Join Another Household
+              </button>
+            </div>
           </div>
         </div>
       )}
@@ -565,6 +580,10 @@ const Dashboard: React.FC = () => {
       <HouseholdSettingsModal
         isOpen={isHouseholdSettingsModalOpen}
         onClose={() => setIsHouseholdSettingsModalOpen(false)}
+      />
+      <JoinHouseholdModal
+        isOpen={isJoinHouseholdModalOpen}
+        onClose={() => setIsJoinHouseholdModalOpen(false)}
       />
 
       {/* Category Expenses Modal */}

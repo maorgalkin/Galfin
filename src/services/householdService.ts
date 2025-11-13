@@ -293,6 +293,192 @@ export const leaveHousehold = async (): Promise<void> => {
 };
 
 /**
+ * Delete a household (only owner can do this)
+ * WARNING: This deletes ALL household data including budgets, transactions, etc.
+ */
+export const deleteHousehold = async (householdId: string): Promise<void> => {
+  const userId = await getCurrentUserId();
+
+  // Verify user is the owner
+  const { data: memberData, error: memberError } = await supabase
+    .from('household_members')
+    .select('role')
+    .eq('household_id', householdId)
+    .eq('user_id', userId)
+    .single();
+
+  if (memberError || !memberData) {
+    throw new Error('User is not a member of this household');
+  }
+
+  if (memberData.role !== 'owner') {
+    throw new Error('Only the household owner can delete the household');
+  }
+
+  // Delete the household (CASCADE will delete all related data)
+  const { error } = await supabase
+    .from('households')
+    .delete()
+    .eq('id', householdId);
+
+  if (error) {
+    console.error('Error deleting household:', error);
+    throw error;
+  }
+};
+
+/**
+ * Check if user is the sole owner of their household (auto-created scenario)
+ */
+export const isUserSoleOwner = async (): Promise<boolean> => {
+  const userId = await getCurrentUserId();
+
+  // Get user's household membership
+  const { data: memberData, error: memberError } = await supabase
+    .from('household_members')
+    .select('household_id, role')
+    .eq('user_id', userId)
+    .single();
+
+  if (memberError || !memberData) {
+    return false;
+  }
+
+  // Check if user is owner
+  if (memberData.role !== 'owner') {
+    return false;
+  }
+
+  // Count total members in this household
+  const { count, error: countError } = await supabase
+    .from('household_members')
+    .select('*', { count: 'exact', head: true })
+    .eq('household_id', memberData.household_id);
+
+  if (countError) {
+    console.error('Error counting household members:', countError);
+    return false;
+  }
+
+  // Return true if user is the only member
+  return count === 1;
+};
+
+/**
+ * Accept an invitation and join another household
+ * If user owns their current household (auto-created), it will be deleted
+ * WARNING: This may result in data loss
+ */
+export const acceptInvitationAndJoin = async (
+  invitationCode: string,
+  deleteCurrentHousehold: boolean = false
+): Promise<{
+  success: boolean;
+  willDeleteData: boolean;
+  householdName?: string;
+  error?: string;
+}> => {
+  const userId = await getCurrentUserId();
+
+  try {
+    // Decode invitation code (format: base64 of "householdId:inviterUserId")
+    const decoded = atob(invitationCode);
+    const [targetHouseholdId, inviterUserId] = decoded.split(':');
+
+    if (!targetHouseholdId || !inviterUserId) {
+      return { success: false, willDeleteData: false, error: 'Invalid invitation code' };
+    }
+
+    // Get target household info
+    const { data: targetHousehold, error: householdError } = await supabase
+      .from('households')
+      .select('name')
+      .eq('id', targetHouseholdId)
+      .single();
+
+    if (householdError || !targetHousehold) {
+      return { success: false, willDeleteData: false, error: 'Household not found' };
+    }
+
+    // Get user's current household membership
+    const { data: currentMember, error: memberError } = await supabase
+      .from('household_members')
+      .select('household_id, role')
+      .eq('user_id', userId)
+      .single();
+
+    const isSoleOwner = await isUserSoleOwner();
+
+    // If user owns their current household and hasn't confirmed deletion, return warning
+    if (isSoleOwner && !deleteCurrentHousehold) {
+      return {
+        success: false,
+        willDeleteData: true,
+        householdName: targetHousehold.name,
+        error: 'You will lose all your current household data. Please confirm to proceed.'
+      };
+    }
+
+    // Delete current household if user is sole owner
+    if (isSoleOwner && currentMember) {
+      await deleteHousehold(currentMember.household_id);
+    } else if (currentMember) {
+      // Just leave the household if not owner
+      await leaveHousehold();
+    }
+
+    // Join the new household
+    const { error: joinError } = await supabase
+      .from('household_members')
+      .insert({
+        household_id: targetHouseholdId,
+        user_id: userId,
+        role: 'member',
+        invited_by: inviterUserId,
+      });
+
+    if (joinError) {
+      console.error('Error joining household:', joinError);
+      return { success: false, willDeleteData: false, error: 'Failed to join household' };
+    }
+
+    return { success: true, willDeleteData: isSoleOwner, householdName: targetHousehold.name };
+  } catch (error) {
+    console.error('Error accepting invitation:', error);
+    return { success: false, willDeleteData: false, error: 'Invalid invitation code or expired' };
+  }
+};
+
+/**
+ * Generate an invitation code for the current household
+ * Returns a base64 encoded string: "householdId:inviterUserId"
+ */
+export const generateInvitationCode = async (): Promise<string> => {
+  const userId = await getCurrentUserId();
+
+  // Get user's household
+  const { data: memberData, error: memberError } = await supabase
+    .from('household_members')
+    .select('household_id, role')
+    .eq('user_id', userId)
+    .single();
+
+  if (memberError || !memberData) {
+    throw new Error('User is not part of a household');
+  }
+
+  // Check if user has permission to invite (owner or admin)
+  if (memberData.role !== 'owner' && memberData.role !== 'admin') {
+    throw new Error('Only owners and admins can generate invitation codes');
+  }
+
+  // Create invitation code: base64 of "householdId:userId"
+  const code = btoa(`${memberData.household_id}:${userId}`);
+  
+  return code;
+};
+
+/**
  * Update a member's role
  */
 export const updateMemberRole = async (

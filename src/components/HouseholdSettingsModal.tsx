@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { createPortal } from 'react-dom';
-import { X, Home, Users, UserPlus, Crown, Shield, User as UserIcon, Trash2, Plus, Tag } from 'lucide-react';
+import { X, Home, Users, UserPlus, Crown, Shield, User as UserIcon, Trash2, Plus, Tag, Copy, Check } from 'lucide-react';
 import { useAuth } from '../contexts/AuthContext';
 import { useFinance } from '../context/FinanceContext';
 import * as HouseholdService from '../services/householdService';
@@ -31,6 +31,10 @@ const HouseholdSettingsModal: React.FC<HouseholdSettingsModalProps> = ({ isOpen,
   const [isAddingFamilyMember, setIsAddingFamilyMember] = useState(false);
   const [editingFamilyMemberId, setEditingFamilyMemberId] = useState<string | null>(null);
   const [editingHouseholdMemberId, setEditingHouseholdMemberId] = useState<string>('');
+  
+  // Invitation code states
+  const [invitationCode, setInvitationCode] = useState<string>('');
+  const [copiedCode, setCopiedCode] = useState(false);
 
   const PRESET_COLORS = [
     '#3B82F6', '#EF4444', '#10B981', '#F59E0B', 
@@ -40,6 +44,7 @@ const HouseholdSettingsModal: React.FC<HouseholdSettingsModalProps> = ({ isOpen,
   useEffect(() => {
     if (isOpen) {
       loadHouseholdData();
+      loadInvitationCode();
     }
   }, [isOpen]);
 
@@ -60,6 +65,25 @@ const HouseholdSettingsModal: React.FC<HouseholdSettingsModalProps> = ({ isOpen,
       console.error('Error loading household data:', error);
     } finally {
       setIsLoading(false);
+    }
+  };
+
+  const loadInvitationCode = async () => {
+    try {
+      const code = await HouseholdService.generateInvitationCode();
+      setInvitationCode(code);
+    } catch (error) {
+      console.error('Error generating invitation code:', error);
+      // User might not have permission (not owner/admin)
+      setInvitationCode('');
+    }
+  };
+
+  const handleCopyInvitationCode = () => {
+    if (invitationCode) {
+      navigator.clipboard.writeText(invitationCode);
+      setCopiedCode(true);
+      setTimeout(() => setCopiedCode(false), 2000);
     }
   };
 
@@ -360,6 +384,47 @@ const HouseholdSettingsModal: React.FC<HouseholdSettingsModalProps> = ({ isOpen,
                     <UserPlus className="h-5 w-5 mr-2" />
                     Invite Member
                   </h3>
+                  
+                  {/* Invitation Code Section */}
+                  {invitationCode && (
+                    <div className="mb-6 p-4 bg-blue-50 dark:bg-blue-900/20 border border-blue-200 dark:border-blue-800 rounded-lg">
+                      <p className="text-sm font-medium text-blue-900 dark:text-blue-100 mb-2">
+                        Share this code with others to invite them:
+                      </p>
+                      <div className="flex gap-2">
+                        <input
+                          type="text"
+                          value={invitationCode}
+                          readOnly
+                          className="flex-1 px-3 py-2 bg-white dark:bg-gray-700 border border-blue-300 dark:border-blue-700 rounded-md text-gray-900 dark:text-gray-100 font-mono text-sm select-all"
+                        />
+                        <button
+                          onClick={handleCopyInvitationCode}
+                          className={`px-4 py-2 rounded-md flex items-center gap-2 font-medium transition-colors ${
+                            copiedCode
+                              ? 'bg-green-600 text-white'
+                              : 'bg-blue-600 text-white hover:bg-blue-700'
+                          }`}
+                        >
+                          {copiedCode ? (
+                            <>
+                              <Check className="h-4 w-4" />
+                              Copied!
+                            </>
+                          ) : (
+                            <>
+                              <Copy className="h-4 w-4" />
+                              Copy
+                            </>
+                          )}
+                        </button>
+                      </div>
+                      <p className="text-xs text-blue-700 dark:text-blue-300 mt-2">
+                        Anyone with this code can join your household as a member.
+                      </p>
+                    </div>
+                  )}
+                  
                   <div className="space-y-3">
                     <div>
                       <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
@@ -373,7 +438,7 @@ const HouseholdSettingsModal: React.FC<HouseholdSettingsModalProps> = ({ isOpen,
                         className="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-md bg-white dark:bg-gray-700 text-gray-900 dark:text-gray-100"
                       />
                       <p className="text-xs text-gray-500 dark:text-gray-400 mt-1">
-                        Email invitation coming in Phase 2. For now, use the user's UUID.
+                        Alternative: Share the invitation code above instead
                       </p>
                     </div>
                     <div>
