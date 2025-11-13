@@ -12,7 +12,7 @@ export interface HouseholdMember {
   id: string;
   household_id: string;
   user_id: string;
-  role: 'owner' | 'admin' | 'member';
+  role: 'owner' | 'participant';
   joined_at: string;
   invited_by: string | null;
   email?: string;  // Added from auth.users join
@@ -92,14 +92,14 @@ export const getHouseholdMembers = async (): Promise<HouseholdMember[]> => {
   // Cast role from TEXT back to the proper type
   return (data || []).map((member: any) => ({
     ...member,
-    role: member.role as 'owner' | 'admin' | 'member',
+    role: member.role as 'owner' | 'participant',
   }));
 };
 
 /**
  * Get current user's role in their household
  */
-export const getUserRole = async (): Promise<'owner' | 'admin' | 'member' | null> => {
+export const getUserRole = async (): Promise<'owner' | 'participant' | null> => {
   const userId = await getCurrentUserId();
 
   const { data, error } = await supabase
@@ -176,34 +176,20 @@ export const updateHouseholdName = async (householdId: string, name: string): Pr
 
 /**
  * Invite a member to the household (simplified - just adds them directly)
- * In Phase 2, this would send an email invitation
+ * Note: This function is deprecated. Use invitation codes instead.
  */
-export const inviteMemberByEmail = async (email: string, role: 'admin' | 'member' = 'member'): Promise<void> => {
-  const userId = await getCurrentUserId();
-
-  // Get the inviter's household
-  const { data: memberData, error: memberError } = await supabase
-    .from('household_members')
-    .select('household_id')
-    .eq('user_id', userId)
-    .single();
-
-  if (memberError || !memberData) {
-    throw new Error('User is not part of a household');
-  }
-
-  // Look up user by email
-  // Note: This requires a database function or admin API call
-  // For now, this is a placeholder - will be implemented in Phase 2
-  throw new Error('Email invitation not yet implemented. Use inviteMemberByUserId instead.');
+export const inviteMemberByEmail = async (email: string, role: 'participant' = 'participant'): Promise<void> => {
+  // This function is no longer used - kept for backwards compatibility
+  throw new Error('Email invitation deprecated. Use invitation codes instead.');
 };
 
 /**
  * Invite a member by their user ID (for testing/development)
+ * Note: This function is deprecated. Use invitation codes instead.
  */
 export const inviteMemberByUserId = async (
   inviteeUserId: string, 
-  role: 'admin' | 'member' = 'member'
+  role: 'participant' = 'participant'
 ): Promise<HouseholdMember> => {
   const userId = await getCurrentUserId();
 
@@ -218,9 +204,9 @@ export const inviteMemberByUserId = async (
     throw new Error('User is not part of a household');
   }
 
-  // Check if inviter has permission (owner or admin)
-  if (memberData.role !== 'owner' && memberData.role !== 'admin') {
-    throw new Error('Only owners and admins can invite members');
+  // Check if inviter has permission (owner only for now, or could allow participants)
+  if (memberData.role !== 'owner') {
+    throw new Error('Only owners can invite members');
   }
 
   // Add the new member
@@ -433,7 +419,7 @@ export const acceptInvitationAndJoin = async (
       .insert({
         household_id: targetHouseholdId,
         user_id: userId,
-        role: 'member',
+        role: 'participant',
         invited_by: inviterUserId,
       });
 
@@ -467,9 +453,9 @@ export const generateInvitationCode = async (): Promise<string> => {
     throw new Error('User is not part of a household');
   }
 
-  // Check if user has permission to invite (owner or admin)
-  if (memberData.role !== 'owner' && memberData.role !== 'admin') {
-    throw new Error('Only owners and admins can generate invitation codes');
+  // Check if user has permission to invite (owner or participant can both invite)
+  if (memberData.role !== 'owner' && memberData.role !== 'participant') {
+    throw new Error('Only household members can generate invitation codes');
   }
 
   // Create invitation code: base64 of "householdId:userId"
@@ -526,10 +512,11 @@ export const leaveAndCreateNewHousehold = async (
 
 /**
  * Update a member's role
+ * Note: This function is deprecated - only owner/participant roles exist now
  */
 export const updateMemberRole = async (
   memberId: string, 
-  newRole: 'admin' | 'member'
+  newRole: 'participant'
 ): Promise<HouseholdMember> => {
   const { data, error } = await supabase
     .from('household_members')
@@ -548,7 +535,7 @@ export const updateMemberRole = async (
 
 /**
  * Transfer ownership to another household member
- * The current owner becomes an admin
+ * The current owner becomes a participant
  */
 export const transferOwnership = async (newOwnerId: string): Promise<void> => {
   const userId = await getCurrentUserId();
@@ -591,10 +578,10 @@ export const transferOwnership = async (newOwnerId: string): Promise<void> => {
   }
 
   // Use a transaction-like approach:
-  // 1. Demote current owner to admin
+  // 1. Demote current owner to participant
   const { error: demoteError } = await supabase
     .from('household_members')
-    .update({ role: 'admin' })
+    .update({ role: 'participant' })
     .eq('user_id', userId);
 
   if (demoteError) {

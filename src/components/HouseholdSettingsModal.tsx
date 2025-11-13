@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { createPortal } from 'react-dom';
-import { X, Home, Users, UserPlus, Crown, Shield, User as UserIcon, Trash2, Copy, Check, LogOut, UserCheck } from 'lucide-react';
+import { X, Home, Users, UserPlus, Crown, User as UserIcon, Trash2, Copy, Check, LogOut, UserCheck } from 'lucide-react';
 import { useAuth } from '../contexts/AuthContext';
 import * as HouseholdService from '../services/householdService';
 import type { Household, HouseholdMember } from '../services/householdService';
@@ -16,7 +16,7 @@ const HouseholdSettingsModal: React.FC<HouseholdSettingsModalProps> = ({ isOpen,
   const { user } = useAuth();
   const [household, setHousehold] = useState<Household | null>(null);
   const [members, setMembers] = useState<HouseholdMember[]>([]);
-  const [userRole, setUserRole] = useState<'owner' | 'admin' | 'member' | null>(null);
+  const [userRole, setUserRole] = useState<'owner' | 'participant' | null>(null);
   const [isLoading, setIsLoading] = useState(true);
   const [isEditingName, setIsEditingName] = useState(false);
   const [householdName, setHouseholdName] = useState('');
@@ -102,7 +102,7 @@ const HouseholdSettingsModal: React.FC<HouseholdSettingsModalProps> = ({ isOpen,
   const handleTransferOwnership = async (memberId: string, memberName: string) => {
     const confirmed = confirm(
       `Transfer ownership to ${memberName}?\n\n` +
-      `You will become a Household Member and ${memberName} will become the Owner. ` +
+      `You will become a Budget Participant and ${memberName} will become the Owner. ` +
       `This action cannot be undone.`
     );
     
@@ -122,8 +122,8 @@ const HouseholdSettingsModal: React.FC<HouseholdSettingsModalProps> = ({ isOpen,
     switch (role) {
       case 'owner':
         return <Crown className="h-4 w-4 text-yellow-600" />;
-      case 'admin':
-        return <Shield className="h-4 w-4 text-blue-600" />;
+      case 'participant':
+        return <UserIcon className="h-4 w-4 text-blue-600" />;
       default:
         return <UserIcon className="h-4 w-4 text-gray-600" />;
     }
@@ -132,20 +132,19 @@ const HouseholdSettingsModal: React.FC<HouseholdSettingsModalProps> = ({ isOpen,
   const getRoleBadge = (role: string) => {
     const colors = {
       owner: 'bg-yellow-100 text-yellow-800 dark:bg-yellow-900/30 dark:text-yellow-200',
-      admin: 'bg-blue-100 text-blue-800 dark:bg-blue-900/30 dark:text-blue-200',
-      member: 'bg-gray-100 text-gray-800 dark:bg-gray-700 dark:text-gray-300',
+      participant: 'bg-blue-100 text-blue-800 dark:bg-blue-900/30 dark:text-blue-200',
     };
-    return colors[role as keyof typeof colors] || colors.member;
+    return colors[role as keyof typeof colors] || 'bg-gray-100 text-gray-800 dark:bg-gray-700 dark:text-gray-300';
   };
 
   const getRoleLabel = (role: string) => {
     switch (role) {
       case 'owner':
         return 'Owner';
-      case 'admin':
-        return 'Household Member'; // Simplified from "Admin"
+      case 'participant':
+        return 'Budget Participant';
       default:
-        return 'Household Member';
+        return 'Budget Participant';
     }
   };
 
@@ -157,7 +156,7 @@ const HouseholdSettingsModal: React.FC<HouseholdSettingsModalProps> = ({ isOpen,
     }
   };
 
-  const canManageMembers = userRole === 'owner' || userRole === 'admin';
+  const canManageMembers = userRole === 'owner';  // Only owners can manage participants now
 
   const content = (
     <>
@@ -229,14 +228,18 @@ const HouseholdSettingsModal: React.FC<HouseholdSettingsModalProps> = ({ isOpen,
                   )}
                 </div>
 
-                {/* Members List */}
+                {/* Budget Participants List */}
                 <div>
                   <div className="flex items-center justify-between mb-3">
                     <h3 className="text-lg font-semibold text-gray-900 dark:text-gray-100 flex items-center">
                       <Users className="h-5 w-5 mr-2" />
-                      Household Members ({members.length})
+                      Budget Participants ({members.length})
                     </h3>
                   </div>
+                  
+                  <p className="text-sm text-gray-600 dark:text-gray-400 mb-4">
+                    People who can log in and add transactions. Each participant automatically gets a Household Member tag for transaction attribution.
+                  </p>
 
                   <div className="space-y-2 mb-4">
                     {members.map((member) => {
@@ -300,12 +303,12 @@ const HouseholdSettingsModal: React.FC<HouseholdSettingsModalProps> = ({ isOpen,
                   <div className="border-t border-gray-200 dark:border-gray-700 pt-6">
                     <h3 className="text-lg font-semibold text-gray-900 dark:text-gray-100 flex items-center mb-4">
                       <UserPlus className="h-5 w-5 mr-2" />
-                      Invite Members
+                      Invite Budget Participants
                     </h3>
                     
                     <div className="p-4 bg-blue-50 dark:bg-blue-900/20 border border-blue-200 dark:border-blue-800 rounded-lg">
                       <p className="text-sm font-medium text-blue-900 dark:text-blue-100 mb-3">
-                        Share this code to invite others to your household:
+                        Share this code to invite others as Budget Participants:
                       </p>
                       <div className="flex gap-2">
                         <input
@@ -336,7 +339,7 @@ const HouseholdSettingsModal: React.FC<HouseholdSettingsModalProps> = ({ isOpen,
                         </button>
                       </div>
                       <p className="text-xs text-blue-700 dark:text-blue-300 mt-2">
-                        Anyone with this code can join your household as a member.
+                        Anyone with this code can join your household as a Budget Participant. They'll automatically get a Household Member tag for transactions.
                       </p>
                     </div>
                   </div>
