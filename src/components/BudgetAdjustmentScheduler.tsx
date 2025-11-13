@@ -167,27 +167,27 @@ export const BudgetAdjustmentScheduler: React.FC<BudgetAdjustmentSchedulerProps>
   return (
     <div className={`bg-white dark:bg-gray-800 rounded-lg shadow-md ${className}`}>
       {/* Header */}
-      <div className="px-6 py-4 border-b border-gray-200 dark:border-gray-700">
-        <div className="flex items-center justify-between">
+      <div className="px-4 sm:px-6 py-3 sm:py-4 border-b border-gray-200 dark:border-gray-700">
+        <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3">
           {nextMonthSummary && (
-            <p className="text-sm text-gray-600 dark:text-gray-400">
-              <Calendar className="inline h-4 w-4 mr-1" />
-              {nextMonthSummary.effectiveDate}
+            <p className="text-xs sm:text-sm text-gray-600 dark:text-gray-400 flex items-center">
+              <Calendar className="inline h-4 w-4 mr-1 flex-shrink-0" />
+              <span>{nextMonthSummary.effectiveDate}</span>
             </p>
           )}
           <button
             onClick={() => setIsScheduling(!isScheduling)}
-            className={`flex items-center px-4 py-2 ${getPrimaryButtonBg(themeColor)} text-white rounded-md ${getPrimaryButtonHoverBg(themeColor)} transition-colors text-sm font-medium`}
+            className={`flex items-center justify-center px-4 py-2 ${getPrimaryButtonBg(themeColor)} text-white rounded-md ${getPrimaryButtonHoverBg(themeColor)} transition-colors text-sm font-medium whitespace-nowrap`}
           >
             {isScheduling ? (
               <>
-                <X className="h-4 w-4 mr-2" />
-                Cancel
+                <X className="h-4 w-4 mr-2 flex-shrink-0" />
+                <span>Cancel</span>
               </>
             ) : (
               <>
-                <Plus className="h-4 w-4 mr-2" />
-                Schedule
+                <Plus className="h-4 w-4 mr-2 flex-shrink-0" />
+                <span>Schedule</span>
               </>
             )}
           </button>
@@ -196,29 +196,29 @@ export const BudgetAdjustmentScheduler: React.FC<BudgetAdjustmentSchedulerProps>
 
       {/* Summary Stats */}
       {nextMonthSummary && nextMonthSummary.adjustmentCount > 0 && (
-        <div className="px-6 py-4 bg-gray-50 dark:bg-gray-900/50 border-b border-gray-200 dark:border-gray-700">
-          <div className="grid grid-cols-4 gap-4">
+        <div className="px-4 sm:px-6 py-4 bg-gray-50 dark:bg-gray-900/50 border-b border-gray-200 dark:border-gray-700">
+          <div className="grid grid-cols-2 sm:grid-cols-4 gap-3 sm:gap-4">
             <div>
               <p className="text-xs text-gray-500 dark:text-gray-400 uppercase">Adjustments</p>
-              <p className="text-xl font-semibold text-gray-900 dark:text-gray-100 mt-1">
+              <p className="text-lg sm:text-xl font-semibold text-gray-900 dark:text-gray-100 mt-1">
                 {nextMonthSummary.adjustmentCount}
               </p>
             </div>
             <div>
               <p className="text-xs text-green-600 dark:text-green-400 uppercase">Increases</p>
-              <p className="text-xl font-semibold text-green-600 dark:text-green-400 mt-1">
+              <p className="text-lg sm:text-xl font-semibold text-green-600 dark:text-green-400 mt-1">
                 +{formatCurrency(nextMonthSummary.totalIncrease)}
               </p>
             </div>
             <div>
               <p className="text-xs text-red-600 dark:text-red-400 uppercase">Decreases</p>
-              <p className="text-xl font-semibold text-red-600 dark:text-red-400 mt-1">
+              <p className="text-lg sm:text-xl font-semibold text-red-600 dark:text-red-400 mt-1">
                 -{formatCurrency(nextMonthSummary.totalDecrease)}
               </p>
             </div>
             <div>
               <p className="text-xs text-gray-500 dark:text-gray-400 uppercase">Net Change</p>
-              <p className={`text-xl font-semibold mt-1 ${
+              <p className={`text-lg sm:text-xl font-semibold mt-1 ${
                 nextMonthSummary.netChange > 0 
                   ? 'text-green-600 dark:text-green-400' 
                   : nextMonthSummary.netChange < 0 
@@ -235,13 +235,13 @@ export const BudgetAdjustmentScheduler: React.FC<BudgetAdjustmentSchedulerProps>
 
       {/* Scheduling Form */}
       {isScheduling && (
-        <div className={`px-6 py-4 ${getInactiveBg(themeColor)} border-b ${getInactiveBorderColor(themeColor)}`}>
+        <div className={`px-4 sm:px-6 py-4 ${getInactiveBg(themeColor)} border-b ${getInactiveBorderColor(themeColor)}`}>
           <div className="space-y-4">
             {/* Toggle between existing and new category */}
-            <div className={`flex items-center gap-4 pb-3 border-b ${getInactiveBorderColor(themeColor)}`}>
+            <div className={`flex flex-col sm:flex-row sm:items-center gap-2 sm:gap-4 pb-3 border-b ${getInactiveBorderColor(themeColor)}`}>
               <button
                 onClick={() => setIsCreatingNew(false)}
-                className={`px-4 py-2 rounded-md font-medium transition-colors ${
+                className={`px-4 py-2 rounded-md font-medium transition-colors text-sm ${
                   !isCreatingNew
                     ? `${getPrimaryButtonBg(themeColor)} text-white`
                     : 'bg-white dark:bg-gray-700 text-gray-700 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-600'
@@ -251,14 +251,14 @@ export const BudgetAdjustmentScheduler: React.FC<BudgetAdjustmentSchedulerProps>
               </button>
               <button
                 onClick={() => setIsCreatingNew(true)}
-                className={`flex items-center gap-2 px-4 py-2 rounded-md font-medium transition-colors ${
+                className={`flex items-center justify-center gap-2 px-4 py-2 rounded-md font-medium transition-colors text-sm ${
                   isCreatingNew
                     ? `${getPrimaryButtonBg(themeColor)} text-white`
                     : 'bg-white dark:bg-gray-700 text-gray-700 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-600'
                 }`}
               >
-                <Sparkles className="h-4 w-4" />
-                New Category
+                <Sparkles className="h-4 w-4 flex-shrink-0" />
+                <span>New Category</span>
               </button>
             </div>
 
@@ -283,7 +283,7 @@ export const BudgetAdjustmentScheduler: React.FC<BudgetAdjustmentSchedulerProps>
                   <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
                     Color
                   </label>
-                  <div className="grid grid-cols-10 gap-2">
+                  <div className="grid grid-cols-5 sm:grid-cols-10 gap-2">
                     {CATEGORY_COLOR_PALETTE.map((color) => (
                       <button
                         key={color}
@@ -378,7 +378,7 @@ export const BudgetAdjustmentScheduler: React.FC<BudgetAdjustmentSchedulerProps>
       )}
 
       {/* Pending Adjustments List */}
-      <div className="px-6 py-4">
+      <div className="px-4 sm:px-6 py-4">
         {!nextMonthSummary || nextMonthSummary.adjustmentCount === 0 ? (
           <div className="text-center py-8">
             <AlertCircle className="h-12 w-12 text-gray-400 mx-auto mb-3" />
@@ -392,25 +392,25 @@ export const BudgetAdjustmentScheduler: React.FC<BudgetAdjustmentSchedulerProps>
             {nextMonthSummary.adjustments.map((adjustment) => (
               <div
                 key={adjustment.id}
-                className="flex items-center justify-between py-3 px-4 rounded-lg bg-gray-50 dark:bg-gray-700/50 hover:bg-gray-100 dark:hover:bg-gray-700 transition-colors"
+                className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3 py-3 px-4 rounded-lg bg-gray-50 dark:bg-gray-700/50 hover:bg-gray-100 dark:hover:bg-gray-700 transition-colors"
               >
-                <div className="flex items-center space-x-3 flex-1">
-                  <div>
+                <div className="flex items-start sm:items-center space-x-3 flex-1 min-w-0">
+                  <div className="flex-shrink-0 mt-0.5 sm:mt-0">
                     {adjustment.adjustment_type === 'increase' ? (
                       <TrendingUp className="h-5 w-5 text-green-500" />
                     ) : (
                       <TrendingDown className="h-5 w-5 text-red-500" />
                     )}
                   </div>
-                  <div className="flex-1">
-                    <p className="font-medium text-gray-900 dark:text-gray-100">
+                  <div className="flex-1 min-w-0">
+                    <p className="font-medium text-gray-900 dark:text-gray-100 break-words">
                       {adjustment.category_name}
                     </p>
-                    <div className="flex items-center space-x-2 text-sm text-gray-600 dark:text-gray-400 mt-1">
+                    <div className="flex flex-wrap items-center gap-x-2 gap-y-1 text-xs sm:text-sm text-gray-600 dark:text-gray-400 mt-1">
                       <span>{formatCurrency(adjustment.current_limit)}</span>
                       <span>→</span>
                       <span className="font-medium">{formatCurrency(adjustment.new_limit)}</span>
-                      <span className={`ml-2 ${
+                      <span className={`${
                         adjustment.adjustment_type === 'increase' 
                           ? 'text-green-600 dark:text-green-400' 
                           : 'text-red-600 dark:text-red-400'
@@ -420,7 +420,7 @@ export const BudgetAdjustmentScheduler: React.FC<BudgetAdjustmentSchedulerProps>
                       </span>
                     </div>
                     {adjustment.reason && (
-                      <p className="text-xs text-gray-500 dark:text-gray-500 mt-1 italic">
+                      <p className="text-xs text-gray-500 dark:text-gray-500 mt-1 italic break-words">
                         "{adjustment.reason.split(' | __META__:')[0]}"
                       </p>
                     )}
@@ -429,7 +429,7 @@ export const BudgetAdjustmentScheduler: React.FC<BudgetAdjustmentSchedulerProps>
                 <button
                   onClick={() => handleCancel(adjustment.id)}
                   disabled={cancelAdjustment.isPending}
-                  className="ml-4 p-2 text-red-600 hover:bg-red-50 dark:hover:bg-red-900/20 rounded-md transition-colors"
+                  className="self-end sm:self-auto flex-shrink-0 p-2 text-red-600 hover:bg-red-50 dark:hover:bg-red-900/20 rounded-md transition-colors"
                   title="Cancel adjustment"
                 >
                   <X className="h-4 w-4" />

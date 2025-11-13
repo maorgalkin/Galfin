@@ -229,33 +229,33 @@ const HouseholdSettingsModal: React.FC<HouseholdSettingsModalProps> = ({ isOpen,
 
   const content = (
     <>
-      <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 p-4" onClick={handleBackdropClick}>
+      <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 p-2 sm:p-4" onClick={handleBackdropClick}>
         <div className="bg-white dark:bg-gray-800 rounded-lg shadow-xl max-w-2xl w-full max-h-[90vh] overflow-hidden flex flex-col">
           {/* Header */}
-          <div className="bg-gradient-to-r from-purple-600 to-indigo-600 px-6 py-4 flex items-center justify-between">
-            <div className="flex items-center gap-3">
-              <Home className="h-6 w-6 text-white" />
-              <h2 className="text-xl font-semibold text-white">Household Settings</h2>
+          <div className="bg-gradient-to-r from-purple-600 to-indigo-600 px-4 sm:px-6 py-3 sm:py-4 flex items-center justify-between">
+            <div className="flex items-center gap-2 sm:gap-3 min-w-0">
+              <Home className="h-5 w-5 sm:h-6 sm:w-6 text-white flex-shrink-0" />
+              <h2 className="text-lg sm:text-xl font-semibold text-white truncate">Household Settings</h2>
             </div>
             <button
               onClick={onClose}
-              className="text-white hover:bg-white/20 rounded-lg p-2 transition-colors"
+              className="text-white hover:bg-white/20 rounded-lg p-1.5 sm:p-2 transition-colors flex-shrink-0"
             >
               <X className="h-5 w-5" />
             </button>
           </div>
 
           {/* Content */}
-          <div className="flex-1 overflow-y-auto p-6 space-y-6">
+          <div className="flex-1 overflow-y-auto p-4 sm:p-6 space-y-4 sm:space-y-6">
             {isLoading ? (
               <div className="text-center py-8 text-gray-600 dark:text-gray-400">Loading...</div>
             ) : (
               <>
                 {/* Household Members Section - Using actual household name */}
                 <div className="border-t border-gray-200 dark:border-gray-700 pt-6">
-                  <div className="flex items-center justify-between mb-4">
+                  <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between mb-4 gap-2">
                     {isEditingHouseholdName ? (
-                      <div className="flex gap-2 flex-1">
+                      <div className="flex flex-col sm:flex-row gap-2 flex-1">
                         <input
                           type="text"
                           value={editedHouseholdName}
@@ -270,32 +270,34 @@ const HouseholdSettingsModal: React.FC<HouseholdSettingsModalProps> = ({ isOpen,
                             }
                           }}
                         />
-                        <button
-                          onClick={handleUpdateName}
-                          className="px-4 py-2 bg-purple-600 text-white rounded-md hover:bg-purple-700"
-                        >
-                          Save
-                        </button>
-                        <button
-                          onClick={() => {
-                            setIsEditingHouseholdName(false);
-                            setEditedHouseholdName(household?.name || '');
-                          }}
-                          className="px-4 py-2 bg-gray-200 dark:bg-gray-700 text-gray-700 dark:text-gray-300 rounded-md hover:bg-gray-300 dark:hover:bg-gray-600"
-                        >
-                          Cancel
-                        </button>
+                        <div className="flex gap-2">
+                          <button
+                            onClick={handleUpdateName}
+                            className="flex-1 sm:flex-none px-4 py-2 bg-purple-600 text-white rounded-md hover:bg-purple-700 text-sm"
+                          >
+                            Save
+                          </button>
+                          <button
+                            onClick={() => {
+                              setIsEditingHouseholdName(false);
+                              setEditedHouseholdName(household?.name || '');
+                            }}
+                            className="flex-1 sm:flex-none px-4 py-2 bg-gray-200 dark:bg-gray-700 text-gray-700 dark:text-gray-300 rounded-md hover:bg-gray-300 dark:hover:bg-gray-600 text-sm"
+                          >
+                            Cancel
+                          </button>
+                        </div>
                       </div>
                     ) : (
                       <>
                         <h3 className="text-lg font-semibold text-gray-900 dark:text-gray-100 flex items-center">
-                          <Users className="h-5 w-5 mr-2" />
-                          {household?.name}
+                          <Users className="h-5 w-5 mr-2 flex-shrink-0" />
+                          <span className="break-words">{household?.name}</span>
                         </h3>
                         {userRole === 'owner' && (
                           <button
                             onClick={() => setIsEditingHouseholdName(true)}
-                            className="text-sm text-purple-600 dark:text-purple-400 hover:underline"
+                            className="text-sm text-purple-600 dark:text-purple-400 hover:underline self-start sm:self-auto"
                           >
                             Edit
                           </button>
@@ -315,10 +317,12 @@ const HouseholdSettingsModal: React.FC<HouseholdSettingsModalProps> = ({ isOpen,
                       return (
                         <div
                           key={member.id}
-                          className="flex items-center justify-between p-3 bg-gray-50 dark:bg-gray-700 rounded-lg"
+                          className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3 p-3 bg-gray-50 dark:bg-gray-700 rounded-lg"
                         >
-                          <div className="flex items-center gap-3">
-                            {getRoleIcon(member.role)}
+                          <div className="flex items-center gap-3 min-w-0 flex-1">
+                            <div className="flex-shrink-0">
+                              {getRoleIcon(member.role)}
+                            </div>
                             {memberTag && (
                               <div 
                                 className="w-4 h-4 rounded-full flex-shrink-0" 
@@ -326,13 +330,13 @@ const HouseholdSettingsModal: React.FC<HouseholdSettingsModalProps> = ({ isOpen,
                                 title={`Transaction tag: ${memberTag.name}`}
                               />
                             )}
-                            <div>
-                              <div className="flex items-center gap-2">
-                                <span className="font-medium text-gray-900 dark:text-gray-100">
+                            <div className="min-w-0 flex-1">
+                              <div className="flex flex-wrap items-center gap-2">
+                                <span className="font-medium text-gray-900 dark:text-gray-100 break-words">
                                   {isCurrentUser ? 'You' : (member.email || member.user_id.substring(0, 8))}
                                   {memberTag && ` (${memberTag.name})`}
                                 </span>
-                                <span className={`text-xs px-2 py-1 rounded-full ${getRoleBadge(member.role)}`}>
+                                <span className={`text-xs px-2 py-1 rounded-full whitespace-nowrap ${getRoleBadge(member.role)}`}>
                                   {getRoleLabel(member.role)}
                                 </span>
                               </div>
@@ -343,21 +347,22 @@ const HouseholdSettingsModal: React.FC<HouseholdSettingsModalProps> = ({ isOpen,
                           </div>
 
                           {(canManageThisMember || canTransferToThisMember) && (
-                            <div className="flex items-center gap-2">
+                            <div className="flex items-center gap-2 flex-shrink-0 self-end sm:self-auto">
                               {canTransferToThisMember && (
                                 <button
                                   onClick={() => handleTransferOwnership(member.id, member.email || 'this user')}
-                                  className="flex items-center gap-1 text-xs px-3 py-1.5 bg-yellow-100 dark:bg-yellow-900/30 text-yellow-800 dark:text-yellow-200 rounded hover:bg-yellow-200 dark:hover:bg-yellow-900/50 transition-colors font-medium border border-yellow-300 dark:border-yellow-700"
+                                  className="flex items-center gap-1 text-xs px-2 sm:px-3 py-1.5 bg-yellow-100 dark:bg-yellow-900/30 text-yellow-800 dark:text-yellow-200 rounded hover:bg-yellow-200 dark:hover:bg-yellow-900/50 transition-colors font-medium border border-yellow-300 dark:border-yellow-700 whitespace-nowrap"
                                   title="Transfer ownership to this member"
                                 >
-                                  <Crown className="h-3 w-3" />
-                                  Make Owner
+                                  <Crown className="h-3 w-3 flex-shrink-0" />
+                                  <span className="hidden sm:inline">Make Owner</span>
+                                  <span className="sm:hidden">Owner</span>
                                 </button>
                               )}
                               {canManageThisMember && (
                                 <button
                                   onClick={() => handleRemoveMember(member.id)}
-                                  className="p-2 text-red-600 hover:text-red-700 dark:text-red-400 dark:hover:text-red-300 hover:bg-red-50 dark:hover:bg-red-900/20 rounded transition-colors"
+                                  className="p-2 text-red-600 hover:text-red-700 dark:text-red-400 dark:hover:text-red-300 hover:bg-red-50 dark:hover:bg-red-900/20 rounded transition-colors flex-shrink-0"
                                   title="Remove participant"
                                 >
                                   <Trash2 className="h-4 w-4" />
@@ -473,21 +478,21 @@ const HouseholdSettingsModal: React.FC<HouseholdSettingsModalProps> = ({ isOpen,
                   <h3 className="text-sm font-medium text-gray-700 dark:text-gray-300 mb-3">
                     Leaving the Household?
                   </h3>
-                  <div className="flex gap-3">
+                  <div className="flex flex-col sm:flex-row gap-3">
                     <button
                       onClick={() => setShowJoinModal(true)}
                       className="flex-1 px-3 py-2 bg-blue-600 text-white rounded-md hover:bg-blue-700 transition-colors flex items-center justify-center gap-2 text-sm font-medium"
                     >
-                      <UserCheck className="h-4 w-4" />
-                      Join a Household
+                      <UserCheck className="h-4 w-4 flex-shrink-0" />
+                      <span className="whitespace-nowrap">Switch Households</span>
                     </button>
                     
                     <button
                       onClick={() => setShowLeaveModal(true)}
                       className="flex-1 px-3 py-2 bg-orange-600 text-white rounded-md hover:bg-orange-700 transition-colors flex items-center justify-center gap-2 text-sm font-medium"
                     >
-                      <LogOut className="h-4 w-4" />
-                      Leave Household
+                      <LogOut className="h-4 w-4 flex-shrink-0" />
+                      <span className="whitespace-nowrap">New Household</span>
                     </button>
                   </div>
                 </div>
@@ -509,9 +514,9 @@ const HouseholdSettingsModal: React.FC<HouseholdSettingsModalProps> = ({ isOpen,
       
       {/* Edit Tag Modal */}
       {editingTag && (
-        <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-[60] p-4" onClick={() => setEditingTag(null)}>
-          <div className="bg-white dark:bg-gray-800 rounded-lg shadow-xl max-w-md w-full p-6" onClick={(e) => e.stopPropagation()}>
-            <h3 className="text-lg font-semibold text-gray-900 dark:text-gray-100 mb-4">
+        <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-[60] p-2 sm:p-4" onClick={() => setEditingTag(null)}>
+          <div className="bg-white dark:bg-gray-800 rounded-lg shadow-xl max-w-md w-full p-4 sm:p-6 max-h-[90vh] overflow-y-auto" onClick={(e) => e.stopPropagation()}>
+            <h3 className="text-base sm:text-lg font-semibold text-gray-900 dark:text-gray-100 mb-4">
               Edit Household Member Tag
             </h3>
             
@@ -578,24 +583,24 @@ const HouseholdSettingsModal: React.FC<HouseholdSettingsModalProps> = ({ isOpen,
               </div>
 
               {/* Action Buttons */}
-              <div className="flex gap-3 pt-4">
+              <div className="flex flex-col sm:flex-row gap-2 sm:gap-3 pt-4">
                 <button
                   onClick={handleSaveTagEdit}
-                  className="flex-1 px-4 py-2 bg-purple-600 text-white rounded-md hover:bg-purple-700 transition-colors font-medium"
+                  className="flex-1 px-4 py-2 bg-purple-600 text-white rounded-md hover:bg-purple-700 transition-colors font-medium text-sm"
                 >
                   Save Changes
                 </button>
                 <button
                   onClick={handleDeleteTagFromModal}
-                  className="px-4 py-2 bg-red-600 text-white rounded-md hover:bg-red-700 transition-colors font-medium flex items-center gap-2"
+                  className="px-4 py-2 bg-red-600 text-white rounded-md hover:bg-red-700 transition-colors font-medium flex items-center justify-center gap-2 text-sm"
                   title="Delete this tag"
                 >
-                  <Trash2 className="h-4 w-4" />
-                  Delete
+                  <Trash2 className="h-4 w-4 flex-shrink-0" />
+                  <span>Delete</span>
                 </button>
                 <button
                   onClick={() => setEditingTag(null)}
-                  className="px-4 py-2 bg-gray-200 dark:bg-gray-700 text-gray-700 dark:text-gray-300 rounded-md hover:bg-gray-300 dark:hover:bg-gray-600 transition-colors"
+                  className="px-4 py-2 bg-gray-200 dark:bg-gray-700 text-gray-700 dark:text-gray-300 rounded-md hover:bg-gray-300 dark:hover:bg-gray-600 transition-colors text-sm"
                 >
                   Cancel
                 </button>
