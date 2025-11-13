@@ -16,9 +16,22 @@ WHERE role IN ('admin', 'member');
 -- 2. UPDATE CHECK CONSTRAINT
 -- ============================================================================
 
--- Drop old constraint
-ALTER TABLE household_members 
-DROP CONSTRAINT IF EXISTS household_members_role_check;
+-- Drop ALL existing role check constraints (there might be multiple or different names)
+DO $$ 
+DECLARE
+  constraint_name TEXT;
+BEGIN
+  FOR constraint_name IN 
+    SELECT conname 
+    FROM pg_constraint 
+    WHERE conrelid = 'household_members'::regclass 
+      AND contype = 'c' 
+      AND conname LIKE '%role%'
+  LOOP
+    EXECUTE format('ALTER TABLE household_members DROP CONSTRAINT IF EXISTS %I', constraint_name);
+    RAISE NOTICE 'Dropped constraint: %', constraint_name;
+  END LOOP;
+END $$;
 
 -- Add new constraint with only 'owner' and 'participant'
 ALTER TABLE household_members 
