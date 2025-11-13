@@ -1,9 +1,11 @@
 import React, { useState, useEffect } from 'react';
 import { createPortal } from 'react-dom';
-import { X, Home, Users, UserPlus, Crown, User as UserIcon, Trash2, Copy, Check, LogOut, UserCheck } from 'lucide-react';
+import { X, Home, Users, UserPlus, Crown, User as UserIcon, Trash2, Copy, Check, LogOut, UserCheck, Tag, Plus } from 'lucide-react';
 import { useAuth } from '../contexts/AuthContext';
 import * as HouseholdService from '../services/householdService';
+import * as SupabaseDataService from '../services/supabaseDataService';
 import type { Household, HouseholdMember } from '../services/householdService';
+import type { FamilyMember } from '../types';
 import { JoinHouseholdModal } from './JoinHouseholdModal';
 import { LeaveHouseholdModal } from './LeaveHouseholdModal';
 
@@ -16,6 +18,7 @@ const HouseholdSettingsModal: React.FC<HouseholdSettingsModalProps> = ({ isOpen,
   const { user } = useAuth();
   const [household, setHousehold] = useState<Household | null>(null);
   const [members, setMembers] = useState<HouseholdMember[]>([]);
+  const [familyMembers, setFamilyMembers] = useState<FamilyMember[]>([]);
   const [userRole, setUserRole] = useState<'owner' | 'participant' | null>(null);
   const [isLoading, setIsLoading] = useState(true);
   const [isEditingName, setIsEditingName] = useState(false);
@@ -39,15 +42,17 @@ const HouseholdSettingsModal: React.FC<HouseholdSettingsModalProps> = ({ isOpen,
   const loadHouseholdData = async () => {
     setIsLoading(true);
     try {
-      const [householdData, membersData, role] = await Promise.all([
+      const [householdData, membersData, familyMembersData, role] = await Promise.all([
         HouseholdService.getUserHousehold(),
         HouseholdService.getHouseholdMembers(),
+        SupabaseDataService.getFamilyMembers(),
         HouseholdService.getUserRole(),
       ]);
       
       setHousehold(householdData);
       setHouseholdName(householdData?.name || '');
       setMembers(membersData);
+      setFamilyMembers(familyMembersData);
       setUserRole(role);
     } catch (error) {
       console.error('Error loading household data:', error);
@@ -92,10 +97,42 @@ const HouseholdSettingsModal: React.FC<HouseholdSettingsModalProps> = ({ isOpen,
 
     try {
       await HouseholdService.removeMember(memberId);
-      await loadHouseholdData();
+      await loadHouseholdData();  // Reload both members and family members
     } catch (error) {
       console.error('Error removing member:', error);
       alert('Failed to remove member');
+    }
+  };
+
+  const handleDeleteFamilyMember = async (familyMemberId: string) => {
+    if (!confirm('Delete this household member tag? This cannot be undone.')) return;
+
+    try {
+      await SupabaseDataService.deleteFamilyMember(familyMemberId);
+      await loadHouseholdData();
+    } catch (error) {
+      console.error('Error deleting family member:', error);
+      alert('Failed to delete household member tag');
+    }
+  };
+
+  const handleAddCustomTag = async () => {
+    const tagName = prompt('Enter name for new household member tag:');
+    if (!tagName || !tagName.trim()) return;
+
+    const colors = ['#ef4444', '#f59e0b', '#10b981', '#3b82f6', '#8b5cf6', '#ec4899', '#6366f1', '#14b8a6'];
+    const randomColor = colors[Math.floor(Math.random() * colors.length)];
+
+    try {
+      await SupabaseDataService.addFamilyMember({
+        name: tagName.trim(),
+        color: randomColor,
+        household_member_id: null,  // Custom tag, not linked to any participant
+      });
+      await loadHouseholdData();
+    } catch (error) {
+      console.error('Error adding custom tag:', error);
+      alert('Failed to add custom tag');
     }
   };
 
@@ -344,6 +381,82 @@ const HouseholdSettingsModal: React.FC<HouseholdSettingsModalProps> = ({ isOpen,
                     </div>
                   </div>
                 )}
+
+                {/* Household Members (Transaction Tags) Section */}
+                <div className="border-t border-gray-200 dark:border-gray-700 pt-6">
+                  <div className="flex items-center justify-between mb-3">
+                    <h3 className="text-lg font-semibold text-gray-900 dark:text-gray-100 flex items-center">
+                      <Tag className="h-5 w-5 mr-2" />
+                      Household Member Tags ({familyMembers.length})
+                    </h3>
+                  </div>
+                  
+                  <p className="text-sm text-gray-600 dark:text-gray-400 mb-4">
+                    Transaction labels for attributing expenses. Tags are auto-created for Budget Participants but you can add custom tags too.
+                  </p>
+
+                  <div className="space-y-2">
+                    {familyMembers.map((fm) => {
+                      const linkedParticipant = members.find(m => m.id === fm.household_member_id);
+                      const isAutoCreated = !!linkedParticipant;
+                      
+                      return (
+                        <div
+                          key={fm.id}
+                          className="flex items-center justify-between p-3 bg-gray-50 dark:bg-gray-700 rounded-lg"
+                        >
+                          <div className="flex items-center gap-3">
+                            <div 
+                              className="w-4 h-4 rounded-full flex-shrink-0" 
+                              style={{ backgroundColor: fm.color }}
+                            />
+                            <div>
+                              <div className="flex items-center gap-2">
+                                <span className="font-medium text-gray-900 dark:text-gray-100">
+                                  {fm.name}
+                                </span>
+                                {isAutoCreated && (
+                                  <span className="text-xs px-2 py-0.5 bg-green-100 dark:bg-green-900/30 text-green-800 dark:text-green-200 rounded-full">
+                                    Linked to {linkedParticipant.email || 'participant'}
+                                  </span>
+                                )}
+                              </div>
+                              <div className="text-xs text-gray-500 dark:text-gray-400">
+                                {isAutoCreated ? 'Auto-created tag' : 'Custom tag'}
+                              </div>
+                            </div>
+                          </div>
+
+                          {userRole === 'owner' && !isAutoCreated && (
+                            <button
+                              onClick={() => handleDeleteFamilyMember(fm.id)}
+                              className="p-2 text-red-600 hover:text-red-700 dark:text-red-400 dark:hover:text-red-300 hover:bg-red-50 dark:hover:bg-red-900/20 rounded transition-colors"
+                              title="Delete tag"
+                            >
+                              <Trash2 className="h-4 w-4" />
+                            </button>
+                          )}
+                        </div>
+                      );
+                    })}
+                    
+                    {familyMembers.length === 0 && (
+                      <div className="text-center py-4 text-gray-500 dark:text-gray-400 text-sm">
+                        No household member tags yet. Tags are auto-created when participants join.
+                      </div>
+                    )}
+                  </div>
+
+                  {userRole === 'owner' && (
+                    <button
+                      onClick={() => handleAddCustomTag()}
+                      className="mt-4 w-full px-4 py-2 border-2 border-dashed border-gray-300 dark:border-gray-600 text-gray-600 dark:text-gray-400 rounded-lg hover:border-purple-400 hover:text-purple-600 dark:hover:text-purple-400 transition-colors flex items-center justify-center gap-2"
+                    >
+                      <Plus className="h-4 w-4" />
+                      Add Custom Tag
+                    </button>
+                  )}
+                </div>
 
                 {/* Join/Leave Actions */}
                 <div className="border-t border-gray-200 dark:border-gray-700 pt-6 space-y-3">
