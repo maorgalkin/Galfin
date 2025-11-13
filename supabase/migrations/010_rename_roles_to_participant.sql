@@ -4,19 +4,15 @@
 -- Description: Simplify role terminology - Owner and Participant instead of Owner/Admin/Member
 
 -- ============================================================================
--- 1. UPDATE ROLE VALUES IN household_members TABLE
+-- 1. DROP THE INLINE CHECK CONSTRAINT FIRST
 -- ============================================================================
 
--- Update existing 'admin' and 'member' roles to 'participant'
-UPDATE household_members 
-SET role = 'participant' 
-WHERE role IN ('admin', 'member');
+-- The constraint is inline in the column definition from migration 003
+-- We need to recreate the column without the old constraint
+ALTER TABLE household_members 
+  ALTER COLUMN role DROP NOT NULL;
 
--- ============================================================================
--- 2. UPDATE CHECK CONSTRAINT
--- ============================================================================
-
--- Drop ALL existing role check constraints (there might be multiple or different names)
+-- Drop ALL existing role check constraints
 DO $$ 
 DECLARE
   constraint_name TEXT;
@@ -26,12 +22,29 @@ BEGIN
     FROM pg_constraint 
     WHERE conrelid = 'household_members'::regclass 
       AND contype = 'c' 
-      AND conname LIKE '%role%'
+      AND (conname LIKE '%role%' OR pg_get_constraintdef(oid) LIKE '%role%')
   LOOP
     EXECUTE format('ALTER TABLE household_members DROP CONSTRAINT IF EXISTS %I', constraint_name);
     RAISE NOTICE 'Dropped constraint: %', constraint_name;
   END LOOP;
 END $$;
+
+-- ============================================================================
+-- 2. UPDATE ROLE VALUES IN household_members TABLE
+-- ============================================================================
+
+-- Update existing 'admin' and 'member' roles to 'participant'
+UPDATE household_members 
+SET role = 'participant' 
+WHERE role IN ('admin', 'member');
+
+-- ============================================================================
+-- 3. ADD NEW CHECK CONSTRAINT
+-- ============================================================================
+
+-- Add NOT NULL back
+ALTER TABLE household_members 
+  ALTER COLUMN role SET NOT NULL;
 
 -- Add new constraint with only 'owner' and 'participant'
 ALTER TABLE household_members 
@@ -39,7 +52,7 @@ ADD CONSTRAINT household_members_role_check
 CHECK (role IN ('owner', 'participant'));
 
 -- ============================================================================
--- 3. AUTO-CREATE FAMILY MEMBER TAGS FOR PARTICIPANTS
+-- 4. AUTO-CREATE FAMILY MEMBER TAGS FOR PARTICIPANTS
 -- ============================================================================
 
 -- Create a trigger function to auto-create family_member tag when participant joins
@@ -105,7 +118,7 @@ FOR EACH ROW
 EXECUTE FUNCTION auto_create_family_member_tag();
 
 -- ============================================================================
--- 4. BACKFILL: Create family_member tags for existing participants without tags
+-- 5. BACKFILL: Create family_member tags for existing participants without tags
 -- ============================================================================
 
 -- Temporarily disable the trigger during backfill to avoid conflicts
@@ -161,7 +174,7 @@ END $$;
 ALTER TABLE household_members ENABLE TRIGGER trigger_auto_create_family_member_tag;
 
 -- ============================================================================
--- 5. UPDATE COMMENTS
+-- 6. UPDATE COMMENTS
 -- ============================================================================
 
 COMMENT ON COLUMN household_members.role IS 'owner (full control, budget config) or participant (can add transactions, view data)';
