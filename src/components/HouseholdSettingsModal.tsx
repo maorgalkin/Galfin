@@ -185,6 +185,25 @@ const HouseholdSettingsModal: React.FC<HouseholdSettingsModalProps> = ({ isOpen,
     }
   };
 
+  const handleTransferOwnership = async (memberId: string, memberName: string) => {
+    const confirmed = confirm(
+      `Are you sure you want to transfer ownership to ${memberName}?\n\n` +
+      `You will become an admin and ${memberName} will become the new household owner. ` +
+      `This action cannot be undone.`
+    );
+    
+    if (!confirmed) return;
+
+    try {
+      await HouseholdService.transferOwnership(memberId);
+      await loadHouseholdData(); // Reload members to show new roles
+      alert(`Ownership successfully transferred to ${memberName}`);
+    } catch (error: any) {
+      console.error('Error transferring ownership:', error);
+      alert(error.message || 'Failed to transfer ownership');
+    }
+  };
+
   const getRoleIcon = (role: string) => {
     switch (role) {
       case 'owner':
@@ -329,6 +348,7 @@ const HouseholdSettingsModal: React.FC<HouseholdSettingsModalProps> = ({ isOpen,
                   {members.map((member) => {
                     const isCurrentUser = member.user_id === user?.id;
                     const canManageThisMember = canManageMembers && !isCurrentUser && member.role !== 'owner';
+                    const canTransferToThisMember = userRole === 'owner' && !isCurrentUser && member.role !== 'owner';
 
                     return (
                       <div
@@ -352,23 +372,37 @@ const HouseholdSettingsModal: React.FC<HouseholdSettingsModalProps> = ({ isOpen,
                           </div>
                         </div>
 
-                        {canManageThisMember && (
+                        {(canManageThisMember || canTransferToThisMember) && (
                           <div className="flex items-center gap-2">
-                            <select
-                              value={member.role}
-                              onChange={(e) => handleUpdateRole(member.id, e.target.value as 'admin' | 'member')}
-                              className="text-sm px-2 py-1 border border-gray-300 dark:border-gray-600 rounded bg-white dark:bg-gray-800 text-gray-900 dark:text-gray-100"
-                            >
-                              <option value="member">Member</option>
-                              <option value="admin">Admin</option>
-                            </select>
-                            <button
-                              onClick={() => handleRemoveMember(member.id)}
-                              className="p-1 text-red-600 hover:text-red-700 dark:text-red-400 dark:hover:text-red-300"
-                              title="Remove member"
-                            >
-                              <Trash2 className="h-4 w-4" />
-                            </button>
+                            {canTransferToThisMember && (
+                              <button
+                                onClick={() => handleTransferOwnership(member.id, member.email || 'this user')}
+                                className="flex items-center gap-1 text-xs px-3 py-1.5 bg-yellow-100 dark:bg-yellow-900/30 text-yellow-800 dark:text-yellow-200 rounded hover:bg-yellow-200 dark:hover:bg-yellow-900/50 transition-colors font-medium border border-yellow-300 dark:border-yellow-700"
+                                title="Transfer ownership to this member"
+                              >
+                                <Crown className="h-3 w-3" />
+                                Make Owner
+                              </button>
+                            )}
+                            {canManageThisMember && (
+                              <>
+                                <select
+                                  value={member.role}
+                                  onChange={(e) => handleUpdateRole(member.id, e.target.value as 'admin' | 'member')}
+                                  className="text-sm px-2 py-1 border border-gray-300 dark:border-gray-600 rounded bg-white dark:bg-gray-800 text-gray-900 dark:text-gray-100"
+                                >
+                                  <option value="member">Member</option>
+                                  <option value="admin">Admin</option>
+                                </select>
+                                <button
+                                  onClick={() => handleRemoveMember(member.id)}
+                                  className="p-1 text-red-600 hover:text-red-700 dark:text-red-400 dark:hover:text-red-300"
+                                  title="Remove member"
+                                >
+                                  <Trash2 className="h-4 w-4" />
+                                </button>
+                              </>
+                            )}
                           </div>
                         )}
                       </div>

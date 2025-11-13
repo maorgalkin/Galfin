@@ -146,7 +146,7 @@ export const LeaveHouseholdModal: React.FC<LeaveHouseholdModalProps> = ({ isOpen
                   </ul>
                   {!isSoleOwner && (
                     <p className="mt-2 text-sm text-orange-800 dark:text-orange-200 font-medium">
-                      Consider transferring ownership to another member before leaving.
+                      💡 Tip: You can transfer ownership to another member instead of deleting the household. Go to Household Settings → App Users → "Make Owner" button.
                     </p>
                   )}
                 </div>

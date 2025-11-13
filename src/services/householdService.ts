@@ -545,3 +545,76 @@ export const updateMemberRole = async (
 
   return data;
 };
+
+/**
+ * Transfer ownership to another household member
+ * The current owner becomes an admin
+ */
+export const transferOwnership = async (newOwnerId: string): Promise<void> => {
+  const userId = await getCurrentUserId();
+
+  // Get current owner's membership
+  const { data: currentOwner, error: ownerError } = await supabase
+    .from('household_members')
+    .select('household_id, role')
+    .eq('user_id', userId)
+    .single();
+
+  if (ownerError || !currentOwner) {
+    throw new Error('User is not part of a household');
+  }
+
+  // Verify current user is owner
+  if (currentOwner.role !== 'owner') {
+    throw new Error('Only the household owner can transfer ownership');
+  }
+
+  // Get new owner's membership
+  const { data: newOwner, error: newOwnerError } = await supabase
+    .from('household_members')
+    .select('id, household_id, role')
+    .eq('id', newOwnerId)
+    .single();
+
+  if (newOwnerError || !newOwner) {
+    throw new Error('New owner not found');
+  }
+
+  // Verify new owner is in the same household
+  if (newOwner.household_id !== currentOwner.household_id) {
+    throw new Error('New owner must be a member of the same household');
+  }
+
+  // Verify new owner is not already owner
+  if (newOwner.role === 'owner') {
+    throw new Error('User is already the owner');
+  }
+
+  // Use a transaction-like approach:
+  // 1. Demote current owner to admin
+  const { error: demoteError } = await supabase
+    .from('household_members')
+    .update({ role: 'admin' })
+    .eq('user_id', userId);
+
+  if (demoteError) {
+    console.error('Error demoting current owner:', demoteError);
+    throw new Error('Failed to transfer ownership');
+  }
+
+  // 2. Promote new member to owner
+  const { error: promoteError } = await supabase
+    .from('household_members')
+    .update({ role: 'owner' })
+    .eq('id', newOwnerId);
+
+  if (promoteError) {
+    console.error('Error promoting new owner:', promoteError);
+    // Try to rollback by re-promoting original owner
+    await supabase
+      .from('household_members')
+      .update({ role: 'owner' })
+      .eq('user_id', userId);
+    throw new Error('Failed to transfer ownership');
+  }
+};
