@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { createPortal } from 'react-dom';
-import { X, Home, Users, UserPlus, Crown, User as UserIcon, Trash2, Copy, Check, LogOut, UserCheck, Tag, Plus } from 'lucide-react';
+import { X, Home, Users, UserPlus, Crown, User as UserIcon, Trash2, Copy, Check, LogOut, UserCheck, Plus, Edit2 } from 'lucide-react';
 import { useAuth } from '../contexts/AuthContext';
 import * as HouseholdService from '../services/householdService';
 import * as SupabaseDataService from '../services/supabaseDataService';
@@ -21,8 +21,8 @@ const HouseholdSettingsModal: React.FC<HouseholdSettingsModalProps> = ({ isOpen,
   const [familyMembers, setFamilyMembers] = useState<FamilyMember[]>([]);
   const [userRole, setUserRole] = useState<'owner' | 'participant' | null>(null);
   const [isLoading, setIsLoading] = useState(true);
-  const [isEditingName, setIsEditingName] = useState(false);
-  const [householdName, setHouseholdName] = useState('');
+  const [isEditingHouseholdName, setIsEditingHouseholdName] = useState(false);
+  const [editedHouseholdName, setEditedHouseholdName] = useState('');
   
   // Invitation code states
   const [invitationCode, setInvitationCode] = useState<string>('');
@@ -31,6 +31,12 @@ const HouseholdSettingsModal: React.FC<HouseholdSettingsModalProps> = ({ isOpen,
   // Modal states
   const [showJoinModal, setShowJoinModal] = useState(false);
   const [showLeaveModal, setShowLeaveModal] = useState(false);
+  
+  // Edit tag modal states
+  const [editingTag, setEditingTag] = useState<FamilyMember | null>(null);
+  const [editedTagName, setEditedTagName] = useState('');
+  const [editedTagColor, setEditedTagColor] = useState('');
+  const [editedTagLinkedMember, setEditedTagLinkedMember] = useState<string>(''); // household_member_id or empty for unlinked
 
   useEffect(() => {
     if (isOpen) {
@@ -50,7 +56,7 @@ const HouseholdSettingsModal: React.FC<HouseholdSettingsModalProps> = ({ isOpen,
       ]);
       
       setHousehold(householdData);
-      setHouseholdName(householdData?.name || '');
+      setEditedHouseholdName(householdData?.name || '');
       setMembers(membersData);
       setFamilyMembers(familyMembersData);
       setUserRole(role);
@@ -80,12 +86,12 @@ const HouseholdSettingsModal: React.FC<HouseholdSettingsModalProps> = ({ isOpen,
   };
 
   const handleUpdateName = async () => {
-    if (!household || !householdName.trim()) return;
+    if (!household || !editedHouseholdName.trim()) return;
     
     try {
-      await HouseholdService.updateHouseholdName(household.id, householdName.trim());
-      setHousehold({ ...household, name: householdName.trim() });
-      setIsEditingName(false);
+      await HouseholdService.updateHouseholdName(household.id, editedHouseholdName.trim());
+      setHousehold({ ...household, name: editedHouseholdName.trim() });
+      setIsEditingHouseholdName(false);
     } catch (error) {
       console.error('Error updating household name:', error);
       alert('Failed to update household name');
@@ -101,18 +107,6 @@ const HouseholdSettingsModal: React.FC<HouseholdSettingsModalProps> = ({ isOpen,
     } catch (error) {
       console.error('Error removing member:', error);
       alert('Failed to remove member');
-    }
-  };
-
-  const handleDeleteFamilyMember = async (familyMemberId: string) => {
-    if (!confirm('Delete this household member tag? This cannot be undone.')) return;
-
-    try {
-      await SupabaseDataService.deleteFamilyMember(familyMemberId);
-      await loadHouseholdData();
-    } catch (error) {
-      console.error('Error deleting family member:', error);
-      alert('Failed to delete household member tag');
     }
   };
 
@@ -133,6 +127,44 @@ const HouseholdSettingsModal: React.FC<HouseholdSettingsModalProps> = ({ isOpen,
     } catch (error) {
       console.error('Error adding custom tag:', error);
       alert('Failed to add custom tag');
+    }
+  };
+
+  const handleEditTag = (tag: FamilyMember) => {
+    setEditingTag(tag);
+    setEditedTagName(tag.name);
+    setEditedTagColor(tag.color);
+    setEditedTagLinkedMember(tag.household_member_id || '');
+  };
+
+  const handleSaveTagEdit = async () => {
+    if (!editingTag || !editedTagName.trim()) return;
+
+    try {
+      await SupabaseDataService.updateFamilyMember(editingTag.id, {
+        name: editedTagName.trim(),
+        color: editedTagColor,
+        household_member_id: editedTagLinkedMember || null,
+      });
+      await loadHouseholdData();
+      setEditingTag(null);
+    } catch (error) {
+      console.error('Error updating tag:', error);
+      alert('Failed to update tag');
+    }
+  };
+
+  const handleDeleteTagFromModal = async () => {
+    if (!editingTag) return;
+    if (!confirm('Are you sure you want to delete this tag?')) return;
+
+    try {
+      await SupabaseDataService.deleteFamilyMember(editingTag.id);
+      await loadHouseholdData();
+      setEditingTag(null);
+    } catch (error) {
+      console.error('Error deleting tag:', error);
+      alert('Failed to delete tag');
     }
   };
 
@@ -219,70 +251,66 @@ const HouseholdSettingsModal: React.FC<HouseholdSettingsModalProps> = ({ isOpen,
               <div className="text-center py-8 text-gray-600 dark:text-gray-400">Loading...</div>
             ) : (
               <>
-                {/* Household Name */}
-                <div>
-                  <h3 className="text-lg font-semibold text-gray-900 dark:text-gray-100 mb-3 flex items-center">
-                    <Home className="h-5 w-5 mr-2" />
-                    Household Name
-                  </h3>
-                  {isEditingName ? (
-                    <div className="flex gap-2">
-                      <input
-                        type="text"
-                        value={householdName}
-                        onChange={(e) => setHouseholdName(e.target.value)}
-                        className="flex-1 px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-md bg-white dark:bg-gray-700 text-gray-900 dark:text-gray-100"
-                        autoFocus
-                      />
-                      <button
-                        onClick={handleUpdateName}
-                        className="px-4 py-2 bg-purple-600 text-white rounded-md hover:bg-purple-700"
-                      >
-                        Save
-                      </button>
-                      <button
-                        onClick={() => {
-                          setIsEditingName(false);
-                          setHouseholdName(household?.name || '');
-                        }}
-                        className="px-4 py-2 bg-gray-200 dark:bg-gray-700 text-gray-700 dark:text-gray-300 rounded-md hover:bg-gray-300 dark:hover:bg-gray-600"
-                      >
-                        Cancel
-                      </button>
-                    </div>
-                  ) : (
-                    <div className="flex items-center justify-between p-3 bg-gray-50 dark:bg-gray-700 rounded-lg">
-                      <span className="text-gray-900 dark:text-gray-100 font-medium">{household?.name}</span>
-                      {userRole === 'owner' && (
+                {/* Household Members Section - Using actual household name */}
+                <div className="border-t border-gray-200 dark:border-gray-700 pt-6">
+                  <div className="flex items-center justify-between mb-4">
+                    {isEditingHouseholdName ? (
+                      <div className="flex gap-2 flex-1">
+                        <input
+                          type="text"
+                          value={editedHouseholdName}
+                          onChange={(e) => setEditedHouseholdName(e.target.value)}
+                          className="flex-1 px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-md bg-white dark:bg-gray-700 text-gray-900 dark:text-gray-100 text-lg font-semibold"
+                          autoFocus
+                          onKeyDown={(e) => {
+                            if (e.key === 'Enter') handleUpdateName();
+                            if (e.key === 'Escape') {
+                              setIsEditingHouseholdName(false);
+                              setEditedHouseholdName(household?.name || '');
+                            }
+                          }}
+                        />
                         <button
-                          onClick={() => setIsEditingName(true)}
-                          className="text-sm text-purple-600 dark:text-purple-400 hover:underline"
+                          onClick={handleUpdateName}
+                          className="px-4 py-2 bg-purple-600 text-white rounded-md hover:bg-purple-700"
                         >
-                          Edit
+                          Save
                         </button>
-                      )}
-                    </div>
-                  )}
-                </div>
-
-                {/* Budget Participants List */}
-                <div>
-                  <div className="flex items-center justify-between mb-3">
-                    <h3 className="text-lg font-semibold text-gray-900 dark:text-gray-100 flex items-center">
-                      <Users className="h-5 w-5 mr-2" />
-                      Budget Participants ({members.length})
-                    </h3>
+                        <button
+                          onClick={() => {
+                            setIsEditingHouseholdName(false);
+                            setEditedHouseholdName(household?.name || '');
+                          }}
+                          className="px-4 py-2 bg-gray-200 dark:bg-gray-700 text-gray-700 dark:text-gray-300 rounded-md hover:bg-gray-300 dark:hover:bg-gray-600"
+                        >
+                          Cancel
+                        </button>
+                      </div>
+                    ) : (
+                      <>
+                        <h3 className="text-lg font-semibold text-gray-900 dark:text-gray-100 flex items-center">
+                          <Users className="h-5 w-5 mr-2" />
+                          {household?.name}
+                        </h3>
+                        {userRole === 'owner' && (
+                          <button
+                            onClick={() => setIsEditingHouseholdName(true)}
+                            className="text-sm text-purple-600 dark:text-purple-400 hover:underline"
+                          >
+                            Edit
+                          </button>
+                        )}
+                      </>
+                    )}
                   </div>
-                  
-                  <p className="text-sm text-gray-600 dark:text-gray-400 mb-4">
-                    People who can log in and add transactions. Each participant automatically gets a Household Member tag for transaction attribution.
-                  </p>
 
+                  {/* Members List with their tags */}
                   <div className="space-y-2 mb-4">
                     {members.map((member) => {
                       const isCurrentUser = member.user_id === user?.id;
                       const canManageThisMember = canManageMembers && !isCurrentUser && member.role !== 'owner';
                       const canTransferToThisMember = userRole === 'owner' && !isCurrentUser && member.role !== 'owner';
+                      const memberTag = familyMembers.find(fm => fm.household_member_id === member.id);
 
                       return (
                         <div
@@ -291,10 +319,18 @@ const HouseholdSettingsModal: React.FC<HouseholdSettingsModalProps> = ({ isOpen,
                         >
                           <div className="flex items-center gap-3">
                             {getRoleIcon(member.role)}
+                            {memberTag && (
+                              <div 
+                                className="w-4 h-4 rounded-full flex-shrink-0" 
+                                style={{ backgroundColor: memberTag.color }}
+                                title={`Transaction tag: ${memberTag.name}`}
+                              />
+                            )}
                             <div>
                               <div className="flex items-center gap-2">
                                 <span className="font-medium text-gray-900 dark:text-gray-100">
                                   {isCurrentUser ? 'You' : (member.email || member.user_id.substring(0, 8))}
+                                  {memberTag && ` (${memberTag.name})`}
                                 </span>
                                 <span className={`text-xs px-2 py-1 rounded-full ${getRoleBadge(member.role)}`}>
                                   {getRoleLabel(member.role)}
@@ -322,7 +358,7 @@ const HouseholdSettingsModal: React.FC<HouseholdSettingsModalProps> = ({ isOpen,
                                 <button
                                   onClick={() => handleRemoveMember(member.id)}
                                   className="p-2 text-red-600 hover:text-red-700 dark:text-red-400 dark:hover:text-red-300 hover:bg-red-50 dark:hover:bg-red-900/20 rounded transition-colors"
-                                  title="Remove member"
+                                  title="Remove participant"
                                 >
                                   <Trash2 className="h-4 w-4" />
                                 </button>
@@ -332,7 +368,57 @@ const HouseholdSettingsModal: React.FC<HouseholdSettingsModalProps> = ({ isOpen,
                         </div>
                       );
                     })}
+                    
+                    {/* Custom (unlinked) tags */}
+                    {familyMembers.filter(fm => !fm.household_member_id).map((fm) => (
+                      <div
+                        key={fm.id}
+                        className="flex items-center justify-between p-3 bg-gray-50 dark:bg-gray-700 rounded-lg border-l-4"
+                        style={{ borderLeftColor: fm.color }}
+                      >
+                        <div className="flex items-center gap-3">
+                          <div 
+                            className="w-4 h-4 rounded-full flex-shrink-0" 
+                            style={{ backgroundColor: fm.color }}
+                          />
+                          <div>
+                            <div className="flex items-center gap-2">
+                              <span className="font-medium text-gray-900 dark:text-gray-100">
+                                {fm.name}
+                              </span>
+                              <span className="text-xs px-2 py-0.5 bg-gray-200 dark:bg-gray-600 text-gray-700 dark:text-gray-300 rounded-full">
+                                Custom tag
+                              </span>
+                            </div>
+                            <div className="text-xs text-gray-500 dark:text-gray-400">
+                              For transaction labeling only
+                            </div>
+                          </div>
+                        </div>
+
+                        {userRole === 'owner' && (
+                          <button
+                            onClick={() => handleEditTag(fm)}
+                            className="p-2 text-purple-600 hover:text-purple-700 dark:text-purple-400 dark:hover:text-purple-300 hover:bg-purple-50 dark:hover:bg-purple-900/20 rounded transition-colors"
+                            title="Edit tag"
+                          >
+                            <Edit2 className="h-4 w-4" />
+                          </button>
+                        )}
+                      </div>
+                    ))}
                   </div>
+
+                  {/* Add Member button */}
+                  {userRole === 'owner' && (
+                    <button
+                      onClick={() => handleAddCustomTag()}
+                      className="w-full px-4 py-2 border-2 border-dashed border-gray-300 dark:border-gray-600 text-gray-600 dark:text-gray-400 rounded-lg hover:border-purple-400 hover:text-purple-600 dark:hover:text-purple-400 transition-colors flex items-center justify-center gap-2 mb-4"
+                    >
+                      <Plus className="h-4 w-4" />
+                      Add Member
+                    </button>
+                  )}
                 </div>
 
                 {/* Invite Section */}
@@ -382,99 +468,28 @@ const HouseholdSettingsModal: React.FC<HouseholdSettingsModalProps> = ({ isOpen,
                   </div>
                 )}
 
-                {/* Household Members (Transaction Tags) Section */}
+                {/* Leaving the Household Section */}
                 <div className="border-t border-gray-200 dark:border-gray-700 pt-6">
-                  <div className="flex items-center justify-between mb-3">
-                    <h3 className="text-lg font-semibold text-gray-900 dark:text-gray-100 flex items-center">
-                      <Tag className="h-5 w-5 mr-2" />
-                      Household Member Tags ({familyMembers.length})
-                    </h3>
-                  </div>
-                  
-                  <p className="text-sm text-gray-600 dark:text-gray-400 mb-4">
-                    Transaction labels for attributing expenses. Tags are auto-created for Budget Participants but you can add custom tags too.
-                  </p>
-
-                  <div className="space-y-2">
-                    {familyMembers.map((fm) => {
-                      const linkedParticipant = members.find(m => m.id === fm.household_member_id);
-                      const isAutoCreated = !!linkedParticipant;
-                      
-                      return (
-                        <div
-                          key={fm.id}
-                          className="flex items-center justify-between p-3 bg-gray-50 dark:bg-gray-700 rounded-lg"
-                        >
-                          <div className="flex items-center gap-3">
-                            <div 
-                              className="w-4 h-4 rounded-full flex-shrink-0" 
-                              style={{ backgroundColor: fm.color }}
-                            />
-                            <div>
-                              <div className="flex items-center gap-2">
-                                <span className="font-medium text-gray-900 dark:text-gray-100">
-                                  {fm.name}
-                                </span>
-                                {isAutoCreated && (
-                                  <span className="text-xs px-2 py-0.5 bg-green-100 dark:bg-green-900/30 text-green-800 dark:text-green-200 rounded-full">
-                                    Linked to {linkedParticipant.email || 'participant'}
-                                  </span>
-                                )}
-                              </div>
-                              <div className="text-xs text-gray-500 dark:text-gray-400">
-                                {isAutoCreated ? 'Auto-created tag' : 'Custom tag'}
-                              </div>
-                            </div>
-                          </div>
-
-                          {userRole === 'owner' && !isAutoCreated && (
-                            <button
-                              onClick={() => handleDeleteFamilyMember(fm.id)}
-                              className="p-2 text-red-600 hover:text-red-700 dark:text-red-400 dark:hover:text-red-300 hover:bg-red-50 dark:hover:bg-red-900/20 rounded transition-colors"
-                              title="Delete tag"
-                            >
-                              <Trash2 className="h-4 w-4" />
-                            </button>
-                          )}
-                        </div>
-                      );
-                    })}
-                    
-                    {familyMembers.length === 0 && (
-                      <div className="text-center py-4 text-gray-500 dark:text-gray-400 text-sm">
-                        No household member tags yet. Tags are auto-created when participants join.
-                      </div>
-                    )}
-                  </div>
-
-                  {userRole === 'owner' && (
+                  <h3 className="text-sm font-medium text-gray-700 dark:text-gray-300 mb-3">
+                    Leaving the Household?
+                  </h3>
+                  <div className="flex gap-3">
                     <button
-                      onClick={() => handleAddCustomTag()}
-                      className="mt-4 w-full px-4 py-2 border-2 border-dashed border-gray-300 dark:border-gray-600 text-gray-600 dark:text-gray-400 rounded-lg hover:border-purple-400 hover:text-purple-600 dark:hover:text-purple-400 transition-colors flex items-center justify-center gap-2"
+                      onClick={() => setShowJoinModal(true)}
+                      className="flex-1 px-3 py-2 bg-blue-600 text-white rounded-md hover:bg-blue-700 transition-colors flex items-center justify-center gap-2 text-sm font-medium"
                     >
-                      <Plus className="h-4 w-4" />
-                      Add Custom Tag
+                      <UserCheck className="h-4 w-4" />
+                      Join a Household
                     </button>
-                  )}
-                </div>
-
-                {/* Join/Leave Actions */}
-                <div className="border-t border-gray-200 dark:border-gray-700 pt-6 space-y-3">
-                  <button
-                    onClick={() => setShowJoinModal(true)}
-                    className="w-full px-4 py-3 bg-gradient-to-r from-blue-600 to-indigo-600 text-white rounded-lg hover:from-blue-700 hover:to-indigo-700 transition-all shadow-md hover:shadow-lg flex items-center justify-center gap-2 font-medium"
-                  >
-                    <UserCheck className="h-5 w-5" />
-                    Join Another Household
-                  </button>
-                  
-                  <button
-                    onClick={() => setShowLeaveModal(true)}
-                    className="w-full px-4 py-3 bg-gradient-to-r from-orange-600 to-red-600 text-white rounded-lg hover:from-orange-700 hover:to-red-700 transition-all shadow-md hover:shadow-lg flex items-center justify-center gap-2 font-medium"
-                  >
-                    <LogOut className="h-5 w-5" />
-                    Leave & Create New Household
-                  </button>
+                    
+                    <button
+                      onClick={() => setShowLeaveModal(true)}
+                      className="flex-1 px-3 py-2 bg-orange-600 text-white rounded-md hover:bg-orange-700 transition-colors flex items-center justify-center gap-2 text-sm font-medium"
+                    >
+                      <LogOut className="h-4 w-4" />
+                      Leave Household
+                    </button>
+                  </div>
                 </div>
               </>
             )}
@@ -491,6 +506,104 @@ const HouseholdSettingsModal: React.FC<HouseholdSettingsModalProps> = ({ isOpen,
         isOpen={showLeaveModal}
         onClose={() => setShowLeaveModal(false)}
       />
+      
+      {/* Edit Tag Modal */}
+      {editingTag && (
+        <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-[60] p-4" onClick={() => setEditingTag(null)}>
+          <div className="bg-white dark:bg-gray-800 rounded-lg shadow-xl max-w-md w-full p-6" onClick={(e) => e.stopPropagation()}>
+            <h3 className="text-lg font-semibold text-gray-900 dark:text-gray-100 mb-4">
+              Edit Household Member Tag
+            </h3>
+            
+            <div className="space-y-4">
+              {/* Tag Name */}
+              <div>
+                <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
+                  Tag Name
+                </label>
+                <input
+                  type="text"
+                  value={editedTagName}
+                  onChange={(e) => setEditedTagName(e.target.value)}
+                  className="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-md bg-white dark:bg-gray-700 text-gray-900 dark:text-gray-100"
+                  placeholder="Enter tag name"
+                />
+              </div>
+
+              {/* Tag Color */}
+              <div>
+                <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
+                  Color
+                </label>
+                <div className="flex gap-2 items-center">
+                  <input
+                    type="color"
+                    value={editedTagColor}
+                    onChange={(e) => setEditedTagColor(e.target.value)}
+                    className="w-12 h-10 rounded border border-gray-300 dark:border-gray-600 cursor-pointer"
+                  />
+                  <input
+                    type="text"
+                    value={editedTagColor}
+                    onChange={(e) => setEditedTagColor(e.target.value)}
+                    className="flex-1 px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-md bg-white dark:bg-gray-700 text-gray-900 dark:text-gray-100 font-mono text-sm"
+                    placeholder="#000000"
+                  />
+                </div>
+              </div>
+
+              {/* Link to Participant */}
+              <div>
+                <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
+                  Link to Budget Participant (Optional)
+                </label>
+                <select
+                  value={editedTagLinkedMember}
+                  onChange={(e) => setEditedTagLinkedMember(e.target.value)}
+                  className="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-md bg-white dark:bg-gray-700 text-gray-900 dark:text-gray-100"
+                >
+                  <option value="">Unlinked (custom tag)</option>
+                  {members.map((member) => (
+                    <option key={member.id} value={member.id}>
+                      {member.email || member.user_id}
+                      {member.role === 'owner' && ' (Owner)'}
+                    </option>
+                  ))}
+                </select>
+                <p className="text-xs text-gray-500 dark:text-gray-400 mt-1">
+                  {editedTagLinkedMember 
+                    ? 'This tag is linked to a participant and will be updated when they change' 
+                    : 'This is a custom tag that can be used independently'}
+                </p>
+              </div>
+
+              {/* Action Buttons */}
+              <div className="flex gap-3 pt-4">
+                <button
+                  onClick={handleSaveTagEdit}
+                  className="flex-1 px-4 py-2 bg-purple-600 text-white rounded-md hover:bg-purple-700 transition-colors font-medium"
+                >
+                  Save Changes
+                </button>
+                <button
+                  onClick={handleDeleteTagFromModal}
+                  className="px-4 py-2 bg-red-600 text-white rounded-md hover:bg-red-700 transition-colors font-medium flex items-center gap-2"
+                  title="Delete this tag"
+                >
+                  <Trash2 className="h-4 w-4" />
+                  Delete
+                </button>
+                <button
+                  onClick={() => setEditingTag(null)}
+                  className="px-4 py-2 bg-gray-200 dark:bg-gray-700 text-gray-700 dark:text-gray-300 rounded-md hover:bg-gray-300 dark:hover:bg-gray-600 transition-colors"
+                >
+                  Cancel
+                </button>
+              </div>
+            </div>
+          </div>
+        </div>
+      )}
     </>
   );
 

@@ -31,6 +31,8 @@ interface MonthNavigatorProps {
   onDirectionChange: (direction: number) => void;
   userName?: string;
   themeColor?: ThemeColor;
+  householdName?: string;
+  ownerName?: string;
 }
 
 /**
@@ -45,6 +47,8 @@ export const MonthNavigator: React.FC<MonthNavigatorProps> = ({
   onDirectionChange,
   userName,
   themeColor = 'purple',
+  householdName,
+  ownerName,
 }) => {
   const handlePrevious = () => {
     onDirectionChange(-1);
@@ -73,7 +77,11 @@ export const MonthNavigator: React.FC<MonthNavigatorProps> = ({
     <div className="mb-8">
       <div className="flex justify-between items-center mb-6">
         <h2 className={`text-2xl font-semibold ${getHeadingColor(themeColor)}`}>
-          {userName ? `${userName}'s Family Budget` : 'Family Budget'}
+          {householdName && ownerName 
+            ? `${householdName} (Owner: ${ownerName})`
+            : userName 
+              ? `${userName}'s Family Budget` 
+              : 'Family Budget'}
         </h2>
         <div className={`text-sm ${getSubheadingColor(themeColor)}`}>
           Select month to analyze budget performance and financial overview

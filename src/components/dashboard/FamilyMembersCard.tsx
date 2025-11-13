@@ -4,6 +4,7 @@ import { Users } from 'lucide-react';
 interface FamilyMembersCardProps {
   familyMembersCount: number;
   onOpenModal: () => void;
+  householdName?: string;
 }
 
 /**
@@ -12,6 +13,7 @@ interface FamilyMembersCardProps {
 export const FamilyMembersCard: React.FC<FamilyMembersCardProps> = ({
   familyMembersCount,
   onOpenModal,
+  householdName,
 }) => {
   return (
     <button
@@ -22,8 +24,10 @@ export const FamilyMembersCard: React.FC<FamilyMembersCardProps> = ({
         <div className="flex items-center">
           <Users className="h-5 w-5 text-purple-600 dark:text-purple-400 mr-3" />
           <div>
-            <p className="text-sm font-medium text-purple-900 dark:text-purple-100">Family Members</p>
-            <p className="text-xs text-purple-600 dark:text-purple-400">Click to manage family members</p>
+            <p className="text-sm font-medium text-purple-900 dark:text-purple-100">
+              {householdName || 'Family Members'}
+            </p>
+            <p className="text-xs text-purple-600 dark:text-purple-400">Click to Manage Your Household</p>
           </div>
         </div>
         <p className="text-2xl font-bold text-purple-600 dark:text-purple-400">{familyMembersCount}</p>

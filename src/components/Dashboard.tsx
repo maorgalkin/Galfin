@@ -21,7 +21,9 @@ import { FamilyMembersCard } from './dashboard/FamilyMembersCard';
 import { TransactionsList } from './dashboard/TransactionsList';
 import { CategoryTransactionsModal } from './dashboard/CategoryTransactionsModal';
 import CustomDateRangeModal from './CustomDateRangeModal';
+import * as HouseholdService from '../services/householdService';
 import type { Transaction, BudgetConfiguration } from '../types';
+import type { Household, HouseholdMember } from '../services/householdService';
 
 const Dashboard: React.FC = () => {
   const { transactions, familyMembers, addTransaction, deleteTransaction } = useFinance();
@@ -55,6 +57,10 @@ const Dashboard: React.FC = () => {
   const [alertsViewed, setAlertsViewed] = useState(false);
   const [viewingTransactionDetails, setViewingTransactionDetails] = useState<Transaction | null>(null);
   const expenseChartRef = React.useRef<HTMLDivElement>(null);
+
+  // Household data
+  const [household, setHousehold] = useState<Household | null>(null);
+  const [householdMembers, setHouseholdMembers] = useState<HouseholdMember[]>([]);
 
   // Calculate budget alerts for the current month
   const currentAlertsCount = useMemo(() => {
@@ -117,6 +123,24 @@ const Dashboard: React.FC = () => {
     mediaQuery.addEventListener('change', handleChange);
     
     return () => mediaQuery.removeEventListener('change', handleChange);
+  }, []);
+
+  // Load household data
+  useEffect(() => {
+    const loadHouseholdData = async () => {
+      try {
+        const [householdData, membersData] = await Promise.all([
+          HouseholdService.getUserHousehold(),
+          HouseholdService.getHouseholdMembers(),
+        ]);
+        setHousehold(householdData);
+        setHouseholdMembers(membersData);
+      } catch (error) {
+        console.error('Error loading household data:', error);
+      }
+    };
+    
+    loadHouseholdData();
   }, []);
 
   // Listen to URL changes and update activeTab accordingly
@@ -281,7 +305,25 @@ const Dashboard: React.FC = () => {
             onDirectionChange={setDirection}
             userName={getUserFirstName(user)}
             themeColor="purple"
+            householdName={household?.name}
+            ownerName={householdMembers.find(m => m.role === 'owner')?.email?.split('@')[0] || householdMembers.find(m => m.role === 'owner')?.user_id}
           />
+
+          {/* Family Members - Quick Access */}
+          <div className="mb-8">
+            {/* Mobile Sticky Header */}
+            <div className="md:hidden sticky top-0 z-10 bg-purple-100 dark:bg-purple-950/30 -mx-3 px-3 py-3 mb-4 border-b-2 border-purple-300 dark:border-purple-700">
+              <h2 className="text-lg font-semibold text-purple-900 dark:text-purple-100">
+                {household?.name || 'Family Members'}
+              </h2>
+            </div>
+            
+            <FamilyMembersCard
+              familyMembersCount={familyMembers.length}
+              onOpenModal={() => setIsHouseholdSettingsModalOpen(true)}
+              householdName={household?.name}
+            />
+          </div>
 
           {/* BUDGET PERFORMANCE - Unified Widget */}
           <div className="mb-8">
@@ -334,19 +376,6 @@ const Dashboard: React.FC = () => {
                 setSelectedDesktopCategory(category);
                 setIsCategoryModalOpen(true);
               }}
-            />
-          </div>
-
-          {/* Family Members - Quick Access */}
-          <div className="mb-8">
-            {/* Mobile Sticky Header */}
-            <div className="md:hidden sticky top-0 z-10 bg-purple-100 dark:bg-purple-950/30 -mx-3 px-3 py-3 mb-4 border-b-2 border-purple-300 dark:border-purple-700">
-              <h2 className="text-lg font-semibold text-purple-900 dark:text-purple-100">Family Members</h2>
-            </div>
-            
-            <FamilyMembersCard
-              familyMembersCount={familyMembers.length}
-              onOpenModal={() => setIsHouseholdSettingsModalOpen(true)}
             />
           </div>
         </div>
