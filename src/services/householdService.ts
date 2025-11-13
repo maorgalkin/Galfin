@@ -479,6 +479,52 @@ export const generateInvitationCode = async (): Promise<string> => {
 };
 
 /**
+ * Leave current household and create a new personal household
+ * This allows users to "start fresh" with their own household
+ */
+export const leaveAndCreateNewHousehold = async (
+  newHouseholdName?: string
+): Promise<Household> => {
+  const userId = await getCurrentUserId();
+
+  // Get user's current household info
+  const { data: currentMember, error: memberError } = await supabase
+    .from('household_members')
+    .select('household_id, role')
+    .eq('user_id', userId)
+    .single();
+
+  if (memberError || !currentMember) {
+    throw new Error('User is not part of a household');
+  }
+
+  // Get user's first name for default household name
+  const { data: { user }, error: userError } = await supabase.auth.getUser();
+  if (userError || !user) {
+    throw new Error('User not authenticated');
+  }
+
+  const firstName = user.user_metadata?.first_name || 
+                    user.user_metadata?.full_name?.split(' ')[0] || 
+                    'My';
+
+  const householdName = newHouseholdName || `${firstName}'s Household`;
+
+  // If user is owner, delete the household (CASCADE handles members)
+  if (currentMember.role === 'owner') {
+    await deleteHousehold(currentMember.household_id);
+  } else {
+    // If member/admin, just leave
+    await leaveHousehold();
+  }
+
+  // Create new personal household
+  const newHousehold = await createHousehold(householdName);
+
+  return newHousehold;
+};
+
+/**
  * Update a member's role
  */
 export const updateMemberRole = async (
