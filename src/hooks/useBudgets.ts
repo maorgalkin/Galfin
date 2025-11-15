@@ -284,6 +284,19 @@ export function useBudgetComparison(year?: number, month?: number) {
 }
 
 /**
+ * Hook to compare monthly budget to its original state
+ * Shows in-month changes (adjustments made after month started)
+ */
+export function useBudgetComparisonToOriginal(year?: number, month?: number) {
+  return useQuery({
+    queryKey: ['budgetComparison', 'original', year, month],
+    queryFn: () => year && month ? MonthlyBudgetService.compareToOriginal(year, month) : null,
+    enabled: !!year && !!month,
+    staleTime: 2 * 60 * 1000,
+  });
+}
+
+/**
  * Hook to get pending adjustments for a specific month
  */
 export function usePendingAdjustments(year?: number, month?: number) {

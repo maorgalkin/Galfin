@@ -1,19 +1,27 @@
 import React from 'react';
-import { useBudgetComparison } from '../hooks/useBudgets';
+import { useBudgetComparison, useBudgetComparisonToOriginal } from '../hooks/useBudgets';
 import { TrendingUp, TrendingDown, Minus, AlertCircle, Loader2, MinusCircle } from 'lucide-react';
 
 interface BudgetComparisonCardProps {
   year: number;
   month: number;
+  compareToOriginal?: boolean; // If true, compare to month-start; if false, compare to personal budget
   className?: string;
 }
 
 export const BudgetComparisonCard: React.FC<BudgetComparisonCardProps> = ({
   year,
   month,
+  compareToOriginal = false,
   className = '',
 }) => {
-  const { data: comparison, isLoading, error } = useBudgetComparison(year, month);
+  const { data: personalComparison, isLoading: isLoadingPersonal, error: errorPersonal } = useBudgetComparison(year, month);
+  const { data: originalComparison, isLoading: isLoadingOriginal, error: errorOriginal } = useBudgetComparisonToOriginal(year, month);
+
+  // Use the appropriate comparison based on prop
+  const comparison = compareToOriginal ? originalComparison : personalComparison;
+  const isLoading = compareToOriginal ? isLoadingOriginal : isLoadingPersonal;
+  const error = compareToOriginal ? errorOriginal : errorPersonal;
 
   if (isLoading) {
     return (
@@ -85,7 +93,7 @@ export const BudgetComparisonCard: React.FC<BudgetComparisonCardProps> = ({
       {/* Header */}
       <div className="px-6 py-4 border-b border-gray-200 dark:border-gray-700">
         <p className="text-sm text-gray-600 dark:text-gray-400">
-          {comparison.monthlyBudgetDate} compared to My Budget
+          {comparison.monthlyBudgetDate} compared to {compareToOriginal ? 'Month Start' : 'My Budget'}
         </p>
         <p className="text-xs text-gray-500 dark:text-gray-500 mt-1">
           {comparison.adjustedCategories} adjusted · {comparison.addedCategories} added · {comparison.activeCategories} active
@@ -96,12 +104,14 @@ export const BudgetComparisonCard: React.FC<BudgetComparisonCardProps> = ({
       <div className="px-6 py-4 bg-gray-50 dark:bg-gray-900/50 border-b border-gray-200 dark:border-gray-700">
         <div className="grid grid-cols-3 gap-4">
           <div>
-            <p className="text-xs text-gray-500 dark:text-gray-400 uppercase tracking-wide">My Budget</p>
+            <p className="text-xs text-gray-500 dark:text-gray-400 uppercase tracking-wide">
+              {compareToOriginal ? 'Month Start' : 'My Budget'}
+            </p>
             <p className="text-lg font-semibold text-gray-900 dark:text-gray-100 mt-1">
               {formatCurrency(comparison.totalPersonalLimit)}
             </p>
             <p className="text-xs text-gray-500 dark:text-gray-400 mt-0.5">
-              Base configuration
+              {compareToOriginal ? 'Original budget' : 'Base configuration'}
             </p>
           </div>
           <div>

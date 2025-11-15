@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { useSearchParams } from 'react-router-dom';
-import { useActiveBudget } from '../hooks/useBudgets';
+import { useActiveBudget, useCurrentMonthBudget } from '../hooks/useBudgets';
 import { PersonalBudgetEditor } from '../components/PersonalBudgetEditor';
 import { PersonalBudgetDisplay } from '../components/PersonalBudgetDisplay';
 import { BudgetComparisonCard } from '../components/BudgetComparisonCard';
@@ -26,6 +26,8 @@ export const BudgetManagement: React.FC = () => {
   const currentDate = new Date();
   const currentYear = currentDate.getFullYear();
   const currentMonth = currentDate.getMonth() + 1;
+  
+  const { data: monthlyBudget } = useCurrentMonthBudget();
   
   const themeColor = 'green';
 
@@ -165,7 +167,22 @@ export const BudgetManagement: React.FC = () => {
                 <h2 className="text-lg font-semibold text-gray-900 dark:text-gray-100 mb-3">
                   This Month's Changes
                 </h2>
-                <BudgetComparisonCard year={currentYear} month={currentMonth} />
+                {monthlyBudget && monthlyBudget.adjustment_count === 0 ? (
+                  <div className="bg-white dark:bg-gray-800 rounded-lg shadow-md p-8 text-center">
+                    <p className="text-gray-500 dark:text-gray-400">
+                      No changes made to budget this month
+                    </p>
+                    <p className="text-sm text-gray-400 dark:text-gray-500 mt-2">
+                      Budget matches the month-start configuration
+                    </p>
+                  </div>
+                ) : (
+                  <BudgetComparisonCard 
+                    year={currentYear} 
+                    month={currentMonth}
+                    compareToOriginal={true}
+                  />
+                )}
               </div>
 
               {/* Schedule Future Changes */}
@@ -180,7 +197,7 @@ export const BudgetManagement: React.FC = () => {
               <div className="text-sm text-gray-500 dark:text-gray-400 p-4 bg-orange-50 dark:bg-orange-900/20 rounded-lg">
                 <p className="font-medium mb-2">💡 Managing Adjustments:</p>
                 <ul className="list-disc list-inside space-y-1">
-                  <li><strong>Current Month:</strong> Review what changed from your base budget</li>
+                  <li><strong>Current Month:</strong> Shows changes made during this month compared to month start</li>
                   <li><strong>Next Month:</strong> Schedule adjustments that will apply automatically</li>
                   <li>Green indicates increases, red indicates decreases</li>
                   <li>Scheduled adjustments can be reviewed and cancelled before they're applied</li>

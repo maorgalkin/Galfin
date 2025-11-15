@@ -173,7 +173,8 @@ export interface MonthlyBudget {
   personal_budget_id: string | null;
   year: number;
   month: number; // 1-12
-  categories: Record<string, CategoryConfig>;
+  categories: Record<string, CategoryConfig>; // Current state (may be adjusted during month)
+  original_categories: Record<string, CategoryConfig>; // Snapshot at month creation (starting point)
   global_settings: GlobalBudgetSettings;
   adjustment_count: number;
   is_locked: boolean;

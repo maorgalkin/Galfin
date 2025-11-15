@@ -378,7 +378,8 @@ export class MonthlyBudgetService {
         personal_budget_id: personalBudget.id,
         year,
         month,
-        categories: personalBudget.categories,
+        categories: personalBudget.categories, // Current state (starts as copy of personal)
+        original_categories: personalBudget.categories, // Month-start snapshot (never modified)
         global_settings: personalBudget.global_settings,
         adjustment_count: 0,
         is_locked: false,
@@ -667,6 +668,131 @@ export class MonthlyBudgetService {
     return Object.values(budget.categories)
       .filter(cat => cat.isActive)
       .reduce((sum, cat) => sum + cat.monthlyLimit, 0);
+  }
+
+  /**
+   * Compare current monthly budget to its ORIGINAL state
+   * Shows in-month changes (adjustments made after month started)
+   * This is different from compareToPersonalBudget which shows deviation from baseline
+   */
+  static async compareToOriginal(
+    year: number,
+    month: number
+  ): Promise<BudgetComparisonSummary> {
+    try {
+      const monthlyBudget = await this.getMonthlyBudget(year, month);
+      if (!monthlyBudget) {
+        throw new Error('Monthly budget not found');
+      }
+
+      const comparisons: BudgetComparisonResult[] = [];
+      let totalOriginal = 0;
+      let totalCurrent = 0;
+      let adjustedCount = 0;
+      let addedCount = 0;
+      let removedCount = 0;
+      let activeCount = 0;
+
+      // Calculate total from original categories (month-start baseline)
+      for (const [, categoryConfig] of Object.entries(monthlyBudget.original_categories)) {
+        if (categoryConfig.isActive) {
+          totalOriginal += categoryConfig.monthlyLimit;
+        }
+      }
+
+      // Get all categories from both original and current
+      const allCategories = new Set([
+        ...Object.keys(monthlyBudget.categories),
+        ...Object.keys(monthlyBudget.original_categories)
+      ]);
+
+      // Compare each category
+      for (const categoryName of allCategories) {
+        const currentConfig = monthlyBudget.categories[categoryName];
+        const originalConfig = monthlyBudget.original_categories[categoryName];
+
+        let status: 'increased' | 'decreased' | 'unchanged' | 'added' | 'removed';
+        let originalLimit: number | null = originalConfig?.monthlyLimit ?? null;
+        let currentLimit: number = currentConfig?.monthlyLimit ?? 0;
+        let isActive = currentConfig?.isActive ?? false;
+        let difference: number;
+        let differencePercentage: number;
+
+        if (!originalConfig && currentConfig) {
+          // Category added during the month
+          status = 'added';
+          addedCount++;
+          if (isActive) {
+            activeCount++;
+            totalCurrent += currentLimit;
+          }
+          difference = currentLimit;
+          differencePercentage = 0;
+        } else if (originalConfig && !currentConfig?.isActive) {
+          // Category was active at month start but deactivated during month
+          status = 'removed';
+          removedCount++;
+          isActive = false;
+          originalLimit = originalConfig.monthlyLimit;
+          currentLimit = 0;
+          difference = -originalLimit;
+          differencePercentage = -100;
+        } else if (originalConfig && currentConfig && currentConfig.isActive) {
+          // Category exists in both and is currently active
+          isActive = true;
+          activeCount++;
+          difference = currentLimit - originalLimit!;
+          differencePercentage = originalLimit! > 0 ? (difference / originalLimit!) * 100 : 0;
+
+          if (difference > 0) {
+            status = 'increased';
+            adjustedCount++;
+          } else if (difference < 0) {
+            status = 'decreased';
+            adjustedCount++;
+          } else {
+            status = 'unchanged';
+          }
+
+          totalCurrent += currentLimit;
+        } else {
+          // Category exists but is inactive (shouldn't normally happen, but handle it)
+          continue;
+        }
+
+        comparisons.push({
+          category: categoryName,
+          personalLimit: originalLimit, // Using original as the baseline
+          monthlyLimit: currentLimit,
+          difference,
+          differencePercentage,
+          status,
+          isActive
+        });
+      }
+
+      return {
+        monthlyBudgetDate: `${this.getMonthName(month)} ${year}`,
+        personalBudgetName: 'Month Start Budget', // Original state at month creation
+        totalPersonalLimit: totalOriginal, // Month-start total
+        totalMonthlyLimit: totalCurrent, // Current total
+        totalDifference: totalCurrent - totalOriginal,
+        totalCategories: allCategories.size,
+        activeCategories: activeCount,
+        adjustedCategories: adjustedCount,
+        addedCategories: addedCount,
+        removedCategories: removedCount,
+        currency: monthlyBudget.global_settings.currency,
+        comparisons: comparisons.sort((a, b) => {
+          // Sort by status priority: added > adjusted > removed > unchanged
+          const statusOrder = { added: 0, increased: 1, decreased: 2, removed: 3, unchanged: 4 };
+          return statusOrder[a.status] - statusOrder[b.status];
+        })
+      };
+    } catch (error) {
+      console.error('Error comparing to original budget:', error);
+      throw error;
+    }
   }
 
   /**
