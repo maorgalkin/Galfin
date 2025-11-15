@@ -19,17 +19,22 @@ WHERE hm.role = 'participant'
   AND (SELECT COUNT(*) FROM household_members WHERE household_id = h.id) = 1  -- Sole member
 ORDER BY au.email;
 
--- Uncomment to execute the fix:
-/*
-UPDATE household_members
-SET role = 'owner'
-WHERE role = 'participant'
-  AND household_id IN (
-    SELECT h.id
-    FROM households h
-    WHERE h.created_by = household_members.user_id  -- User created their own household
-      AND (SELECT COUNT(*) FROM household_members hm2 WHERE hm2.household_id = h.id) = 1  -- Sole member
-  );
+-- Execute the fix:
+DO $$
+DECLARE
+  rows_updated INT;
+BEGIN
+  UPDATE household_members
+  SET role = 'owner'
+  WHERE role = 'participant'
+    AND household_id IN (
+      SELECT h.id
+      FROM households h
+      WHERE h.created_by = household_members.user_id  -- User created their own household
+        AND (SELECT COUNT(*) FROM household_members hm2 WHERE hm2.household_id = h.id) = 1  -- Sole member
+    );
+  
+  GET DIAGNOSTICS rows_updated = ROW_COUNT;
+  RAISE NOTICE 'Fixed % household membership(s) to owner role', rows_updated;
+END $$;
 
-SELECT 'Fixed ' || ROW_COUNT() || ' household memberships to owner role';
-*/
