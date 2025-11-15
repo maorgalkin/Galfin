@@ -143,6 +143,24 @@ export function useDeletePersonalBudget() {
 }
 
 /**
+ * Hook to reset ALL budgets - bringing user back to default state
+ */
+export function useResetAllBudgets() {
+  const queryClient = useQueryClient();
+  
+  return useMutation({
+    mutationFn: (options?: { includeMonthlyBudgets?: boolean; includeTransactions?: boolean }) => 
+      PersonalBudgetService.resetAllBudgets(options),
+    onSuccess: () => {
+      // Invalidate all budget-related queries
+      queryClient.invalidateQueries({ queryKey: ['personalBudget'] });
+      queryClient.invalidateQueries({ queryKey: ['monthlyBudget'] });
+      queryClient.invalidateQueries({ queryKey: ['transactions'] });
+    },
+  });
+}
+
+/**
  * Hook to get current month's budget
  */
 export function useCurrentMonthBudget() {

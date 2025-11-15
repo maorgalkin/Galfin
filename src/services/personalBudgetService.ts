@@ -403,6 +403,86 @@ export class PersonalBudgetService {
   static getActiveCategoryCount(budget: PersonalBudget): number {
     return Object.values(budget.categories).filter(cat => cat.isActive).length;
   }
+
+  /**
+   * Reset ALL budget configuration - deletes ALL personal budgets
+   * This brings the user back to the default state (no configured budget)
+   * 
+   * @param options.includeMonthlyBudgets - Also delete all monthly budgets (default: false)
+   * @param options.includeTransactions - Also delete all transactions (default: false)
+   * @returns Number of budgets deleted
+   */
+  static async resetAllBudgets(options?: {
+    includeMonthlyBudgets?: boolean;
+    includeTransactions?: boolean;
+  }): Promise<{ budgetsDeleted: number; monthlyBudgetsDeleted?: number; transactionsDeleted?: number }> {
+    try {
+      const householdId = await getHouseholdId();
+      const { data: { user } } = await supabase.auth.getUser();
+      if (!user) {
+        throw new Error('User not authenticated');
+      }
+
+      // Get count of budgets to delete
+      const allBudgets = await this.getBudgetHistory();
+      const budgetCount = allBudgets.length;
+
+      // Delete all personal budgets
+      const { error: budgetError } = await supabase
+        .from('personal_budgets')
+        .delete()
+        .eq('household_id', householdId);
+
+      if (budgetError) throw budgetError;
+
+      const result: { budgetsDeleted: number; monthlyBudgetsDeleted?: number; transactionsDeleted?: number } = {
+        budgetsDeleted: budgetCount
+      };
+
+      // Optionally delete monthly budgets
+      if (options?.includeMonthlyBudgets) {
+        const { data: monthlyBudgets, error: fetchError } = await supabase
+          .from('monthly_budgets')
+          .select('id')
+          .eq('household_id', householdId);
+
+        if (fetchError) throw fetchError;
+
+        const { error: monthlyError } = await supabase
+          .from('monthly_budgets')
+          .delete()
+          .eq('household_id', householdId);
+
+        if (monthlyError) throw monthlyError;
+
+        result.monthlyBudgetsDeleted = monthlyBudgets?.length || 0;
+      }
+
+      // Optionally delete transactions
+      if (options?.includeTransactions) {
+        const { data: transactions, error: fetchError } = await supabase
+          .from('transactions')
+          .select('id')
+          .eq('household_id', householdId);
+
+        if (fetchError) throw fetchError;
+
+        const { error: transError } = await supabase
+          .from('transactions')
+          .delete()
+          .eq('household_id', householdId);
+
+        if (transError) throw transError;
+
+        result.transactionsDeleted = transactions?.length || 0;
+      }
+
+      return result;
+    } catch (error) {
+      console.error('Error resetting budgets:', error);
+      throw error;
+    }
+  }
 }
 
 // Export singleton instance

@@ -6,6 +6,7 @@ import {
   useUpdatePersonalBudget,
   useSetActiveBudget,
   useDeletePersonalBudget,
+  useResetAllBudgets,
 } from '../hooks/useBudgets';
 import { useFinance } from '../context/FinanceContext';
 import { 
@@ -19,7 +20,8 @@ import {
   Loader2, 
   AlertCircle,
   CheckCircle,
-  Settings as SettingsIcon
+  Settings as SettingsIcon,
+  RotateCcw
 } from 'lucide-react';
 import type { PersonalBudget, CategoryConfig } from '../types/budget';
 import { getNextAvailableColor, CATEGORY_COLOR_PALETTE } from '../utils/categoryColors';
@@ -64,6 +66,7 @@ export const PersonalBudgetEditor: React.FC<PersonalBudgetEditorProps> = ({
   const updateBudget = useUpdatePersonalBudget();
   const setActive = useSetActiveBudget();
   const deleteBudget = useDeletePersonalBudget();
+  const resetAllBudgets = useResetAllBudgets();
 
   // Auto-open create mode if autoCreate prop is true
   useEffect(() => {
@@ -262,6 +265,67 @@ export const PersonalBudgetEditor: React.FC<PersonalBudgetEditorProps> = ({
     }
   };
 
+  const handleResetConfiguration = async () => {
+    const message = `⚠️ RESET BUDGET CONFIGURATION ⚠️
+
+This will PERMANENTLY DELETE:
+• All your personal budgets (${history.length} budget${history.length !== 1 ? 's' : ''})
+• All budget configurations and settings
+
+You will also be asked about:
+• Monthly budgets (historical budget snapshots)
+• Transaction data (all your transactions)
+
+This will bring you back to the default state, as if you just created your account.
+
+Are you absolutely sure you want to continue?`;
+    
+    if (!confirm(message)) return;
+
+    // Ask about monthly budgets
+    const deleteMonthly = confirm(
+      'Do you also want to delete ALL monthly budgets?\n\n' +
+      'Monthly budgets are historical snapshots of your budgets for each month.\n\n' +
+      'Click OK to delete them, or Cancel to keep them.'
+    );
+
+    // Ask about transactions
+    const deleteTransactions = confirm(
+      '⚠️ FINAL QUESTION: Do you want to delete ALL transactions?\n\n' +
+      'This will permanently remove all your transaction history.\n\n' +
+      'Click OK to delete ALL data, or Cancel to keep your transactions.'
+    );
+
+    try {
+      const result = await resetAllBudgets.mutateAsync({
+        includeMonthlyBudgets: deleteMonthly,
+        includeTransactions: deleteTransactions,
+      });
+
+      let successMessage = `✅ Configuration reset complete!\n\n` +
+        `• ${result.budgetsDeleted} personal budget${result.budgetsDeleted !== 1 ? 's' : ''} deleted`;
+      
+      if (result.monthlyBudgetsDeleted !== undefined) {
+        successMessage += `\n• ${result.monthlyBudgetsDeleted} monthly budget${result.monthlyBudgetsDeleted !== 1 ? 's' : ''} deleted`;
+      }
+      
+      if (result.transactionsDeleted !== undefined) {
+        successMessage += `\n• ${result.transactionsDeleted} transaction${result.transactionsDeleted !== 1 ? 's' : ''} deleted`;
+      }
+
+      successMessage += '\n\nYou can now create a fresh budget!';
+
+      alert(successMessage);
+      
+      // Clear any editing state
+      setIsCreating(false);
+      setEditingBudgetId(null);
+    } catch (error) {
+      console.error('Error resetting configuration:', error);
+      alert('Failed to reset configuration: ' + (error instanceof Error ? error.message : 'Unknown error'));
+    }
+  };
+
   const totalBudget = Object.values(categories)
     .filter(cat => cat.isActive)
     .reduce((sum, cat) => sum + cat.monthlyLimit, 0);
@@ -290,15 +354,27 @@ export const PersonalBudgetEditor: React.FC<PersonalBudgetEditorProps> = ({
               Configure your budget categories and monthly limits
             </p>
           </div>
-          {!isCreating && !editingBudgetId && !activeBudget && (
-            <button
-              onClick={handleStartCreate}
-              className="flex items-center px-4 py-2 bg-blue-600 text-white rounded-md hover:bg-blue-700 transition-colors text-sm font-medium"
-            >
-              <Plus className="h-4 w-4 mr-2" />
-              Create Budget
-            </button>
-          )}
+          <div className="flex items-center gap-2">
+            {!isCreating && !editingBudgetId && !activeBudget && (
+              <button
+                onClick={handleStartCreate}
+                className="flex items-center px-4 py-2 bg-blue-600 text-white rounded-md hover:bg-blue-700 transition-colors text-sm font-medium"
+              >
+                <Plus className="h-4 w-4 mr-2" />
+                Create Budget
+              </button>
+            )}
+            {!isCreating && !editingBudgetId && history.length > 0 && (
+              <button
+                onClick={handleResetConfiguration}
+                className="flex items-center px-3 py-2 bg-red-600 text-white rounded-md hover:bg-red-700 transition-colors text-sm font-medium"
+                title="Reset all budget configuration - delete everything"
+              >
+                <RotateCcw className="h-4 w-4 mr-2" />
+                Reset All
+              </button>
+            )}
+          </div>
         </div>
       </div>
 
