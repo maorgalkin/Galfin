@@ -173,13 +173,17 @@ export const PersonalBudgetEditor: React.FC<PersonalBudgetEditorProps> = ({
           activeExpenseCategories: Object.keys(categories).filter(name => categories[name].isActive),
         };
 
-        // household_id is added by the service internally
-        await createBudget.mutateAsync({
+        const budgetData = {
           name: budgetName,
           categories,
           global_settings: globalSettings,
           notes: notes || null,
-        } as any);
+        };
+
+        console.log('Creating budget with data:', JSON.stringify(budgetData, null, 2));
+
+        // household_id is added by the service internally
+        await createBudget.mutateAsync(budgetData as any);
       } else if (editingBudgetId) {
         // Build global settings from state for update
         const globalSettings = {

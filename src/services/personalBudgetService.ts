@@ -150,7 +150,12 @@ export class PersonalBudgetService {
         .select()
         .single();
 
-      if (error) throw error;
+      if (error) {
+        console.error('Supabase error creating budget:', error);
+        console.error('Error details:', JSON.stringify(error, null, 2));
+        console.error('Budget data being inserted:', JSON.stringify(newBudget, null, 2));
+        throw error;
+      }
 
       return data;
     } catch (error) {
