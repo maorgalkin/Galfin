@@ -256,9 +256,16 @@ export const PersonalBudgetEditor: React.FC<PersonalBudgetEditorProps> = ({
   };
 
   const handleDelete = async (budgetId: string, isActive: boolean) => {
-    const message = isActive
-      ? 'Are you sure you want to delete the ACTIVE budget?\n\nThis will permanently remove this budget and all its settings. You will need to create or activate another budget to continue using the app.\n\nThis action cannot be undone.'
-      : 'Are you sure you want to delete this budget?\n\nThis action cannot be undone.';
+    const isOnlyBudget = history.length === 1;
+    
+    let message: string;
+    if (isOnlyBudget) {
+      message = '⚠️ DELETE YOUR ONLY BUDGET ⚠️\n\nThis will return you to the initial setup state with no budget configured.\n\nYou will need to create a new budget to continue using the app.\n\nThis action cannot be undone.\n\nAre you sure?';
+    } else if (isActive) {
+      message = 'Are you sure you want to delete the ACTIVE budget?\n\nThis will permanently remove this budget and all its settings. Another budget will be automatically activated.\n\nThis action cannot be undone.';
+    } else {
+      message = 'Are you sure you want to delete this budget?\n\nThis action cannot be undone.';
+    }
     
     if (!confirm(message)) return;
 

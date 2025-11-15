@@ -281,22 +281,19 @@ export class PersonalBudgetService {
 
   /**
    * Delete a personal budget
-   * Cannot delete if it's the only budget or if it's referenced by monthly budgets
+   * Allows deleting any budget, including the last one (returns user to no-budget state)
    */
   static async deleteBudget(budgetId: string): Promise<void> {
     try {
       const householdId = await getHouseholdId();
 
-      // Check if this is the only budget
+      // Get all budgets to check if we need to activate another one
       const allBudgets = await this.getBudgetHistory();
-      if (allBudgets.length <= 1) {
-        throw new Error('Cannot delete the only personal budget');
-      }
-
+      
       // Check if this budget is active
       const budget = await this.getBudgetById(budgetId);
-      if (budget?.is_active) {
-        // Find another budget to activate
+      if (budget?.is_active && allBudgets.length > 1) {
+        // Find another budget to activate (only if there are other budgets)
         const otherBudget = allBudgets.find(b => b.id !== budgetId);
         if (otherBudget) {
           await this.setActiveBudget(otherBudget.id);
