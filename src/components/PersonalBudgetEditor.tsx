@@ -247,8 +247,12 @@ export const PersonalBudgetEditor: React.FC<PersonalBudgetEditorProps> = ({
     }
   };
 
-  const handleDelete = async (budgetId: string) => {
-    if (!confirm('Are you sure you want to delete this budget?')) return;
+  const handleDelete = async (budgetId: string, isActive: boolean) => {
+    const message = isActive
+      ? 'Are you sure you want to delete the ACTIVE budget?\n\nThis will permanently remove this budget and all its settings. You will need to create or activate another budget to continue using the app.\n\nThis action cannot be undone.'
+      : 'Are you sure you want to delete this budget?\n\nThis action cannot be undone.';
+    
+    if (!confirm(message)) return;
 
     try {
       await deleteBudget.mutateAsync(budgetId);
@@ -588,16 +592,14 @@ export const PersonalBudgetEditor: React.FC<PersonalBudgetEditorProps> = ({
                       >
                         <Edit2 className="h-4 w-4" />
                       </button>
-                      {!budget.is_active && (
-                        <button
-                          onClick={() => handleDelete(budget.id)}
-                          disabled={deleteBudget.isPending}
-                          className="p-2 text-red-600 hover:bg-red-50 dark:hover:bg-red-900/20 rounded-md transition-colors"
-                          title="Delete"
-                        >
-                          <Trash2 className="h-4 w-4" />
-                        </button>
-                      )}
+                      <button
+                        onClick={() => handleDelete(budget.id, budget.is_active)}
+                        disabled={deleteBudget.isPending}
+                        className="p-2 text-red-600 hover:bg-red-50 dark:hover:bg-red-900/20 rounded-md transition-colors"
+                        title={budget.is_active ? "Delete Active Budget" : "Delete Budget"}
+                      >
+                        <Trash2 className="h-4 w-4" />
+                      </button>
                     </div>
                   </div>
                 </div>
