@@ -180,8 +180,6 @@ export const PersonalBudgetEditor: React.FC<PersonalBudgetEditorProps> = ({
           notes: notes || null,
         };
 
-        console.log('Creating budget with data:', JSON.stringify(budgetData, null, 2));
-
         // household_id is added by the service internally
         await createBudget.mutateAsync(budgetData as any);
       } else if (editingBudgetId) {
