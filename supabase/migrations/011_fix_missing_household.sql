@@ -36,9 +36,9 @@ BEGIN
     VALUES (user_email || '''s Household', user_record.id)
     RETURNING id INTO new_household_id;
     
-    -- Add user as participant (owner role) of the household
-    INSERT INTO household_members (household_id, user_id, role)
-    VALUES (new_household_id, user_record.id, 'participant');
+    -- Add user as owner of their household
+    INSERT INTO household_members (household_id, user_id, role, invited_by)
+    VALUES (new_household_id, user_record.id, 'owner', user_record.id);
     
     RAISE NOTICE 'Created household % for user % (email: %, created: %)', 
       new_household_id, user_record.id, user_record.email, user_record.created_at;
