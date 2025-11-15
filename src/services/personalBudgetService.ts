@@ -141,7 +141,7 @@ export class PersonalBudgetService {
         categories: budget.categories,
         global_settings: budget.global_settings,
         is_active: true,
-        notes: budget.notes
+        ...(budget.notes && { notes: budget.notes }) // Only include notes if not empty
       };
 
       const { data, error } = await supabase

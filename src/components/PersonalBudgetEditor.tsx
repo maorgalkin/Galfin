@@ -178,7 +178,7 @@ export const PersonalBudgetEditor: React.FC<PersonalBudgetEditorProps> = ({
           name: budgetName,
           categories,
           global_settings: globalSettings,
-          notes: notes || undefined,
+          notes: notes || null,
         } as any);
       } else if (editingBudgetId) {
         // Build global settings from state for update
