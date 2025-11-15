@@ -600,20 +600,19 @@ Are you absolutely sure you want to continue?`;
         </div>
       )}
 
-      {/* Budget List - Only show if no active budget (for version history in the future) */}
-      {!activeBudget && (
-        <div className="px-6 py-4">
-          {history.length === 0 ? (
-            <div className="text-center py-12">
-              <AlertCircle className="h-12 w-12 text-gray-400 mx-auto mb-3" />
-              <p className="text-gray-600 dark:text-gray-400">No budget configured yet</p>
-              <p className="text-sm text-gray-500 dark:text-gray-500 mt-1">
-                Click "Create Budget" to set up your first budget
-              </p>
-            </div>
-          ) : (
-            <div className="space-y-3">
-              {history.map((budget) => (
+      {/* Budget List */}
+      <div className="px-6 py-4">
+        {history.length === 0 ? (
+          <div className="text-center py-12">
+            <AlertCircle className="h-12 w-12 text-gray-400 mx-auto mb-3" />
+            <p className="text-gray-600 dark:text-gray-400">No budget configured yet</p>
+            <p className="text-sm text-gray-500 dark:text-gray-500 mt-1">
+              Click "Create Budget" to set up your first budget
+            </p>
+          </div>
+        ) : (
+          <div className="space-y-3">
+            {history.map((budget) => (
                 <div
                   key={budget.id}
                   className={`p-4 rounded-lg border transition-all ${
@@ -688,7 +687,6 @@ Are you absolutely sure you want to continue?`;
             </div>
           )}
         </div>
-      )}
       
       {/* Category Edit/Add Modal */}
       {(editingCategory || isAddingCategory) && (
