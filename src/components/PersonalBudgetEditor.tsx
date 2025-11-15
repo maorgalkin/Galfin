@@ -110,7 +110,7 @@ export const PersonalBudgetEditor: React.FC<PersonalBudgetEditorProps> = ({
       setWarningNotifications(true);
       setEmailAlerts(false);
       setCategories({
-        'Groceries': { monthlyLimit: 1500, warningThreshold: 80, isActive: true },
+        'Groceries': { monthlyLimit: 1500, warningThreshold: 80,  isActive: true },
         'Transportation': { monthlyLimit: 600, warningThreshold: 80, isActive: true },
         'Entertainment': { monthlyLimit: 400, warningThreshold: 80, isActive: true },
         'Bills & Utilities': { monthlyLimit: 1000, warningThreshold: 80, isActive: true },
@@ -173,12 +173,13 @@ export const PersonalBudgetEditor: React.FC<PersonalBudgetEditorProps> = ({
           activeExpenseCategories: Object.keys(categories).filter(name => categories[name].isActive),
         };
 
+        // household_id is added by the service internally
         await createBudget.mutateAsync({
           name: budgetName,
           categories,
           global_settings: globalSettings,
           notes: notes || undefined,
-        });
+        } as any);
       } else if (editingBudgetId) {
         // Build global settings from state for update
         const globalSettings = {
