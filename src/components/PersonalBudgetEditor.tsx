@@ -59,7 +59,7 @@ export const PersonalBudgetEditor: React.FC<PersonalBudgetEditorProps> = ({
 
   const { data: activeBudget, isLoading: loadingActive } = useActiveBudget();
   const { data: history = [], isLoading: loadingHistory } = usePersonalBudgetHistory();
-  const { transactions } = useFinance();
+  const { transactions, familyMembers } = useFinance();
   const createBudget = useCreatePersonalBudget();
   const updateBudget = useUpdatePersonalBudget();
   const setActive = useSetActiveBudget();
@@ -162,7 +162,11 @@ export const PersonalBudgetEditor: React.FC<PersonalBudgetEditorProps> = ({
           currency,
           warningNotifications,
           emailAlerts,
-          familyMembers: [], // Empty array for now (feature not implemented in budgetConfig)
+          familyMembers: familyMembers.map(fm => ({
+            id: fm.id,
+            name: fm.name,
+            color: fm.color,
+          })),
           activeExpenseCategories: Object.keys(categories).filter(name => categories[name].isActive),
         };
 
@@ -178,7 +182,11 @@ export const PersonalBudgetEditor: React.FC<PersonalBudgetEditorProps> = ({
           currency,
           warningNotifications,
           emailAlerts,
-          familyMembers: [], // Empty array for now (feature not implemented in budgetConfig)
+          familyMembers: familyMembers.map(fm => ({
+            id: fm.id,
+            name: fm.name,
+            color: fm.color,
+          })),
           activeExpenseCategories: Object.keys(categories).filter(name => categories[name].isActive),
         };
         
