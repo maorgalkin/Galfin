@@ -10,6 +10,25 @@ import type {
 } from '../types/budget';
 
 /**
+ * Helper to get user's household_id
+ */
+const getHouseholdId = async (): Promise<string> => {
+  const { data: { user } } = await supabase.auth.getUser();
+  if (!user) throw new Error('User not authenticated');
+
+  const { data, error } = await supabase
+    .from('household_members')
+    .select('household_id')
+    .eq('user_id', user.id)
+    .single();
+
+  if (error) throw error;
+  if (!data) throw new Error('User not part of any household');
+
+  return data.household_id;
+};
+
+/**
  * Budget Adjustment Service
  * Manages scheduled budget adjustments and category history tracking
  */
@@ -31,6 +50,8 @@ export class BudgetAdjustmentService {
         throw new Error('User not authenticated');
       }
 
+      const householdId = await getHouseholdId();
+
       // Calculate next month
       const now = new Date();
       const nextMonth = new Date(now.getFullYear(), now.getMonth() + 1, 1);
@@ -42,6 +63,7 @@ export class BudgetAdjustmentService {
 
       const adjustment: Omit<BudgetAdjustment, 'id' | 'created_at' | 'applied_at'> = {
         user_id: user.id,
+        household_id: householdId,
         category_name: categoryName,
         current_limit: currentLimit,
         adjustment_type: adjustmentType,

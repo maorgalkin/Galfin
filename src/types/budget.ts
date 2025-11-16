@@ -190,6 +190,7 @@ export interface MonthlyBudget {
 export interface BudgetAdjustment {
   id: string;
   user_id: string;
+  household_id: string;
   category_name: string;
   current_limit: number;
   adjustment_type: 'increase' | 'decrease';
