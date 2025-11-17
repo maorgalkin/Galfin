@@ -211,7 +211,7 @@ const AddTransaction: React.FC<AddTransactionProps> = ({ isOpen, onClose }) => {
               </button>
             </div>
 
-        <form onSubmit={handleSubmit} className="space-y-4">
+        <form onSubmit={handleSubmit} className="space-y-4 overflow-x-hidden">
           <div>
             <div className="flex rounded-lg border border-gray-300 overflow-hidden">
               {/* Expense Option */}
@@ -337,7 +337,8 @@ const AddTransaction: React.FC<AddTransactionProps> = ({ isOpen, onClose }) => {
               name="date"
               value={formData.date}
               onChange={handleChange}
-              className="w-full min-w-0 px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
+              className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
+              style={{ maxWidth: '100%', boxSizing: 'border-box' }}
               required
             />
           </div>
