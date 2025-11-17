@@ -145,10 +145,11 @@ const EditTransactionModal: React.FC<EditTransactionModalProps> = ({ transaction
         <form onSubmit={handleSubmit} className="p-6 space-y-4">
           {/* Date */}
           <div>
-            <label className="block text-sm font-medium text-gray-700 mb-1">
+            <label htmlFor="edit-date" className="block text-sm font-medium text-gray-700 mb-1">
               Date
             </label>
             <input
+              id="edit-date"
               type="date"
               name="date"
               value={formData.date}
@@ -160,10 +161,11 @@ const EditTransactionModal: React.FC<EditTransactionModalProps> = ({ transaction
 
           {/* Description */}
           <div>
-            <label className="block text-sm font-medium text-gray-700 mb-1">
+            <label htmlFor="edit-description" className="block text-sm font-medium text-gray-700 mb-1">
               Description
             </label>
             <input
+              id="edit-description"
               type="text"
               name="description"
               value={formData.description}
@@ -176,10 +178,11 @@ const EditTransactionModal: React.FC<EditTransactionModalProps> = ({ transaction
 
           {/* Amount */}
           <div>
-            <label className="block text-sm font-medium text-gray-700 mb-1">
+            <label htmlFor="edit-amount" className="block text-sm font-medium text-gray-700 mb-1">
               Amount ({currencySymbol})
             </label>
             <input
+              id="edit-amount"
               type="number"
               name="amount"
               value={formData.amount}
@@ -194,10 +197,11 @@ const EditTransactionModal: React.FC<EditTransactionModalProps> = ({ transaction
 
           {/* Type */}
           <div>
-            <label className="block text-sm font-medium text-gray-700 mb-1">
+            <label htmlFor="edit-type" className="block text-sm font-medium text-gray-700 mb-1">
               Type
             </label>
             <select
+              id="edit-type"
               name="type"
               value={formData.type}
               onChange={handleChange}
@@ -211,10 +215,11 @@ const EditTransactionModal: React.FC<EditTransactionModalProps> = ({ transaction
 
           {/* Category */}
           <div>
-            <label className="block text-sm font-medium text-gray-700 mb-1">
+            <label htmlFor="edit-category" className="block text-sm font-medium text-gray-700 mb-1">
               Category
             </label>
             <select
+              id="edit-category"
               name="category"
               value={formData.category}
               onChange={handleChange}
@@ -230,10 +235,11 @@ const EditTransactionModal: React.FC<EditTransactionModalProps> = ({ transaction
 
           {/* Family Member */}
           <div>
-            <label className="block text-sm font-medium text-gray-700 mb-1">
+            <label htmlFor="edit-family-member" className="block text-sm font-medium text-gray-700 mb-1">
               Family Member (Optional)
             </label>
             <select
+              id="edit-family-member"
               name="familyMember"
               value={formData.familyMember}
               onChange={handleChange}
