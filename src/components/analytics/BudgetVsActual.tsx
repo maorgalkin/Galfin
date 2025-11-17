@@ -147,6 +147,18 @@ export const BudgetVsActual: React.FC = () => {
 
   const formatCurrencyRounded = (amount: number) => {
     const currency = personalBudget?.global_settings?.currency || 'USD';
+    
+    // Use K notation for values >= 1000
+    if (amount >= 1000) {
+      const kValue = amount / 1000;
+      return new Intl.NumberFormat('en-US', {
+        style: 'currency',
+        currency: currency,
+        minimumFractionDigits: 0,
+        maximumFractionDigits: 1,
+      }).format(kValue) + 'K';
+    }
+    
     return new Intl.NumberFormat('en-US', {
       style: 'currency',
       currency: currency,
@@ -322,7 +334,7 @@ export const BudgetVsActual: React.FC = () => {
                       
                       {/* Min - aligned with bottom of bars (350px from top) */}
                       <div className="absolute right-0 flex flex-col items-end pr-2" style={{ top: '350px' }}>
-                        <span className="font-medium">$0</span>
+                        <span className="font-medium">{formatCurrencyRounded(0)}</span>
                         <span className="text-[10px] text-gray-400 dark:text-gray-500">Min</span>
                       </div>
                     </>
