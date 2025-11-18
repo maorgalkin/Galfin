@@ -225,7 +225,11 @@ export const BudgetVsActual: React.FC = () => {
       </div>
 
       {/* Date Range Filter */}
-      <DateRangeFilter selectedRange={dateRange} onRangeChange={setDateRange} />
+      <DateRangeFilter 
+        selectedRange={dateRange} 
+        onRangeChange={setDateRange}
+        availableMonthsCount={monthlyBudgets?.length || 0}
+      />
 
       {/* Summary Cards */}
       <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
