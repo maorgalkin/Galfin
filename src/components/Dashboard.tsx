@@ -95,19 +95,34 @@ const Dashboard: React.FC = () => {
     
     console.log('Alert calculation:', {
       totalAlerts: analysis.alerts.length,
-      alertDetails: analysis.alerts.map(a => ({ id: a.id, category: a.category, type: a.type })),
-      viewedAlertIds: Array.from(viewedAlertIds)
+      alertsByCategory: analysis.alerts.reduce((acc, a) => {
+        if (!acc[a.category]) acc[a.category] = [];
+        acc[a.category].push({ type: a.type, id: a.id });
+        return acc;
+      }, {} as Record<string, Array<{ type: string; id: string }>>),
+      viewedAlertIds: Array.from(viewedAlertIds),
+      viewedCount: viewedAlertIds.size
     });
     
     // Get unique categories with alerts that haven't been viewed
     const unviewedCategories = new Set<string>();
+    const unviewedAlertsByCategory: Record<string, string[]> = {};
+    
     analysis.alerts.forEach(alert => {
       if (!viewedAlertIds.has(alert.id)) {
         unviewedCategories.add(alert.category);
+        if (!unviewedAlertsByCategory[alert.category]) {
+          unviewedAlertsByCategory[alert.category] = [];
+        }
+        unviewedAlertsByCategory[alert.category].push(alert.type);
       }
     });
     
-    console.log('Unviewed categories:', Array.from(unviewedCategories));
+    console.log('Unviewed categories breakdown:', {
+      count: unviewedCategories.size,
+      categories: Array.from(unviewedCategories),
+      byCategory: unviewedAlertsByCategory
+    });
     
     return unviewedCategories.size;
   }, [personalBudget, transactions, viewedAlertIds]);
@@ -298,6 +313,12 @@ const Dashboard: React.FC = () => {
     }
   };
 
+  const handleClearViewedAlerts = () => {
+    setViewedAlertIds(new Set());
+    localStorage.removeItem('galfin_viewed_alerts');
+    console.log('Cleared all viewed alerts');
+  };
+
   // Dynamic background based on active tab with subtle textures
   const getBackgroundClass = () => {
     switch (activeTab) {
@@ -353,10 +374,19 @@ const Dashboard: React.FC = () => {
             
             {/* Dummy Data Controls - Development Only */}
             {import.meta.env.DEV && (
-              <DummyDataControls
-                onAddDummyData={handleAddDummyData}
-                onRemoveDummyData={handleRemoveDummyData}
-              />
+              <div className="flex gap-2">
+                <DummyDataControls
+                  onAddDummyData={handleAddDummyData}
+                  onRemoveDummyData={handleRemoveDummyData}
+                />
+                <button
+                  onClick={handleClearViewedAlerts}
+                  className="px-3 py-1 text-xs bg-orange-500 text-white rounded hover:bg-orange-600 transition-colors"
+                  title="Clear viewed alerts (dev only)"
+                >
+                  Clear Alerts
+                </button>
+              </div>
             )}
           </div>
 

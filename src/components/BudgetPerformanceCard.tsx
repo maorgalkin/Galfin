@@ -45,6 +45,7 @@ export const BudgetPerformanceCard: React.FC<BudgetPerformanceCardProps> = ({
   const summaryRef = useRef<HTMLDivElement>(null);
   const categoryBreakdownRef = useRef<HTMLDivElement>(null);
   const cardRef = useRef<HTMLDivElement>(null);
+  const alertsMarkedAsViewed = useRef(false); // Track if we've already marked alerts as viewed
 
   // Intersection observer to mark alerts as viewed when card becomes visible
   useEffect(() => {
@@ -52,13 +53,16 @@ export const BudgetPerformanceCard: React.FC<BudgetPerformanceCardProps> = ({
 
     const observer = new IntersectionObserver(
       ([entry]) => {
-        // When card is fully visible, mark alerts as viewed
-        if (entry.isIntersecting && entry.intersectionRatio > 0.5) {
+        // When card is visible and we haven't marked alerts yet, mark them
+        if (entry.isIntersecting && !alertsMarkedAsViewed.current) {
+          console.log('Budget Performance card became visible, marking alerts as viewed');
+          alertsMarkedAsViewed.current = true;
           onAlertsViewed();
         }
       },
       {
-        threshold: 0.5, // 50% of card must be visible
+        threshold: 0.1, // Only 10% needs to be visible
+        rootMargin: '0px' // No margin
       }
     );
 
