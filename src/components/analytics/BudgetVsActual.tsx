@@ -33,6 +33,15 @@ export const BudgetVsActual: React.FC = () => {
   
   const { data: monthlyBudgets, isLoading: loadingMonthly } = useMonthlyBudgetsForDateRange(startDate, endDate);
 
+  // Find the oldest transaction date to determine actual data range
+  const oldestTransactionDate = useMemo(() => {
+    if (transactions.length === 0) return undefined;
+    const sorted = [...transactions].sort((a, b) => 
+      new Date(a.date).getTime() - new Date(b.date).getTime()
+    );
+    return new Date(sorted[0].date);
+  }, [transactions]);
+
   console.log('BudgetVsActual render:', { 
     loadingPersonal, 
     loadingMonthly, 
@@ -40,7 +49,8 @@ export const BudgetVsActual: React.FC = () => {
     monthlyBudgetsCount: monthlyBudgets?.length,
     dateRange,
     startDate,
-    endDate
+    endDate,
+    oldestTransactionDate
   });
 
   const filteredTransactions = useMemo(() => {
@@ -228,7 +238,7 @@ export const BudgetVsActual: React.FC = () => {
       <DateRangeFilter 
         selectedRange={dateRange} 
         onRangeChange={setDateRange}
-        availableMonthsCount={monthlyBudgets?.length || 0}
+        oldestTransactionDate={oldestTransactionDate}
       />
 
       {/* Summary Cards */}

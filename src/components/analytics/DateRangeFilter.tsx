@@ -5,26 +5,31 @@ import { getDateRange, formatDateRange } from '../../utils/dateRangeFilters';
 interface DateRangeFilterProps {
   selectedRange: DateRangeType;
   onRangeChange: (range: DateRangeType) => void;
-  availableMonthsCount?: number; // Number of months with budget data
+  oldestTransactionDate?: Date; // Oldest transaction to determine actual data range
 }
 
 export const DateRangeFilter: React.FC<DateRangeFilterProps> = ({ 
   selectedRange, 
   onRangeChange,
-  availableMonthsCount = 12, // Default to 12 if not provided
+  oldestTransactionDate,
 }) => {
   const { startDate, endDate } = getDateRange(selectedRange);
 
+  // Calculate months of actual data (from oldest transaction to now)
+  const monthsOfData = oldestTransactionDate 
+    ? Math.max(1, Math.ceil((new Date().getTime() - oldestTransactionDate.getTime()) / (1000 * 60 * 60 * 24 * 30)))
+    : 12; // Default to 12 if no transactions
+
   const filters: { id: DateRangeType; label: string; requiredMonths: number }[] = [
     { id: 'mtd', label: 'Current Month', requiredMonths: 1 },
-    { id: 'ytd', label: 'Year to Date', requiredMonths: 3 }, // Show if at least 3 months
-    { id: 'qtd', label: 'Quarter to Date', requiredMonths: 2 }, // Show if at least 2 months
+    { id: 'ytd', label: 'Year to Date', requiredMonths: 3 }, // Show if at least 3 months of data
+    { id: 'qtd', label: 'Quarter to Date', requiredMonths: 2 }, // Show if at least 2 months of data
     { id: 'lastQuarter', label: 'Last Quarter', requiredMonths: 3 },
-    { id: 'lastYear', label: 'Last 12 Months', requiredMonths: 6 }, // Show if at least 6 months
+    { id: 'lastYear', label: 'Last 12 Months', requiredMonths: 6 }, // Show if at least 6 months of data
   ];
 
-  // Filter out ranges that require more months than available
-  const visibleFilters = filters.filter(f => availableMonthsCount >= f.requiredMonths);
+  // Filter out ranges that require more months than available data
+  const visibleFilters = filters.filter(f => monthsOfData >= f.requiredMonths);
 
   return (
     <div className="space-y-3">
