@@ -54,7 +54,15 @@ const Dashboard: React.FC = () => {
   const [isCategoryModalOpen, setIsCategoryModalOpen] = useState(false);
   const [isCustomDateRangeModalOpen, setIsCustomDateRangeModalOpen] = useState(false);
   const [showBreakdownInHeader, setShowBreakdownInHeader] = useState(false);
-  const [viewedAlertIds, setViewedAlertIds] = useState<Set<string>>(new Set());
+  const [viewedAlertIds, setViewedAlertIds] = useState<Set<string>>(() => {
+    // Load viewed alert IDs from localStorage on mount
+    try {
+      const stored = localStorage.getItem('galfin_viewed_alerts');
+      return stored ? new Set(JSON.parse(stored)) : new Set();
+    } catch {
+      return new Set();
+    }
+  });
   const [viewingTransactionDetails, setViewingTransactionDetails] = useState<Transaction | null>(null);
   const expenseChartRef = React.useRef<HTMLDivElement>(null);
 
@@ -85,6 +93,12 @@ const Dashboard: React.FC = () => {
       budgetConfig
     );
     
+    console.log('Alert calculation:', {
+      totalAlerts: analysis.alerts.length,
+      alertDetails: analysis.alerts.map(a => ({ id: a.id, category: a.category, type: a.type })),
+      viewedAlertIds: Array.from(viewedAlertIds)
+    });
+    
     // Get unique categories with alerts that haven't been viewed
     const unviewedCategories = new Set<string>();
     analysis.alerts.forEach(alert => {
@@ -92,6 +106,8 @@ const Dashboard: React.FC = () => {
         unviewedCategories.add(alert.category);
       }
     });
+    
+    console.log('Unviewed categories:', Array.from(unviewedCategories));
     
     return unviewedCategories.size;
   }, [personalBudget, transactions, viewedAlertIds]);
@@ -163,6 +179,15 @@ const Dashboard: React.FC = () => {
     
     return () => mediaQuery.removeEventListener('change', handleChange);
   }, []);
+
+  // Persist viewed alert IDs to localStorage whenever they change
+  useEffect(() => {
+    try {
+      localStorage.setItem('galfin_viewed_alerts', JSON.stringify(Array.from(viewedAlertIds)));
+    } catch (error) {
+      console.error('Failed to save viewed alerts to localStorage:', error);
+    }
+  }, [viewedAlertIds]);
 
   // Load household data
   useEffect(() => {

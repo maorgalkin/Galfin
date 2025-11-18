@@ -44,6 +44,28 @@ export const BudgetPerformanceCard: React.FC<BudgetPerformanceCardProps> = ({
   const [viewingAlerts, setViewingAlerts] = useState(false);
   const summaryRef = useRef<HTMLDivElement>(null);
   const categoryBreakdownRef = useRef<HTMLDivElement>(null);
+  const cardRef = useRef<HTMLDivElement>(null);
+
+  // Intersection observer to mark alerts as viewed when card becomes visible
+  useEffect(() => {
+    if (!onAlertsViewed || !cardRef.current) return;
+
+    const observer = new IntersectionObserver(
+      ([entry]) => {
+        // When card is fully visible, mark alerts as viewed
+        if (entry.isIntersecting && entry.intersectionRatio > 0.5) {
+          onAlertsViewed();
+        }
+      },
+      {
+        threshold: 0.5, // 50% of card must be visible
+      }
+    );
+
+    observer.observe(cardRef.current);
+
+    return () => observer.disconnect();
+  }, [onAlertsViewed]);
 
   // Intersection observer to detect when summary scrolls out of view (breakdown is visible)
   useEffect(() => {
@@ -189,7 +211,7 @@ export const BudgetPerformanceCard: React.FC<BudgetPerformanceCardProps> = ({
   }
 
   return (
-    <div className="bg-white dark:bg-gray-800 rounded-lg shadow-md overflow-hidden">
+    <div ref={cardRef} className="bg-white dark:bg-gray-800 rounded-lg shadow-md overflow-hidden">
       {/* Header - Hidden on mobile, shown on desktop */}
       <div className={`max-md:hidden px-6 py-4 ${getHeaderGradient(themeColor)}`}>
         <div className="flex items-center justify-between">
@@ -311,7 +333,6 @@ export const BudgetPerformanceCard: React.FC<BudgetPerformanceCardProps> = ({
                 onClick={() => {
                   setViewingAlerts(true);
                   setShowDetails(true);
-                  onAlertsViewed?.();
                 }}
                 className="text-sm text-orange-700 dark:text-orange-300 hover:text-orange-800 dark:hover:text-orange-200 font-medium"
               >
