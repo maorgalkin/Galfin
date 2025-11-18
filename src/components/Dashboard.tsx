@@ -54,7 +54,7 @@ const Dashboard: React.FC = () => {
   const [isCategoryModalOpen, setIsCategoryModalOpen] = useState(false);
   const [isCustomDateRangeModalOpen, setIsCustomDateRangeModalOpen] = useState(false);
   const [showBreakdownInHeader, setShowBreakdownInHeader] = useState(false);
-  const [alertsViewed, setAlertsViewed] = useState(false);
+  const [viewedAlertIds, setViewedAlertIds] = useState<Set<string>>(new Set());
   const [viewingTransactionDetails, setViewingTransactionDetails] = useState<Transaction | null>(null);
   const expenseChartRef = React.useRef<HTMLDivElement>(null);
 
@@ -63,8 +63,9 @@ const Dashboard: React.FC = () => {
   const [householdMembers, setHouseholdMembers] = useState<HouseholdMember[]>([]);
 
   // Calculate budget alerts for the current month
+  // Count unique categories with alerts/warnings (not individual alert IDs)
   const currentAlertsCount = useMemo(() => {
-    if (!personalBudget || alertsViewed) return 0;
+    if (!personalBudget) return 0;
     
     const budgetConfig: BudgetConfiguration = {
       version: "2.0.0",
@@ -84,13 +85,51 @@ const Dashboard: React.FC = () => {
       budgetConfig
     );
     
-    return analysis.alerts.length;
-  }, [personalBudget, transactions, alertsViewed]);
+    // Get unique categories with alerts that haven't been viewed
+    const unviewedCategories = new Set<string>();
+    analysis.alerts.forEach(alert => {
+      if (!viewedAlertIds.has(alert.id)) {
+        unviewedCategories.add(alert.category);
+      }
+    });
+    
+    return unviewedCategories.size;
+  }, [personalBudget, transactions, viewedAlertIds]);
 
   // Memoize callback to prevent effect re-runs
   const handleBreakdownVisible = useCallback((visible: boolean) => {
     setShowBreakdownInHeader(visible);
   }, []);
+
+  // Mark all current alerts as viewed
+  const handleAlertsViewed = useCallback(() => {
+    if (!personalBudget) return;
+    
+    const budgetConfig: BudgetConfiguration = {
+      version: "2.0.0",
+      lastUpdated: personalBudget.updated_at,
+      categories: personalBudget.categories,
+      globalSettings: personalBudget.global_settings
+    };
+    
+    const currentDate = new Date();
+    const monthName = currentDate.toLocaleDateString('en-US', { month: 'long' });
+    const year = currentDate.getFullYear();
+    
+    const analysis = budgetService.analyzeBudgetPerformanceWithConfig(
+      transactions,
+      monthName,
+      year,
+      budgetConfig
+    );
+    
+    // Mark all current alert IDs as viewed
+    setViewedAlertIds(prev => {
+      const newSet = new Set(prev);
+      analysis.alerts.forEach(alert => newSet.add(alert.id));
+      return newSet;
+    });
+  }, [personalBudget, transactions]);
 
   // Handle category click from Budget Performance Card
   const handleCategoryClick = useCallback((category: string) => {
@@ -340,7 +379,7 @@ const Dashboard: React.FC = () => {
                 selectedMonth={selectedMonthDate} 
                 isCompact={true} 
                 themeColor="purple"
-                onAlertsViewed={() => setAlertsViewed(true)}
+                onAlertsViewed={handleAlertsViewed}
                 onCategoryClick={handleCategoryClick}
               />
             </div>
@@ -352,7 +391,7 @@ const Dashboard: React.FC = () => {
                 isCompact={false} 
                 themeColor="purple"
                 onBreakdownVisible={handleBreakdownVisible}
-                onAlertsViewed={() => setAlertsViewed(true)}
+                onAlertsViewed={handleAlertsViewed}
                 onCategoryClick={handleCategoryClick}
               />
             </div>
