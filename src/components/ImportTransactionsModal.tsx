@@ -39,7 +39,6 @@ const ImportTransactionsModal: React.FC<ImportTransactionsModalProps> = ({ isOpe
       reader.onload = (e) => {
         try {
           const transactions = JSON.parse(e.target?.result as string);
-          console.log('Loaded Test File:', transactions);
           setTransactions(transactions as Transaction[]);
           alert('Test file loaded successfully!');
           onClose();
@@ -55,7 +54,6 @@ const ImportTransactionsModal: React.FC<ImportTransactionsModalProps> = ({ isOpe
     if (fileContent) {
       try {
         const transactions = JSON.parse(fileContent);
-        console.log('DEBUG: Parsed transactions:', transactions);
         if (!Array.isArray(transactions) || transactions.length === 0) {
           alert('Imported file is empty or not an array.');
           return;

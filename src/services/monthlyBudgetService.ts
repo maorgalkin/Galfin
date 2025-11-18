@@ -220,8 +220,6 @@ export class MonthlyBudgetService {
     endDate: Date
   ): Promise<MonthlyBudget[]> {
     try {
-      console.log('getMonthlyBudgetsForDateRange called:', { startDate, endDate });
-
       const householdId = await getHouseholdId();      // Get all months in the range
       const monthsInRange: { year: number; month: number }[] = [];
       const current = new Date(startDate);
@@ -233,16 +231,12 @@ export class MonthlyBudgetService {
         current.setMonth(current.getMonth() + 1);
       }
 
-      console.log('Months in range:', monthsInRange);
-
       // Fetch existing monthly budgets
       // Note: We need to fetch all budgets that fall within the year/month range
       const startYear = startDate.getFullYear();
       const startMonthNum = startDate.getMonth() + 1;
       const endYear = endDate.getFullYear();
       const endMonthNum = endDate.getMonth() + 1;
-
-      console.log('Querying range:', { startYear, startMonthNum, endYear, endMonthNum });
 
       // Build query based on whether it spans multiple years
       let query = supabase
@@ -279,8 +273,6 @@ export class MonthlyBudgetService {
         });
       }
 
-      console.log('Existing budgets found:', existingBudgets.length);
-      
       const existingMonths = new Set(existingBudgets.map(b => `${b.year}-${b.month}`));
 
       // Create missing monthly budgets
@@ -289,19 +281,13 @@ export class MonthlyBudgetService {
         return !existingMonths.has(monthStr);
       });
 
-      console.log('Missing months:', missingMonths);
-
       // Create missing budgets if any
       if (missingMonths.length > 0) {
-        console.log('Creating missing budgets...');
-        
         const createdBudgets = await Promise.all(
           missingMonths.map(m => 
             this.getOrCreateMonthlyBudget(m.year, m.month)
           )
         );
-        
-        console.log('Created budgets:', createdBudgets.length);
 
         // Re-fetch all budgets after creation
         let refreshQuery = supabase
@@ -337,11 +323,9 @@ export class MonthlyBudgetService {
           });
         }
         
-        console.log('Refreshed budgets:', finalBudgets.length);
         return finalBudgets;
       }
 
-      console.log('Returning existing budgets:', existingBudgets.length);
       return existingBudgets;
     } catch (error) {
       console.error('Error fetching monthly budgets for date range:', error);

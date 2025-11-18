@@ -61,9 +61,6 @@ export const getTransactions = async (): Promise<Transaction[]> => {
 export const addTransaction = async (transaction: Omit<Transaction, 'id'>): Promise<Transaction> => {
   const userId = await getCurrentUserId();
   const householdId = await getHouseholdId();
-  
-  console.log('SupabaseService: Adding transaction for household:', householdId);
-  console.log('Transaction data:', transaction);
 
   const { data, error } = await supabase
     .from('transactions')
@@ -81,14 +78,8 @@ export const addTransaction = async (transaction: Omit<Transaction, 'id'>): Prom
     .single();
 
   if (error) {
-    console.error('Supabase error details:', error);
-    console.error('Error code:', error.code);
-    console.error('Error message:', error.message);
-    console.error('Error hint:', error.hint);
     throw new Error(`Failed to add transaction: ${error.message}`);
   }
-
-  console.log('Transaction added successfully to Supabase:', data);
 
   return {
     id: data.id,

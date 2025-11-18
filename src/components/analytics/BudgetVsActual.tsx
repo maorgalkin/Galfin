@@ -42,17 +42,6 @@ export const BudgetVsActual: React.FC = () => {
     return new Date(sorted[0].date);
   }, [transactions]);
 
-  console.log('BudgetVsActual render:', { 
-    loadingPersonal, 
-    loadingMonthly, 
-    personalBudget: !!personalBudget,
-    monthlyBudgetsCount: monthlyBudgets?.length,
-    dateRange,
-    startDate,
-    endDate,
-    oldestTransactionDate
-  });
-
   const filteredTransactions = useMemo(() => {
     return filterTransactionsByDateRange(transactions, dateRange);
   }, [transactions, dateRange]);

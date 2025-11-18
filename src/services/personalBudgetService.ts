@@ -324,7 +324,6 @@ export class PersonalBudgetService {
       // Check if personal budget already exists
       const existing = await this.getActiveBudget();
       if (existing) {
-        console.log('Personal budget already exists, skipping migration');
         return existing;
       }
 
