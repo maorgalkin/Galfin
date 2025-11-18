@@ -93,6 +93,17 @@ const Dashboard: React.FC = () => {
       budgetConfig
     );
     
+    console.log('=== BUDGET COMPARISONS ===');
+    console.log('All category comparisons:', analysis.categoryComparisons.map(c => ({
+      category: c.category,
+      budgeted: c.budgeted,
+      actual: c.actual,
+      status: c.status,
+      percentage: ((c.actual / c.budgeted) * 100).toFixed(1) + '%',
+      warningThreshold: budgetConfig.categories[c.category]?.warningThreshold
+    })));
+    console.log('==========================');
+    
     console.log('=== ALERT CALCULATION DEBUG ===');
     console.log('Total alerts generated:', analysis.alerts.length);
     console.log('All alerts:', analysis.alerts.map(a => ({

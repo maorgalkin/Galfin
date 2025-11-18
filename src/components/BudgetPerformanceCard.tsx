@@ -47,6 +47,7 @@ export const BudgetPerformanceCard: React.FC<BudgetPerformanceCardProps> = ({
   const cardRef = useRef<HTMLDivElement>(null);
   const alertsMarkedAsViewed = useRef(false); // Track if we've already marked alerts as viewed
   const hasScrolledPastCard = useRef(false); // Track if user has scrolled past the card at least once
+  const initialIntersectionHandled = useRef(false); // Track if we've handled the initial load
 
   // Intersection observer to mark alerts as viewed when user interacts with card
   useEffect(() => {
@@ -54,6 +55,13 @@ export const BudgetPerformanceCard: React.FC<BudgetPerformanceCardProps> = ({
 
     const observer = new IntersectionObserver(
       ([entry]) => {
+        // Ignore the very first intersection event (happens on mount when card is visible)
+        if (!initialIntersectionHandled.current) {
+          initialIntersectionHandled.current = true;
+          console.log('Initial intersection - card is visible on mount, ignoring');
+          return;
+        }
+        
         console.log('Intersection observer fired:', { 
           isIntersecting: entry.isIntersecting, 
           hasScrolledPast: hasScrolledPastCard.current,
