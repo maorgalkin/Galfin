@@ -46,23 +46,32 @@ export const BudgetPerformanceCard: React.FC<BudgetPerformanceCardProps> = ({
   const categoryBreakdownRef = useRef<HTMLDivElement>(null);
   const cardRef = useRef<HTMLDivElement>(null);
   const alertsMarkedAsViewed = useRef(false); // Track if we've already marked alerts as viewed
+  const hasScrolledPastCard = useRef(false); // Track if user has scrolled past the card at least once
 
-  // Intersection observer to mark alerts as viewed when card becomes visible
+  // Intersection observer to mark alerts as viewed when user interacts with card
   useEffect(() => {
     if (!onAlertsViewed || !cardRef.current) return;
 
     const observer = new IntersectionObserver(
       ([entry]) => {
-        // When card is visible and we haven't marked alerts yet, mark them
-        if (entry.isIntersecting && !alertsMarkedAsViewed.current) {
-          console.log('Budget Performance card became visible, marking alerts as viewed');
+        // If card is NOT visible, user has scrolled past it
+        if (!entry.isIntersecting) {
+          hasScrolledPastCard.current = true;
+        }
+        
+        // Mark alerts as viewed only if:
+        // 1. Card is visible AND
+        // 2. User has scrolled past it before (meaning they're coming back to it) AND
+        // 3. We haven't already marked alerts as viewed
+        if (entry.isIntersecting && hasScrolledPastCard.current && !alertsMarkedAsViewed.current) {
+          console.log('User scrolled back to Budget Performance card, marking alerts as viewed');
           alertsMarkedAsViewed.current = true;
           onAlertsViewed();
         }
       },
       {
-        threshold: 0.1, // Only 10% needs to be visible
-        rootMargin: '0px' // No margin
+        threshold: 0.1,
+        rootMargin: '0px'
       }
     );
 
@@ -70,6 +79,15 @@ export const BudgetPerformanceCard: React.FC<BudgetPerformanceCardProps> = ({
 
     return () => observer.disconnect();
   }, [onAlertsViewed]);
+
+  // Mark alerts as viewed when user expands the details section
+  useEffect(() => {
+    if (showDetails && onAlertsViewed && !alertsMarkedAsViewed.current) {
+      console.log('User expanded budget details, marking alerts as viewed');
+      alertsMarkedAsViewed.current = true;
+      onAlertsViewed();
+    }
+  }, [showDetails, onAlertsViewed]);
 
   // Intersection observer to detect when summary scrolls out of view (breakdown is visible)
   useEffect(() => {
