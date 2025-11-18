@@ -201,6 +201,23 @@ export const BudgetPerformanceCard: React.FC<BudgetPerformanceCardProps> = ({
 
   const categoriesOverBudget = budgetAnalysis.categoryComparisons.filter(c => c.status === 'over').length;
 
+  // Calculate average warning threshold across all active categories
+  const averageWarningThreshold = useMemo(() => {
+    if (!budgetConfig.categories) return 80;
+    
+    const activeCategories = Object.entries(budgetConfig.categories)
+      .filter(([, config]) => config.isActive);
+    
+    if (activeCategories.length === 0) return 80;
+    
+    const totalThreshold = activeCategories.reduce(
+      (sum, [, config]) => sum + (config.warningThreshold || 80),
+      0
+    );
+    
+    return totalThreshold / activeCategories.length;
+  }, [budgetConfig.categories]);
+
   if (loadingActive || loadingMonthly) {
     return (
       <div className="bg-white dark:bg-gray-800 rounded-lg shadow-md p-6">
@@ -307,13 +324,13 @@ export const BudgetPerformanceCard: React.FC<BudgetPerformanceCardProps> = ({
 
           {/* Budget Status */}
           <div className={`rounded-lg p-4 ${
-            budgetUtilization <= 80 ? 'bg-green-50 dark:bg-green-900/20' : 
+            budgetUtilization <= averageWarningThreshold ? 'bg-green-50 dark:bg-green-900/20' : 
             budgetUtilization <= 100 ? 'bg-yellow-50 dark:bg-yellow-900/20' : 
             'bg-red-50 dark:bg-red-900/20'
           }`}>
             <p className="text-xs font-medium text-gray-600 dark:text-gray-400 mb-1">Status</p>
             <p className={`text-sm font-bold ${
-              budgetUtilization <= 80 ? 'text-green-900 dark:text-green-400' : 
+              budgetUtilization <= averageWarningThreshold ? 'text-green-900 dark:text-green-400' : 
               budgetUtilization <= 100 ? 'text-yellow-900 dark:text-yellow-400' : 
               'text-red-900 dark:text-red-400'
             }`}>
@@ -323,7 +340,7 @@ export const BudgetPerformanceCard: React.FC<BudgetPerformanceCardProps> = ({
               }
             </p>
             <p className={`text-xs font-medium mt-0.5 ${
-              budgetUtilization <= 80 ? 'text-green-700 dark:text-green-500' : 
+              budgetUtilization <= averageWarningThreshold ? 'text-green-700 dark:text-green-500' : 
               budgetUtilization <= 100 ? 'text-yellow-700 dark:text-yellow-500' : 
               'text-red-700 dark:text-red-500'
             }`}>
@@ -349,7 +366,7 @@ export const BudgetPerformanceCard: React.FC<BudgetPerformanceCardProps> = ({
           <div className="w-full bg-gray-200 dark:bg-gray-700 rounded-full h-2">
             <div 
               className={`h-2 rounded-full transition-all duration-300 ${
-                budgetUtilization <= 80 ? 'bg-green-500' : 
+                budgetUtilization <= averageWarningThreshold ? 'bg-green-500' : 
                 budgetUtilization <= 100 ? 'bg-yellow-500' : 'bg-red-500'
               }`}
               style={{ width: `${Math.min(budgetUtilization, 100)}%` }}
@@ -460,7 +477,7 @@ export const BudgetPerformanceCard: React.FC<BudgetPerformanceCardProps> = ({
                       <div className="w-full bg-gray-200 dark:bg-gray-700 rounded-full h-1.5 mb-1">
                         <div 
                           className={`h-1.5 rounded-full transition-all duration-300 ${
-                            utilization <= 80 ? 'bg-green-500' : 
+                            utilization <= (budgetConfig.categories[comparison.category]?.warningThreshold || 80) ? 'bg-green-500' : 
                             utilization <= 100 ? 'bg-yellow-500' : 'bg-red-500'
                           }`}
                           style={{ width: `${Math.min(utilization, 100)}%` }}
