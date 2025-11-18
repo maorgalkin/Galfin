@@ -93,35 +93,6 @@ const Dashboard: React.FC = () => {
       budgetConfig
     );
     
-    console.log('=== BUDGET COMPARISONS ===');
-    console.log('All category comparisons:', analysis.categoryComparisons.map(c => ({
-      category: c.category,
-      budgeted: c.budgeted,
-      actual: c.actual,
-      status: c.status,
-      percentage: ((c.actual / c.budgeted) * 100).toFixed(1) + '%',
-      warningThreshold: budgetConfig.categories[c.category]?.warningThreshold
-    })));
-    console.log('==========================');
-    
-    console.log('=== ALERT CALCULATION DEBUG ===');
-    console.log('Total alerts generated:', analysis.alerts.length);
-    console.log('All alerts:', analysis.alerts.map(a => ({
-      category: a.category,
-      type: a.type,
-      id: a.id,
-      severity: a.severity,
-      percentage: a.percentage
-    })));
-    console.log('Alerts grouped by category:', analysis.alerts.reduce((acc, a) => {
-      if (!acc[a.category]) acc[a.category] = [];
-      acc[a.category].push({ type: a.type, id: a.id, percentage: a.percentage?.toFixed(1) + '%' });
-      return acc;
-    }, {} as Record<string, Array<{ type: string; id: string; percentage: string }>>));
-    console.log('Currently viewed alert IDs:', Array.from(viewedAlertIds));
-    console.log('Viewed count:', viewedAlertIds.size);
-    console.log('================================');
-    
     // Get unique categories with alerts that haven't been viewed
     const unviewedCategories = new Set<string>();
     const unviewedAlertsByCategory: Record<string, string[]> = {};
@@ -135,12 +106,6 @@ const Dashboard: React.FC = () => {
         unviewedAlertsByCategory[alert.category].push(alert.type);
       }
     });
-    
-    console.log('=== UNVIEWED BREAKDOWN ===');
-    console.log('Unviewed category count:', unviewedCategories.size);
-    console.log('Unviewed categories:', Array.from(unviewedCategories));
-    console.log('Alerts per unviewed category:', unviewedAlertsByCategory);
-    console.log('==========================');
     
     return unviewedCategories.size;
   }, [personalBudget, transactions, viewedAlertIds]);
@@ -334,7 +299,6 @@ const Dashboard: React.FC = () => {
   const handleClearViewedAlerts = () => {
     setViewedAlertIds(new Set());
     localStorage.removeItem('galfin_viewed_alerts');
-    console.log('Cleared all viewed alerts');
   };
 
   // Dynamic background based on active tab with subtle textures

@@ -58,20 +58,11 @@ export const BudgetPerformanceCard: React.FC<BudgetPerformanceCardProps> = ({
         // Ignore the very first intersection event (happens on mount when card is visible)
         if (!initialIntersectionHandled.current) {
           initialIntersectionHandled.current = true;
-          console.log('Initial intersection - card is visible on mount, ignoring');
           return;
         }
         
-        console.log('Intersection observer fired:', { 
-          isIntersecting: entry.isIntersecting, 
-          hasScrolledPast: hasScrolledPastCard.current,
-          alertsMarked: alertsMarkedAsViewed.current,
-          intersectionRatio: entry.intersectionRatio
-        });
-        
         // If card is NOT visible, user has scrolled past it
         if (!entry.isIntersecting) {
-          console.log('User scrolled past Budget Performance card');
           hasScrolledPastCard.current = true;
         }
         
@@ -80,7 +71,6 @@ export const BudgetPerformanceCard: React.FC<BudgetPerformanceCardProps> = ({
         // 2. User has scrolled past it before (meaning they're coming back to it) AND
         // 3. We haven't already marked alerts as viewed
         if (entry.isIntersecting && hasScrolledPastCard.current && !alertsMarkedAsViewed.current) {
-          console.log('User scrolled back to Budget Performance card, marking alerts as viewed');
           alertsMarkedAsViewed.current = true;
           onAlertsViewed();
         }
@@ -99,7 +89,6 @@ export const BudgetPerformanceCard: React.FC<BudgetPerformanceCardProps> = ({
   // Mark alerts as viewed when user expands the details section
   useEffect(() => {
     if (showDetails && onAlertsViewed && !alertsMarkedAsViewed.current) {
-      console.log('User expanded budget details, marking alerts as viewed');
       alertsMarkedAsViewed.current = true;
       onAlertsViewed();
     }
@@ -453,7 +442,6 @@ export const BudgetPerformanceCard: React.FC<BudgetPerformanceCardProps> = ({
                       aria-label={`View details for ${comparison.category}`}
                       className="block w-full border border-gray-200 dark:border-gray-700 rounded-lg p-3 cursor-pointer active:bg-gray-100 dark:active:bg-gray-700/50 transition-colors"
                       onClick={() => {
-                        console.log('Category clicked:', comparison.category);
                         onCategoryClick?.(comparison.category);
                       }}
                       onKeyDown={(e) => {
