@@ -54,8 +54,16 @@ export const BudgetPerformanceCard: React.FC<BudgetPerformanceCardProps> = ({
 
     const observer = new IntersectionObserver(
       ([entry]) => {
+        console.log('Intersection observer fired:', { 
+          isIntersecting: entry.isIntersecting, 
+          hasScrolledPast: hasScrolledPastCard.current,
+          alertsMarked: alertsMarkedAsViewed.current,
+          intersectionRatio: entry.intersectionRatio
+        });
+        
         // If card is NOT visible, user has scrolled past it
         if (!entry.isIntersecting) {
+          console.log('User scrolled past Budget Performance card');
           hasScrolledPastCard.current = true;
         }
         
@@ -70,7 +78,7 @@ export const BudgetPerformanceCard: React.FC<BudgetPerformanceCardProps> = ({
         }
       },
       {
-        threshold: 0.1,
+        threshold: [0, 0.1, 0.5, 1.0], // Multiple thresholds for better detection
         rootMargin: '0px'
       }
     );

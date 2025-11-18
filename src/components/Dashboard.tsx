@@ -93,16 +93,23 @@ const Dashboard: React.FC = () => {
       budgetConfig
     );
     
-    console.log('Alert calculation:', {
-      totalAlerts: analysis.alerts.length,
-      alertsByCategory: analysis.alerts.reduce((acc, a) => {
-        if (!acc[a.category]) acc[a.category] = [];
-        acc[a.category].push({ type: a.type, id: a.id });
-        return acc;
-      }, {} as Record<string, Array<{ type: string; id: string }>>),
-      viewedAlertIds: Array.from(viewedAlertIds),
-      viewedCount: viewedAlertIds.size
-    });
+    console.log('=== ALERT CALCULATION DEBUG ===');
+    console.log('Total alerts generated:', analysis.alerts.length);
+    console.log('All alerts:', analysis.alerts.map(a => ({
+      category: a.category,
+      type: a.type,
+      id: a.id,
+      severity: a.severity,
+      percentage: a.percentage
+    })));
+    console.log('Alerts grouped by category:', analysis.alerts.reduce((acc, a) => {
+      if (!acc[a.category]) acc[a.category] = [];
+      acc[a.category].push({ type: a.type, id: a.id, percentage: a.percentage?.toFixed(1) + '%' });
+      return acc;
+    }, {} as Record<string, Array<{ type: string; id: string; percentage: string }>>));
+    console.log('Currently viewed alert IDs:', Array.from(viewedAlertIds));
+    console.log('Viewed count:', viewedAlertIds.size);
+    console.log('================================');
     
     // Get unique categories with alerts that haven't been viewed
     const unviewedCategories = new Set<string>();
@@ -118,11 +125,11 @@ const Dashboard: React.FC = () => {
       }
     });
     
-    console.log('Unviewed categories breakdown:', {
-      count: unviewedCategories.size,
-      categories: Array.from(unviewedCategories),
-      byCategory: unviewedAlertsByCategory
-    });
+    console.log('=== UNVIEWED BREAKDOWN ===');
+    console.log('Unviewed category count:', unviewedCategories.size);
+    console.log('Unviewed categories:', Array.from(unviewedCategories));
+    console.log('Alerts per unviewed category:', unviewedAlertsByCategory);
+    console.log('==========================');
     
     return unviewedCategories.size;
   }, [personalBudget, transactions, viewedAlertIds]);
