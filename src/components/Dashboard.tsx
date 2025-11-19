@@ -4,6 +4,7 @@ import { useFinance } from '../context/FinanceContext';
 import { useAuth } from '../contexts/AuthContext';
 import { useActiveBudget } from '../hooks/useBudgets';
 import { budgetService } from '../services/budgetService';
+import { userAlertViewService } from '../services/userAlertViewService';
 import { motion, AnimatePresence } from 'framer-motion';
 import { BudgetPerformanceCard } from './BudgetPerformanceCard';
 import { TransactionDetailsModal } from './TransactionDetailsModal';
@@ -54,15 +55,7 @@ const Dashboard: React.FC = () => {
   const [isCategoryModalOpen, setIsCategoryModalOpen] = useState(false);
   const [isCustomDateRangeModalOpen, setIsCustomDateRangeModalOpen] = useState(false);
   const [showBreakdownInHeader, setShowBreakdownInHeader] = useState(false);
-  const [viewedAlertIds, setViewedAlertIds] = useState<Set<string>>(() => {
-    // Load viewed alert IDs from localStorage on mount
-    try {
-      const stored = localStorage.getItem('galfin_viewed_alerts');
-      return stored ? new Set(JSON.parse(stored)) : new Set();
-    } catch {
-      return new Set();
-    }
-  });
+  const [viewedAlertIds, setViewedAlertIds] = useState<Set<string>>(new Set());
   const [viewingTransactionDetails, setViewingTransactionDetails] = useState<Transaction | null>(null);
   const expenseChartRef = React.useRef<HTMLDivElement>(null);
 
@@ -116,8 +109,8 @@ const Dashboard: React.FC = () => {
   }, []);
 
   // Mark all current alerts as viewed
-  const handleAlertsViewed = useCallback(() => {
-    if (!personalBudget) return;
+  const handleAlertsViewed = useCallback(async () => {
+    if (!personalBudget || !user?.id || !household?.id) return;
     
     const budgetConfig: BudgetConfiguration = {
       version: "2.0.0",
@@ -137,13 +130,19 @@ const Dashboard: React.FC = () => {
       budgetConfig
     );
     
-    // Mark all current alert IDs as viewed
+    // Get alert IDs to mark as viewed
+    const alertIds = analysis.alerts.map(alert => alert.id);
+    
+    // Save to database
+    await userAlertViewService.markAlertsAsViewed(user.id, alertIds, household.id);
+    
+    // Update local state
     setViewedAlertIds(prev => {
       const newSet = new Set(prev);
-      analysis.alerts.forEach(alert => newSet.add(alert.id));
+      alertIds.forEach(id => newSet.add(id));
       return newSet;
     });
-  }, [personalBudget, transactions]);
+  }, [personalBudget, transactions, user?.id, household?.id]);
 
   // Handle category click from Budget Performance Card
   const handleCategoryClick = useCallback((category: string) => {
@@ -178,32 +177,28 @@ const Dashboard: React.FC = () => {
     return () => mediaQuery.removeEventListener('change', handleChange);
   }, []);
 
-  // Persist viewed alert IDs to localStorage whenever they change
+  // Load viewed alert IDs from database and household data
   useEffect(() => {
-    try {
-      localStorage.setItem('galfin_viewed_alerts', JSON.stringify(Array.from(viewedAlertIds)));
-    } catch (error) {
-      console.error('Failed to save viewed alerts to localStorage:', error);
-    }
-  }, [viewedAlertIds]);
-
-  // Load household data
-  useEffect(() => {
-    const loadHouseholdData = async () => {
+    const loadData = async () => {
+      if (!user?.id) return;
+      
       try {
-        const [householdData, membersData] = await Promise.all([
+        const [viewedIds, householdData, membersData] = await Promise.all([
+          userAlertViewService.getViewedAlertIds(user.id),
           HouseholdService.getUserHousehold(),
           HouseholdService.getHouseholdMembers(),
         ]);
+        
+        setViewedAlertIds(viewedIds);
         setHousehold(householdData);
         setHouseholdMembers(membersData);
       } catch (error) {
-        console.error('Error loading household data:', error);
+        console.error('Error loading data:', error);
       }
     };
     
-    loadHouseholdData();
-  }, []);
+    loadData();
+  }, [user?.id]);
 
   // Listen to URL changes and update activeTab accordingly
   useEffect(() => {
@@ -296,9 +291,11 @@ const Dashboard: React.FC = () => {
     }
   };
 
-  const handleClearViewedAlerts = () => {
+  const handleClearViewedAlerts = async () => {
+    if (!user?.id) return;
+    
+    await userAlertViewService.clearAllViewedAlerts(user.id);
     setViewedAlertIds(new Set());
-    localStorage.removeItem('galfin_viewed_alerts');
   };
 
   // Dynamic background based on active tab with subtle textures
