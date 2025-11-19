@@ -163,7 +163,7 @@ export class BudgetService {
       // Budget exceeded alert
       if (comparison.status === 'over') {
         alerts.push({
-          id: `exceeded-${comparison.category}-${month}-${year}`,
+          id: `exceeded-${comparison.category}-${month}-${year}-${Math.floor(comparison.actual)}`,
           type: 'budgetExceeded',
           severity: 'high',
           category: comparison.category,
@@ -178,7 +178,7 @@ export class BudgetService {
       else if (spentPercentage >= warningThreshold && 
           spentPercentage < 100) {
         alerts.push({
-          id: `approaching-${comparison.category}-${month}-${year}`,
+          id: `approaching-${comparison.category}-${month}-${year}-${Math.floor(comparison.actual)}`,
           type: 'approachingLimit',
           severity: 'medium',
           category: comparison.category,
