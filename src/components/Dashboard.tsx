@@ -189,6 +189,7 @@ const Dashboard: React.FC = () => {
           HouseholdService.getHouseholdMembers(),
         ]);
         
+        console.log('Loaded viewed alert IDs from database:', viewedIds.size, 'alerts');
         setViewedAlertIds(viewedIds);
         setHousehold(householdData);
         setHouseholdMembers(membersData);

@@ -20,10 +20,13 @@ class UserAlertViewService {
 
     if (error) {
       console.error('Error fetching viewed alerts:', error);
+      console.error('Error details:', error.message, error.code);
       return new Set();
     }
 
-    return new Set(data?.map((row: { alert_id: string }) => row.alert_id) || []);
+    const alertIds = data?.map((row: { alert_id: string }) => row.alert_id) || [];
+    console.log('Fetched viewed alert IDs from DB:', alertIds);
+    return new Set(alertIds);
   }
 
   /**
@@ -64,7 +67,16 @@ class UserAlertViewService {
   ): Promise<boolean> {
     if (alertIds.length === 0) return true;
 
-    const records = alertIds.map(alertId => ({
+    // First, get already-viewed alert IDs to avoid duplicates
+    const alreadyViewed = await this.getViewedAlertIds(userId);
+    const newAlertIds = alertIds.filter(id => !alreadyViewed.has(id));
+    
+    if (newAlertIds.length === 0) {
+      console.log('All alerts already viewed, skipping insert');
+      return true; // Nothing to insert
+    }
+
+    const records = newAlertIds.map(alertId => ({
       user_id: userId,
       alert_id: alertId,
       household_id: householdId
@@ -75,7 +87,7 @@ class UserAlertViewService {
       .insert(records);
 
     if (error) {
-      // Ignore duplicate key errors
+      // Ignore duplicate key errors (shouldn't happen now, but keep as safety)
       if (error.code === '23505') {
         return true;
       }
