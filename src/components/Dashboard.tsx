@@ -36,7 +36,7 @@ const Dashboard: React.FC = () => {
   const [direction, setDirection] = useState(0); // Track animation direction: -1 (left), 1 (right)
   const [transactionTypeFilter, setTransactionTypeFilter] = useState<'all' | 'income' | 'expense'>('all');
   const [transactionMemberFilter, setTransactionMemberFilter] = useState<string>('all');
-  const [transactionMonthFilter, setTransactionMonthFilter] = useState<string>('current');
+  const [transactionMonthFilter, setTransactionMonthFilter] = useState<string>('carousel-0'); // Start with current month
   const [isDarkMode, setIsDarkMode] = useState(() => {
     // Check OS/browser dark mode preference
     if (typeof window !== 'undefined') {
@@ -550,7 +550,7 @@ const Dashboard: React.FC = () => {
                             setActiveMonthTab(idx);
                             setTransactionTypeFilter('all');
                             setTransactionMemberFilter('all');
-                            setTransactionMonthFilter('current');
+                            setTransactionMonthFilter(`carousel-${idx}`); // Sync dropdown with carousel
                           }}
                           className={`${positionClass} sm:relative sm:z-auto w-28 sm:w-40 h-16 sm:h-28 rounded-lg border font-medium flex flex-col items-center justify-center flex-shrink-0 ${
                             isActive
@@ -608,9 +608,17 @@ const Dashboard: React.FC = () => {
               memberFilter={transactionMemberFilter}
               monthFilter={transactionMonthFilter}
               familyMembers={familyMembers}
+              months={months}
+              activeMonthIndex={activeMonthTab}
               onTypeChange={setTransactionTypeFilter}
               onMemberChange={setTransactionMemberFilter}
-              onMonthChange={setTransactionMonthFilter}
+              onMonthChange={(month, monthIndex) => {
+                setTransactionMonthFilter(month);
+                // If a carousel month was selected, update the active month tab
+                if (monthIndex !== undefined) {
+                  setActiveMonthTab(monthIndex);
+                }
+              }}
               onMoreClick={() => {
                 // Coming soon placeholder
               }}
@@ -622,10 +630,12 @@ const Dashboard: React.FC = () => {
                 let filtered: Transaction[] = [];
                 
                 // Apply month filter
-                if (transactionMonthFilter === 'current') {
-                  filtered = getTransactionsForMonth(months[activeMonthTab].start, months[activeMonthTab].end);
+                if (transactionMonthFilter.startsWith('carousel-')) {
+                  // Extract carousel index
+                  const index = parseInt(transactionMonthFilter.split('-')[1]);
+                  filtered = getTransactionsForMonth(months[index].start, months[index].end);
                 } else {
-                  // Parse YYYY-MM format
+                  // Parse YYYY-MM format for older months
                   const [year, month] = transactionMonthFilter.split('-').map(Number);
                   const start = new Date(year, month - 1, 1);
                   const end = new Date(year, month, 0, 23, 59, 59);

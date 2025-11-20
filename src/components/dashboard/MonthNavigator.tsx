@@ -177,14 +177,18 @@ export const MonthNavigator: React.FC<MonthNavigatorProps> = ({
               {/* Dummy placeholder on the right (when at oldest month) */}
               {activeMonthIndex === months.length - 1 && (
                 <motion.div
-                  key="past-dummy"
+                  key="older-dummy"
                   initial={{ opacity: 0, x: direction * 50 }}
                   animate={{ opacity: 0.4, x: 0 }}
                   exit={{ opacity: 0, x: direction * -50 }}
                   transition={{ duration: 0.3, ease: "easeInOut" }}
-                  className="absolute -right-3 sm:relative w-28 sm:w-40 h-16 sm:h-28 rounded-lg border border-gray-200 bg-gray-50 scale-75 sm:scale-[0.7] flex-shrink-0 flex items-center justify-center z-0 sm:z-auto"
+                  className="absolute -right-3 sm:relative w-28 sm:w-40 h-16 sm:h-28 rounded-lg border border-gray-200 bg-gray-50 dark:bg-gray-800 dark:border-gray-600 scale-75 sm:scale-[0.7] flex-shrink-0 flex items-center justify-center z-0 sm:z-auto cursor-pointer hover:opacity-60 transition-opacity"
+                  onClick={() => {
+                    // Future: Open "More" modal for historical data
+                    alert('Coming soon: Access older transaction history');
+                  }}
                 >
-                  <span className="text-xs sm:text-base font-medium text-gray-400">Past</span>
+                  <span className="text-xs sm:text-base font-medium text-gray-400 dark:text-gray-500">Older</span>
                 </motion.div>
               )}
             </AnimatePresence>

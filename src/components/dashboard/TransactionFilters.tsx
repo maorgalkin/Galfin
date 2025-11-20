@@ -2,14 +2,24 @@ import React, { useState, useRef, useEffect } from 'react';
 import { ChevronDown } from 'lucide-react';
 import type { FamilyMember } from '../../types';
 
+interface MonthData {
+  label: string;
+  monthName: string;
+  year: string;
+  start: Date;
+  end: Date;
+}
+
 interface TransactionFiltersProps {
   typeFilter: 'all' | 'income' | 'expense';
   memberFilter: string; // 'all' or member ID
-  monthFilter: string; // 'current' or YYYY-MM format
+  monthFilter: string; // 'current' or YYYY-MM format or month index as string
   familyMembers: FamilyMember[];
+  months: MonthData[]; // Available months from carousel
+  activeMonthIndex: number; // Currently selected month in carousel
   onTypeChange: (type: 'all' | 'income' | 'expense') => void;
   onMemberChange: (memberId: string) => void;
-  onMonthChange: (month: string) => void;
+  onMonthChange: (month: string, monthIndex?: number) => void;
   onMoreClick: () => void;
 }
 
@@ -18,6 +28,8 @@ export const TransactionFilters: React.FC<TransactionFiltersProps> = ({
   memberFilter,
   monthFilter,
   familyMembers,
+  months,
+  activeMonthIndex,
   onTypeChange,
   onMemberChange,
   onMonthChange,
@@ -26,19 +38,33 @@ export const TransactionFilters: React.FC<TransactionFiltersProps> = ({
   const [openDropdown, setOpenDropdown] = useState<string | null>(null);
   const dropdownRefs = useRef<{ [key: string]: HTMLDivElement | null }>({});
 
-  // Generate last 12 months for dropdown
+  // Build month options from carousel months + older months
   const generateMonthOptions = () => {
-    const months = [{ value: 'current', label: 'Current Month' }];
-    const now = new Date();
+    const options: { value: string; label: string; index?: number }[] = [];
     
-    for (let i = 1; i <= 12; i++) {
-      const date = new Date(now.getFullYear(), now.getMonth() - i, 1);
-      const value = `${date.getFullYear()}-${String(date.getMonth() + 1).padStart(2, '0')}`;
-      const label = date.toLocaleDateString('en-US', { month: 'long', year: 'numeric' });
-      months.push({ value, label });
+    // Add carousel months
+    months.forEach((month, index) => {
+      options.push({
+        value: `carousel-${index}`,
+        label: `${month.monthName} ${month.year}`,
+        index,
+      });
+    });
+    
+    // Add "Older" option for historical months
+    const oldestMonth = months[months.length - 1];
+    if (oldestMonth) {
+      const oldestDate = new Date(oldestMonth.start);
+      
+      for (let i = 1; i <= 8; i++) {
+        const date = new Date(oldestDate.getFullYear(), oldestDate.getMonth() - i, 1);
+        const value = `${date.getFullYear()}-${String(date.getMonth() + 1).padStart(2, '0')}`;
+        const label = date.toLocaleDateString('en-US', { month: 'long', year: 'numeric' });
+        options.push({ value, label });
+      }
     }
     
-    return months;
+    return options;
   };
 
   const monthOptions = generateMonthOptions();
@@ -75,8 +101,16 @@ export const TransactionFilters: React.FC<TransactionFiltersProps> = ({
   };
 
   const getMonthLabel = () => {
+    // Check if it's a carousel month
+    if (monthFilter.startsWith('carousel-')) {
+      const index = parseInt(monthFilter.split('-')[1]);
+      const month = months[index];
+      return month ? `${month.monthName} ${month.year}` : 'Select Month';
+    }
+    
+    // Check other options
     const option = monthOptions.find(m => m.value === monthFilter);
-    return option?.label || 'Current Month';
+    return option?.label || 'Select Month';
   };
 
   const getButtonClasses = (isActive: boolean) => {
@@ -95,7 +129,7 @@ export const TransactionFilters: React.FC<TransactionFiltersProps> = ({
     <div className="flex justify-center gap-2 mb-6 flex-wrap">
       {/* Type Filter */}
       <div 
-        ref={el => dropdownRefs.current['type'] = el}
+        ref={el => { dropdownRefs.current['type'] = el; }}
         className="relative"
         onMouseEnter={() => setOpenDropdown('type')}
         onMouseLeave={() => setOpenDropdown(null)}
@@ -145,7 +179,7 @@ export const TransactionFilters: React.FC<TransactionFiltersProps> = ({
 
       {/* Member Filter */}
       <div 
-        ref={el => dropdownRefs.current['member'] = el}
+        ref={el => { dropdownRefs.current['member'] = el; }}
         className="relative"
         onMouseEnter={() => setOpenDropdown('member')}
         onMouseLeave={() => setOpenDropdown(null)}
@@ -189,14 +223,14 @@ export const TransactionFilters: React.FC<TransactionFiltersProps> = ({
 
       {/* Month Filter */}
       <div 
-        ref={el => dropdownRefs.current['month'] = el}
+        ref={el => { dropdownRefs.current['month'] = el; }}
         className="relative"
         onMouseEnter={() => setOpenDropdown('month')}
         onMouseLeave={() => setOpenDropdown(null)}
       >
         <button
           onClick={() => toggleDropdown('month')}
-          className={getButtonClasses(monthFilter !== 'current')}
+          className={getButtonClasses(monthFilter !== `carousel-0`)}
         >
           <span className="flex items-center gap-1">
             {getMonthLabel()}
@@ -210,7 +244,12 @@ export const TransactionFilters: React.FC<TransactionFiltersProps> = ({
               <div
                 key={option.value}
                 onClick={() => {
-                  onMonthChange(option.value);
+                  // If it's a carousel month, pass the index too
+                  if (option.index !== undefined) {
+                    onMonthChange(option.value, option.index);
+                  } else {
+                    onMonthChange(option.value);
+                  }
                   setOpenDropdown(null);
                 }}
                 className={monthFilter === option.value ? activeOptionClasses : optionClasses}
@@ -224,7 +263,7 @@ export const TransactionFilters: React.FC<TransactionFiltersProps> = ({
 
       {/* More Button */}
       <div 
-        ref={el => dropdownRefs.current['more'] = el}
+        ref={el => { dropdownRefs.current['more'] = el; }}
         className="relative"
         onMouseEnter={() => setOpenDropdown('more')}
         onMouseLeave={() => setOpenDropdown(null)}
