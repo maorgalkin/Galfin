@@ -20,6 +20,7 @@ import { ExpenseChart } from './dashboard/ExpenseChart';
 import { DummyDataControls } from './dashboard/DummyDataControls';
 import { FamilyMembersCard } from './dashboard/FamilyMembersCard';
 import { TransactionsList } from './dashboard/TransactionsList';
+import { TransactionFilters } from './dashboard/TransactionFilters';
 import { CategoryTransactionsModal } from './dashboard/CategoryTransactionsModal';
 import CustomDateRangeModal from './CustomDateRangeModal';
 import * as HouseholdService from '../services/householdService';
@@ -34,6 +35,8 @@ const Dashboard: React.FC = () => {
   const [activeMonthTab, setActiveMonthTab] = useState(0);
   const [direction, setDirection] = useState(0); // Track animation direction: -1 (left), 1 (right)
   const [transactionTypeFilter, setTransactionTypeFilter] = useState<'all' | 'income' | 'expense'>('all');
+  const [transactionMemberFilter, setTransactionMemberFilter] = useState<string>('all');
+  const [transactionMonthFilter, setTransactionMonthFilter] = useState<string>('current');
   const [isDarkMode, setIsDarkMode] = useState(() => {
     // Check OS/browser dark mode preference
     if (typeof window !== 'undefined') {
@@ -546,6 +549,8 @@ const Dashboard: React.FC = () => {
                           onClick={() => {
                             setActiveMonthTab(idx);
                             setTransactionTypeFilter('all');
+                            setTransactionMemberFilter('all');
+                            setTransactionMonthFilter('current');
                           }}
                           className={`${positionClass} sm:relative sm:z-auto w-28 sm:w-40 h-16 sm:h-28 rounded-lg border font-medium flex flex-col items-center justify-center flex-shrink-0 ${
                             isActive
@@ -597,47 +602,49 @@ const Dashboard: React.FC = () => {
               </button>
             </div>
 
-            {/* Transaction Type Filter Buttons */}
-            <div className="flex justify-center gap-2 mb-6">
-              <button
-                onClick={() => setTransactionTypeFilter('all')}
-                className={`px-4 py-2 rounded-md border font-medium transition-all ${
-                  transactionTypeFilter === 'all'
-                    ? 'bg-blue-600 dark:bg-blue-700 text-white border-blue-600 dark:border-blue-500'
-                    : 'bg-white dark:bg-blue-900/20 text-blue-700 dark:text-blue-200 border-blue-300 dark:border-blue-600 hover:bg-blue-50 dark:hover:bg-blue-800/30'
-                }`}
-              >
-                All
-              </button>
-              <button
-                onClick={() => setTransactionTypeFilter('income')}
-                className={`px-4 py-2 rounded-md border font-medium transition-all ${
-                  transactionTypeFilter === 'income'
-                    ? 'bg-green-600 dark:bg-green-700 text-white border-green-600 dark:border-green-500'
-                    : 'bg-white dark:bg-blue-900/20 text-blue-700 dark:text-blue-200 border-blue-300 dark:border-blue-600 hover:bg-blue-50 dark:hover:bg-blue-800/30'
-                }`}
-              >
-                Income
-              </button>
-              <button
-                onClick={() => setTransactionTypeFilter('expense')}
-                className={`px-4 py-2 rounded-md border font-medium transition-all ${
-                  transactionTypeFilter === 'expense'
-                    ? 'bg-red-600 dark:bg-red-700 text-white border-red-600 dark:border-red-500'
-                    : 'bg-white dark:bg-blue-900/20 text-blue-700 dark:text-blue-200 border-blue-300 dark:border-blue-600 hover:bg-blue-50 dark:hover:bg-blue-800/30'
-                }`}
-              >
-                Expenses
-              </button>
-            </div>
+            {/* Transaction Filters */}
+            <TransactionFilters
+              typeFilter={transactionTypeFilter}
+              memberFilter={transactionMemberFilter}
+              monthFilter={transactionMonthFilter}
+              familyMembers={familyMembers}
+              onTypeChange={setTransactionTypeFilter}
+              onMemberChange={setTransactionMemberFilter}
+              onMonthChange={setTransactionMonthFilter}
+              onMoreClick={() => {
+                // Coming soon placeholder
+              }}
+            />
 
-            {/* Monthly Transaction Cards with Filter */}
+            {/* Monthly Transaction Cards with Filters */}
             <TransactionsList
               transactions={(() => {
-                let filtered = getTransactionsForMonth(months[activeMonthTab].start, months[activeMonthTab].end);
+                let filtered: Transaction[] = [];
+                
+                // Apply month filter
+                if (transactionMonthFilter === 'current') {
+                  filtered = getTransactionsForMonth(months[activeMonthTab].start, months[activeMonthTab].end);
+                } else {
+                  // Parse YYYY-MM format
+                  const [year, month] = transactionMonthFilter.split('-').map(Number);
+                  const start = new Date(year, month - 1, 1);
+                  const end = new Date(year, month, 0, 23, 59, 59);
+                  filtered = transactions.filter(t => {
+                    const tDate = new Date(t.date);
+                    return tDate >= start && tDate <= end;
+                  });
+                }
+                
+                // Apply type filter
                 if (transactionTypeFilter !== 'all') {
                   filtered = filtered.filter(t => t.type === transactionTypeFilter);
                 }
+                
+                // Apply member filter
+                if (transactionMemberFilter !== 'all') {
+                  filtered = filtered.filter(t => t.familyMember === transactionMemberFilter);
+                }
+                
                 return filtered;
               })()}
               familyMembers={familyMembers}
