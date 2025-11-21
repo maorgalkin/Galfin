@@ -1,10 +1,11 @@
 import React, { useState, useEffect, useMemo } from 'react';
 import { AccuracyTargetGrid } from './AccuracyTargetGrid';
-import { DateRangeFilter } from './DateRangeFilter';
 import { categoryAccuracyService } from '../../services/categoryAccuracyService';
 import type { CategoryAccuracy } from '../../types/analytics';
 import type { Transaction } from '../../types';
 import type { PersonalBudget } from '../../types/budget';
+
+type AccuracyDateRange = 'last-month' | 'last-3-months' | 'last-6-months' | 'last-12-months' | 'ytd' | 'all-time';
 
 interface CategoryAccuracyChartProps {
   transactions: Transaction[];
@@ -23,7 +24,7 @@ export const CategoryAccuracyChart: React.FC<CategoryAccuracyChartProps> = ({
   currency = '$',
   oldestTransactionDate,
 }) => {
-  const [selectedRange, setSelectedRange] = useState<string>('last-3-months');
+  const [selectedRange, setSelectedRange] = useState<AccuracyDateRange>('last-3-months');
   const [accuracyData, setAccuracyData] = useState<CategoryAccuracy[]>([]);
   const [isLoading, setIsLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
@@ -112,12 +113,29 @@ export const CategoryAccuracyChart: React.FC<CategoryAccuracyChartProps> = ({
           </p>
         </div>
 
-        {/* Date Range Filter */}
-        <DateRangeFilter
-          selectedRange={selectedRange}
-          onRangeChange={setSelectedRange}
-          oldestTransactionDate={oldestTransactionDate}
-        />
+        {/* Custom Date Range Selector */}
+        <div className="flex flex-wrap gap-2">
+          {[
+            { id: 'last-month' as AccuracyDateRange, label: 'Last Month' },
+            { id: 'last-3-months' as AccuracyDateRange, label: 'Last 3 Months' },
+            { id: 'last-6-months' as AccuracyDateRange, label: 'Last 6 Months' },
+            { id: 'last-12-months' as AccuracyDateRange, label: 'Last 12 Months' },
+            { id: 'ytd' as AccuracyDateRange, label: 'Year to Date' },
+            { id: 'all-time' as AccuracyDateRange, label: 'All Time' },
+          ].map(range => (
+            <button
+              key={range.id}
+              onClick={() => setSelectedRange(range.id)}
+              className={`px-3 py-1.5 text-sm font-medium rounded-md transition-colors ${
+                selectedRange === range.id
+                  ? 'bg-purple-600 text-white'
+                  : 'bg-white dark:bg-gray-800 text-gray-700 dark:text-gray-300 border border-gray-300 dark:border-gray-600 hover:bg-gray-50 dark:hover:bg-gray-700'
+              }`}
+            >
+              {range.label}
+            </button>
+          ))}
+        </div>
       </div>
 
       {/* Description Card */}
@@ -136,7 +154,7 @@ export const CategoryAccuracyChart: React.FC<CategoryAccuracyChartProps> = ({
                 • <strong>Outer Rings (Yellow/Orange/Red):</strong> Further from center means greater variance
               </p>
               <p>
-                • <strong>Bust (Red X):</strong> Significantly over budget (>80% over)
+                • <strong>Bust (Red X):</strong> Significantly over budget (&gt;80% over)
               </p>
               <p>
                 • <strong>Grayed Out:</strong> No spending - consider reallocating this budget
