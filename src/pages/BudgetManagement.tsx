@@ -7,6 +7,8 @@ import { BudgetComparisonCard } from '../components/BudgetComparisonCard';
 import { BudgetAdjustmentScheduler } from '../components/BudgetAdjustmentScheduler';
 import { BudgetVsActual } from '../components/analytics/BudgetVsActual';
 import { CategoryAccuracyChart } from '../components/analytics/CategoryAccuracyChart';
+import { DateRangeFilter } from '../components/analytics/DateRangeFilter';
+import type { DateRangeType } from '../utils/dateRangeFilters';
 import { Wallet, Settings, BarChart3 } from 'lucide-react';
 import { useFinance } from '../context/FinanceContext';
 import {
@@ -25,6 +27,7 @@ export const BudgetManagement: React.FC = () => {
   const [activeTab, setActiveTab] = useState<TabType>('budget');
   const [autoCreate, setAutoCreate] = useState(false);
   const [isEditingBudget, setIsEditingBudget] = useState(false);
+  const [analyticsDateRange, setAnalyticsDateRange] = useState<DateRangeType>('ytd');
   const currentDate = new Date();
   const currentYear = currentDate.getFullYear();
   const currentMonth = currentDate.getMonth() + 1;
@@ -36,15 +39,6 @@ export const BudgetManagement: React.FC = () => {
 
   // Check if user has an active budget
   const { data: activeBudget, isLoading: loadingActiveBudget } = useActiveBudget();
-  
-  // Calculate oldest transaction date for date range filter
-  const oldestTransactionDate = React.useMemo(() => {
-    if (transactions.length === 0) return undefined;
-    const sorted = [...transactions].sort((a, b) => 
-      new Date(a.date).getTime() - new Date(b.date).getTime()
-    );
-    return new Date(sorted[0].date);
-  }, [transactions]);
 
   // Check for 'create' parameter on mount
   useEffect(() => {
@@ -167,7 +161,15 @@ export const BudgetManagement: React.FC = () => {
           )}
 
           {activeTab === 'analytics' && (
-            <div className="space-y-12">
+            <div className="space-y-6">
+              {/* Shared Date Range Filter */}
+              <div className="flex justify-end">
+                <DateRangeFilter 
+                  selectedRange={analyticsDateRange}
+                  onRangeChange={setAnalyticsDateRange}
+                />
+              </div>
+
               {/* Budget vs Actual */}
               <div>
                 <BudgetVsActual />
@@ -179,7 +181,7 @@ export const BudgetManagement: React.FC = () => {
                   transactions={transactions}
                   personalBudget={activeBudget}
                   currency={activeBudget?.global_settings?.currency || '$'}
-                  oldestTransactionDate={oldestTransactionDate}
+                  selectedRange={analyticsDateRange}
                 />
               </div>
             </div>

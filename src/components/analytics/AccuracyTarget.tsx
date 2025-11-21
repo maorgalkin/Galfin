@@ -73,7 +73,7 @@ export const AccuracyTarget: React.FC<AccuracyTargetProps> = ({
       <svg
         width={size}
         height={size}
-        viewBox={`0 0 ${size} ${size}`}
+        viewBox={`${-size * 0.15} ${-size * 0.15} ${size * 1.3} ${size * 1.3}`}
         className="drop-shadow-md"
       >
         {/* Render rings from outside to inside */}
@@ -169,7 +169,7 @@ export const AccuracyTarget: React.FC<AccuracyTargetProps> = ({
 
       {/* Tooltip */}
       {showTooltip && (
-        <div className="absolute z-50 w-64 p-3 bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-700 rounded-lg shadow-xl left-1/2 -translate-x-1/2 -top-2 -translate-y-full">
+        <div className="absolute z-50 w-64 p-3 bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-700 rounded-lg shadow-xl left-1/2 -translate-x-1/2 top-full mt-3">
           <div className="text-sm space-y-2">
             <div className="font-semibold text-gray-900 dark:text-gray-100 border-b border-gray-200 dark:border-gray-700 pb-2">
               {accuracy.category}
@@ -219,7 +219,7 @@ export const AccuracyTarget: React.FC<AccuracyTargetProps> = ({
           </div>
           
           {/* Tooltip arrow */}
-          <div className="absolute left-1/2 -translate-x-1/2 -bottom-2 w-4 h-4 bg-white dark:bg-gray-800 border-r border-b border-gray-200 dark:border-gray-700 transform rotate-45"></div>
+          <div className="absolute left-1/2 -translate-x-1/2 -top-2 w-4 h-4 bg-white dark:bg-gray-800 border-l border-t border-gray-200 dark:border-gray-700 transform rotate-45"></div>
         </div>
       )}
     </div>

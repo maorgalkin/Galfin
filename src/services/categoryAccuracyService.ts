@@ -44,7 +44,8 @@ class CategoryAccuracyService {
         monthsInRange,
         startDate,
         endDate,
-        zoneConfig
+        zoneConfig,
+        personalBudget
       );
       accuracyData.push(accuracy);
     }
@@ -62,13 +63,19 @@ class CategoryAccuracyService {
     monthsInRange: number,
     startDate: Date,
     endDate: Date,
-    zoneConfig: AccuracyZoneConfig
+    zoneConfig: AccuracyZoneConfig,
+    personalBudget?: PersonalBudget
   ): CategoryAccuracy {
     // Calculate total budgeted amount across all months
-    const totalBudgeted = monthlyBudgets.reduce((sum, mb) => {
+    let totalBudgeted = monthlyBudgets.reduce((sum, mb) => {
       const categoryConfig = mb.categories[category];
       return sum + (categoryConfig?.monthlyBudget || 0);
     }, 0);
+    
+    // If no monthly budgets exist, fall back to personal budget * months
+    if (totalBudgeted === 0 && personalBudget?.categories[category]?.monthlyLimit) {
+      totalBudgeted = personalBudget.categories[category].monthlyLimit * monthsInRange;
+    }
 
     // Calculate total spent in the date range
     const categoryTransactions = transactions.filter(
@@ -196,7 +203,7 @@ class CategoryAccuracyService {
   /**
    * Get suggested action message for unused categories
    */
-  getSuggestionMessage(category: string, monthsInRange: number): string {
+  getSuggestionMessage(_category: string, monthsInRange: number): string {
     const monthText = monthsInRange === 1 ? 'month' : `${monthsInRange} months`;
     return `This budget wasn't used throughout ${monthText}. Consider reallocating to other categories?`;
   }
