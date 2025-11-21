@@ -6,7 +6,9 @@ import { PersonalBudgetDisplay } from '../components/PersonalBudgetDisplay';
 import { BudgetComparisonCard } from '../components/BudgetComparisonCard';
 import { BudgetAdjustmentScheduler } from '../components/BudgetAdjustmentScheduler';
 import { BudgetVsActual } from '../components/analytics/BudgetVsActual';
+import { CategoryAccuracyChart } from '../components/analytics/CategoryAccuracyChart';
 import { Wallet, Settings, BarChart3 } from 'lucide-react';
+import { useFinance } from '../context/FinanceContext';
 import {
   getHeadingColor,
   getSubheadingColor,
@@ -28,11 +30,21 @@ export const BudgetManagement: React.FC = () => {
   const currentMonth = currentDate.getMonth() + 1;
   
   const { data: monthlyBudget } = useCurrentMonthBudget();
+  const { transactions } = useFinance();
   
   const themeColor = 'green';
 
   // Check if user has an active budget
   const { data: activeBudget, isLoading: loadingActiveBudget } = useActiveBudget();
+  
+  // Calculate oldest transaction date for date range filter
+  const oldestTransactionDate = React.useMemo(() => {
+    if (transactions.length === 0) return undefined;
+    const sorted = [...transactions].sort((a, b) => 
+      new Date(a.date).getTime() - new Date(b.date).getTime()
+    );
+    return new Date(sorted[0].date);
+  }, [transactions]);
 
   // Check for 'create' parameter on mount
   useEffect(() => {
@@ -155,8 +167,21 @@ export const BudgetManagement: React.FC = () => {
           )}
 
           {activeTab === 'analytics' && (
-            <div>
-              <BudgetVsActual />
+            <div className="space-y-12">
+              {/* Budget vs Actual */}
+              <div>
+                <BudgetVsActual />
+              </div>
+
+              {/* Category Accuracy */}
+              <div>
+                <CategoryAccuracyChart
+                  transactions={transactions}
+                  personalBudget={activeBudget}
+                  currency={activeBudget?.global_settings?.currency || '$'}
+                  oldestTransactionDate={oldestTransactionDate}
+                />
+              </div>
             </div>
           )}
 
