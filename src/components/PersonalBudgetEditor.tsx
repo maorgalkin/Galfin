@@ -889,9 +889,9 @@ Are you absolutely sure you want to continue?`;
                       </label>
                       <input
                         type="number"
-                        value={categories[editingCategory]?.monthlyLimit || 0}
+                        value={categories[editingCategory]?.monthlyLimit ?? ''}
                         onChange={(e) =>
-                          handleUpdateCategory(editingCategory, 'monthlyLimit', parseFloat(e.target.value) || 0)
+                          handleUpdateCategory(editingCategory, 'monthlyLimit', e.target.value === '' ? 0 : parseFloat(e.target.value) || 0)
                         }
                         className="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-md bg-white dark:bg-gray-700 text-gray-900 dark:text-gray-100"
                         min="0"

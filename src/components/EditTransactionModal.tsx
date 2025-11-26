@@ -16,7 +16,7 @@ const EditTransactionModal: React.FC<EditTransactionModalProps> = ({ transaction
   const [formData, setFormData] = useState({
     date: transaction.date,
     description: transaction.description,
-    amount: transaction.amount,
+    amount: transaction.amount.toString(),
     category: transaction.category,
     type: transaction.type,
     familyMember: transaction.familyMember || '',
@@ -76,7 +76,10 @@ const EditTransactionModal: React.FC<EditTransactionModalProps> = ({ transaction
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     try {
-      await updateTransaction(transaction.id, formData);
+      await updateTransaction(transaction.id, {
+        ...formData,
+        amount: parseFloat(formData.amount) || 0,
+      });
       onClose();
     } catch (error) {
       console.error('Error updating transaction:', error);
@@ -115,7 +118,7 @@ const EditTransactionModal: React.FC<EditTransactionModalProps> = ({ transaction
       
       return {
         ...prev,
-        [name]: name === 'amount' ? parseFloat(value) || 0 : value,
+        [name]: value,
       };
     });
   };

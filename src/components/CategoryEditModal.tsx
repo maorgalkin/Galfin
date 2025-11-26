@@ -27,7 +27,7 @@ const CategoryEditModal: React.FC<CategoryEditModalProps> = ({
   hasTransactions = false,
   transactionCount = 0,
 }) => {
-  const [monthlyLimit, setMonthlyLimit] = useState(category.monthlyLimit);
+  const [monthlyLimit, setMonthlyLimit] = useState(category.monthlyLimit.toString());
   const [warningThreshold, setWarningThreshold] = useState(category.warningThreshold);
   const [isActive, setIsActive] = useState(category.isActive);
   const [color, setColor] = useState(category.color || '#64748B');
@@ -52,7 +52,7 @@ const CategoryEditModal: React.FC<CategoryEditModalProps> = ({
 
   const handleSave = () => {
     onSave({
-      monthlyLimit,
+      monthlyLimit: parseFloat(monthlyLimit) || 0,
       warningThreshold,
       isActive,
       color,
@@ -75,13 +75,7 @@ const CategoryEditModal: React.FC<CategoryEditModalProps> = ({
   };
 
   const handleMonthlyLimitChange = (e: React.ChangeEvent<HTMLInputElement>) => {
-    const value = e.target.value;
-    // Allow empty string or valid number
-    if (value === '') {
-      setMonthlyLimit(0);
-    } else {
-      setMonthlyLimit(Number(value));
-    }
+    setMonthlyLimit(e.target.value);
   };
 
   return (
