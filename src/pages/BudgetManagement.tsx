@@ -5,12 +5,8 @@ import { PersonalBudgetEditor } from '../components/PersonalBudgetEditor';
 import { PersonalBudgetDisplay } from '../components/PersonalBudgetDisplay';
 import { BudgetComparisonCard } from '../components/BudgetComparisonCard';
 import { BudgetAdjustmentScheduler } from '../components/BudgetAdjustmentScheduler';
-import { BudgetVsActual } from '../components/analytics/BudgetVsActual';
-import { CategoryAccuracyChart } from '../components/analytics/CategoryAccuracyChart';
-import { DateRangeFilter } from '../components/analytics/DateRangeFilter';
-import type { DateRangeType } from '../utils/dateRangeFilters';
-import { Wallet, Settings, BarChart3 } from 'lucide-react';
-import { useFinance } from '../context/FinanceContext';
+import { CategoryList } from '../components/categories';
+import { Wallet, Settings, Tag } from 'lucide-react';
 import {
   getHeadingColor,
   getSubheadingColor,
@@ -20,20 +16,18 @@ import {
   getInactiveTextColor,
 } from '../utils/themeColors';
 
-type TabType = 'budget' | 'analytics' | 'adjustments';
+type TabType = 'overview' | 'categories' | 'adjustments';
 
 export const BudgetManagement: React.FC = () => {
   const [searchParams, setSearchParams] = useSearchParams();
-  const [activeTab, setActiveTab] = useState<TabType>('budget');
+  const [activeTab, setActiveTab] = useState<TabType>('overview');
   const [autoCreate, setAutoCreate] = useState(false);
   const [isEditingBudget, setIsEditingBudget] = useState(false);
-  const [analyticsDateRange, setAnalyticsDateRange] = useState<DateRangeType>('ytd');
   const currentDate = new Date();
   const currentYear = currentDate.getFullYear();
   const currentMonth = currentDate.getMonth() + 1;
   
   const { data: monthlyBudget } = useCurrentMonthBudget();
-  const { transactions } = useFinance();
   
   const themeColor = 'green';
 
@@ -43,7 +37,7 @@ export const BudgetManagement: React.FC = () => {
   // Check for 'create' parameter on mount
   useEffect(() => {
     if (searchParams.get('create') === 'true') {
-      setActiveTab('budget');
+      setActiveTab('overview');
       setAutoCreate(true);
       // Clean up URL
       setSearchParams({});
@@ -51,56 +45,55 @@ export const BudgetManagement: React.FC = () => {
   }, []);
 
   const tabs = [
-    { id: 'budget' as TabType, label: 'My Budget', icon: Wallet },
-    { id: 'analytics' as TabType, label: 'Analytics', icon: BarChart3 },
+    { id: 'overview' as TabType, label: 'Overview', icon: Wallet },
+    { id: 'categories' as TabType, label: 'Categories', icon: Tag },
     { id: 'adjustments' as TabType, label: 'Adjustments', icon: Settings },
   ];
 
   return (
-    <div className="min-h-screen py-8 px-3 sm:px-4 lg:px-6">
-      <div className="max-w-7xl mx-auto">
-        {/* Header */}
-        <div className="mb-8">
-          <h1 className={`text-3xl font-bold ${getHeadingColor(themeColor)} mb-2`}>
-            Budget Management
-          </h1>
-          <p className={getSubheadingColor(themeColor)}>
-            Manage your budget and track monthly spending
-          </p>
-        </div>
+    <div>
+      {/* Header */}
+      <div className="mb-8">
+        <h1 className={`text-3xl font-bold ${getHeadingColor(themeColor)} mb-2`}>
+          Budget Management
+        </h1>
+        <p className={getSubheadingColor(themeColor)}>
+          Manage your budget and track monthly spending
+        </p>
+      </div>
 
-        {/* Tabs */}
-        <div className={`${getInactiveBg(themeColor)} rounded-lg shadow-sm border ${getInactiveBorderColor(themeColor)} mb-6`}>
-          <div className={`border-b ${getInactiveBorderColor(themeColor)} overflow-x-auto`}>
-            <nav className="flex px-2 sm:px-4" aria-label="Tabs">
-              {tabs.map((tab) => {
-                const Icon = tab.icon;
-                const isActive = activeTab === tab.id;
-                return (
-                  <button
-                    key={tab.id}
-                    onClick={() => setActiveTab(tab.id)}
-                    className={`
-                      flex items-center justify-center flex-1 px-2 sm:px-4 py-3 text-xs sm:text-sm font-medium border-b-2 transition-colors whitespace-nowrap
-                      ${
-                        isActive
-                          ? `${getActiveBorderColor(themeColor)} ${getSubheadingColor(themeColor)}`
-                          : `border-transparent ${getInactiveTextColor(themeColor)} hover:${getSubheadingColor(themeColor)} hover:${getInactiveBorderColor(themeColor)}`
-                      }
-                    `}
-                  >
-                    <Icon className="h-3 w-3 sm:h-4 sm:w-4 mr-1 sm:mr-2 flex-shrink-0" />
-                    <span className="truncate">{tab.label}</span>
-                  </button>
-                );
-              })}
-            </nav>
-          </div>
+      {/* Tabs */}
+      <div className={`${getInactiveBg(themeColor)} rounded-lg shadow-sm border ${getInactiveBorderColor(themeColor)} mb-6`}>
+        <div className={`border-b ${getInactiveBorderColor(themeColor)} overflow-x-auto`}>
+          <nav className="flex px-2 sm:px-4" aria-label="Tabs">
+            {tabs.map((tab) => {
+              const Icon = tab.icon;
+              const isActive = activeTab === tab.id;
+              return (
+                <button
+                  key={tab.id}
+                  onClick={() => setActiveTab(tab.id)}
+                  className={`
+                    flex items-center justify-center flex-1 px-2 sm:px-4 py-3 text-xs sm:text-sm font-medium border-b-2 transition-colors whitespace-nowrap
+                    ${
+                      isActive
+                        ? `${getActiveBorderColor(themeColor)} ${getSubheadingColor(themeColor)}`
+                        : `border-transparent ${getInactiveTextColor(themeColor)} hover:${getSubheadingColor(themeColor)} hover:${getInactiveBorderColor(themeColor)}`
+                    }
+                  `}
+                >
+                  <Icon className="h-3 w-3 sm:h-4 sm:w-4 mr-1 sm:mr-2 flex-shrink-0" />
+                  <span className="truncate">{tab.label}</span>
+                </button>
+              );
+            })}
+          </nav>
         </div>
+      </div>
 
-        {/* Tab Content */}
-        <div className="space-y-6">
-          {activeTab === 'budget' && (
+      {/* Tab Content */}
+      <div className="space-y-6">
+          {activeTab === 'overview' && (
             loadingActiveBudget ? (
               <div className="text-center py-8 text-gray-500 dark:text-gray-400">
                 Loading budget...
@@ -160,29 +153,20 @@ export const BudgetManagement: React.FC = () => {
             )
           )}
 
-          {activeTab === 'analytics' && (
+          {activeTab === 'categories' && (
             <div className="space-y-6">
-              {/* Shared Date Range Filter */}
-              <div className="flex justify-end">
-                <DateRangeFilter 
-                  selectedRange={analyticsDateRange}
-                  onRangeChange={setAnalyticsDateRange}
-                />
-              </div>
+              {/* Category List with full management UI */}
+              <CategoryList />
 
-              {/* Budget vs Actual */}
-              <div>
-                <BudgetVsActual />
-              </div>
-
-              {/* Category Accuracy */}
-              <div>
-                <CategoryAccuracyChart
-                  transactions={transactions}
-                  personalBudget={activeBudget}
-                  currency={activeBudget?.global_settings?.currency || '$'}
-                  selectedRange={analyticsDateRange}
-                />
+              {/* Tips */}
+              <div className="text-sm text-gray-500 dark:text-gray-400 p-4 bg-green-50 dark:bg-green-900/20 rounded-lg">
+                <p className="font-medium mb-2">💡 Category Management Tips:</p>
+                <ul className="list-disc list-inside space-y-1">
+                  <li><strong>Rename:</strong> Change a category name without losing transaction history</li>
+                  <li><strong>Merge:</strong> Combine similar categories (e.g., "Food" + "Groceries")</li>
+                  <li><strong>Delete:</strong> Remove unused categories - they'll be hidden but history preserved</li>
+                  <li><strong>Add:</strong> Create new categories with custom colors and limits</li>
+                </ul>
               </div>
             </div>
           )}
@@ -233,7 +217,6 @@ export const BudgetManagement: React.FC = () => {
               </div>
             </div>
           )}
-        </div>
       </div>
     </div>
   );
