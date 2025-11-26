@@ -2,10 +2,14 @@ import React, { useState, useMemo, useRef, useEffect } from 'react';
 import { motion, useMotionValue, useAnimate } from 'framer-motion';
 import { useFinance } from '../../context/FinanceContext';
 import { useActiveBudget, useMonthlyBudgetsForDateRange } from '../../hooks/useBudgets';
-import { DateRangeFilter } from './DateRangeFilter';
 import { filterTransactionsByDateRange, getDateRange } from '../../utils/dateRangeFilters';
 import type { DateRangeType } from '../../utils/dateRangeFilters';
 import { AlertTriangle, TrendingUp, TrendingDown, Minus, Loader2 } from 'lucide-react';
+
+interface BudgetVsActualProps {
+  /** The selected date range type */
+  selectedRange: DateRangeType;
+}
 
 const CATEGORY_WIDTH_DESKTOP = 100; // Width of each category column on desktop
 const CATEGORY_WIDTH_MOBILE = 70; // Width of each category column on mobile
@@ -15,8 +19,7 @@ const BAR_WIDTH_DESKTOP = 80; // Width of individual bars on desktop
 const BAR_WIDTH_MOBILE = 50; // Width of individual bars on mobile (thinner)
 const BAR_OVERLAP = 30; // Reduced from 85% for better clarity
 
-export const BudgetVsActual: React.FC = () => {
-  const [dateRange, setDateRange] = useState<DateRangeType>('ytd');
+export const BudgetVsActual: React.FC<BudgetVsActualProps> = ({ selectedRange }) => {
   const containerRef = useRef<HTMLDivElement>(null);
   const [categoriesPerView, setCategoriesPerView] = useState(8);
   const [barWidth, setBarWidth] = useState(BAR_WIDTH_DESKTOP);
@@ -28,23 +31,14 @@ export const BudgetVsActual: React.FC = () => {
   const { transactions } = useFinance();
   const { data: personalBudget, isLoading: loadingPersonal } = useActiveBudget();
   
-  const dateRangeData = useMemo(() => getDateRange(dateRange), [dateRange]);
+  const dateRangeData = useMemo(() => getDateRange(selectedRange), [selectedRange]);
   const { startDate, endDate } = dateRangeData;
   
   const { data: monthlyBudgets, isLoading: loadingMonthly } = useMonthlyBudgetsForDateRange(startDate, endDate);
 
-  // Find the oldest transaction date to determine actual data range
-  const oldestTransactionDate = useMemo(() => {
-    if (transactions.length === 0) return undefined;
-    const sorted = [...transactions].sort((a, b) => 
-      new Date(a.date).getTime() - new Date(b.date).getTime()
-    );
-    return new Date(sorted[0].date);
-  }, [transactions]);
-
   const filteredTransactions = useMemo(() => {
-    return filterTransactionsByDateRange(transactions, dateRange);
-  }, [transactions, dateRange]);
+    return filterTransactionsByDateRange(transactions, selectedRange);
+  }, [transactions, selectedRange]);
 
   const categoryData = useMemo(() => {
     if (!personalBudget || !monthlyBudgets) return [];
@@ -222,13 +216,6 @@ export const BudgetVsActual: React.FC = () => {
           Compare budgeted amounts with actual spending across categories
         </p>
       </div>
-
-      {/* Date Range Filter */}
-      <DateRangeFilter 
-        selectedRange={dateRange} 
-        onRangeChange={setDateRange}
-        oldestTransactionDate={oldestTransactionDate}
-      />
 
       {/* Summary Cards */}
       <div className="grid grid-cols-1 md:grid-cols-3 gap-4">

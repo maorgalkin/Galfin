@@ -5,8 +5,10 @@
 
 /**
  * Represents accuracy zones on the bullseye target
+ * New model: 0-105% is within target, >105% is bust
+ * Bullseye (96-100%), Ring1 (81-95% or 101-105%), Ring2 (61-80%), Ring3 (41-60%), Ring4 (21-40%), Ring5 (1-20%)
  */
-export type AccuracyZone = 'bullseye' | 'ring1' | 'ring2' | 'ring3' | 'ring4' | 'bust' | 'unused';
+export type AccuracyZone = 'bullseye' | 'ring1' | 'ring2' | 'ring3' | 'ring4' | 'ring5' | 'bust' | 'unused';
 
 /**
  * Category spending accuracy metrics over a date range
@@ -50,29 +52,38 @@ export interface CategoryAccuracy {
   
   /** Visual position on target (0 = center, 1 = edge, >1 = bust) */
   targetPosition: number;
+  
+  /** Deterministic random angle (radians) for hit marker placement */
+  hitAngle: number;
 }
 
 /**
  * Configuration for accuracy zone thresholds
+ * New asymmetric model: underspending (0-100%) has different zones than overspending (>100%)
  */
 export interface AccuracyZoneConfig {
-  bullseye: { min: number; max: number }; // e.g., 95-105%
-  ring1: { min: number; max: number };    // e.g., 80-120%
-  ring2: { min: number; max: number };    // e.g., 60-140%
-  ring3: { min: number; max: number };    // e.g., 40-160%
-  ring4: { min: number; max: number };    // e.g., 20-180%
-  // Below 20% or above 180% = bust
+  bullseye: { min: number; max: number }; // 96-100% (perfect)
+  ring1Upper: { min: number; max: number }; // 101-105% (slightly over, still excellent)
+  ring1Lower: { min: number; max: number }; // 81-95% (excellent underspend)
+  ring2: { min: number; max: number };    // 61-80%
+  ring3: { min: number; max: number };    // 41-60%
+  ring4: { min: number; max: number };    // 21-40%
+  ring5: { min: number; max: number };    // 1-20% (edge)
+  // Above 105% = bust (over budget)
 }
 
 /**
  * Default accuracy zone thresholds (% of budget)
+ * Asymmetric: 0-105% within target, >105% is bust
  */
 export const DEFAULT_ACCURACY_ZONES: AccuracyZoneConfig = {
-  bullseye: { min: 95, max: 105 },   // Within 5% of budget
-  ring1: { min: 85, max: 115 },      // Within 15% of budget
-  ring2: { min: 70, max: 130 },      // Within 30% of budget
-  ring3: { min: 50, max: 150 },      // Within 50% of budget
-  ring4: { min: 20, max: 180 },      // Within 80% of budget
+  bullseye: { min: 96, max: 100 },     // Perfect: 96-100%
+  ring1Upper: { min: 101, max: 105 },  // Slightly over but acceptable
+  ring1Lower: { min: 81, max: 95 },    // Excellent underspend
+  ring2: { min: 61, max: 80 },         // Good
+  ring3: { min: 41, max: 60 },         // Fair
+  ring4: { min: 21, max: 40 },         // Poor
+  ring5: { min: 1, max: 20 },          // Edge (very under)
 };
 
 /**
@@ -91,32 +102,37 @@ export const ACCURACY_ZONE_STYLES: Record<AccuracyZone, AccuracyZoneStyle> = {
   bullseye: {
     color: '#10b981', // green-500
     label: 'Perfect',
-    description: 'Within 5% of budget',
+    description: '96-100% of budget',
   },
   ring1: {
     color: '#84cc16', // lime-500
     label: 'Excellent',
-    description: 'Within 15% of budget',
+    description: '81-95% or 101-105% of budget',
   },
   ring2: {
     color: '#eab308', // yellow-500
     label: 'Good',
-    description: 'Within 30% of budget',
+    description: '61-80% of budget',
   },
   ring3: {
     color: '#f97316', // orange-500
     label: 'Fair',
-    description: 'Within 50% of budget',
+    description: '41-60% of budget',
   },
   ring4: {
     color: '#ef4444', // red-500
     label: 'Poor',
-    description: 'Within 80% of budget',
+    description: '21-40% of budget',
+  },
+  ring5: {
+    color: '#991b1b', // red-800
+    label: 'Very Under',
+    description: '1-20% of budget',
   },
   bust: {
     color: '#dc2626', // red-600
     label: 'Over Budget',
-    description: 'Exceeded budget significantly',
+    description: 'Exceeded 105% of budget',
   },
   unused: {
     color: '#9ca3af', // gray-400

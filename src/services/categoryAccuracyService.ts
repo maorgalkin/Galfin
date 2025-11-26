@@ -109,6 +109,9 @@ class CategoryAccuracyService {
       isUnused,
       zoneConfig
     );
+    
+    // Get deterministic random angle for hit marker
+    const hitAngle = this.getRandomAngleForCategory(category);
 
     return {
       category,
@@ -124,12 +127,22 @@ class CategoryAccuracyService {
       totalSpent,
       accuracyZone,
       targetPosition,
+      hitAngle,
     };
   }
 
   /**
    * Determine which accuracy zone the percentage falls into
-   * and calculate the position on the target (0-1 for rings, >1 for bust)
+   * and calculate the position on the target (0 = center, 1 = edge, >1 = bust)
+   * 
+   * New asymmetric model:
+   * - Bullseye: 96-100% (position 0-0.17)
+   * - Ring 1: 81-95% or 101-105% (position 0.17-0.33)
+   * - Ring 2: 61-80% (position 0.33-0.5)
+   * - Ring 3: 41-60% (position 0.5-0.67)
+   * - Ring 4: 21-40% (position 0.67-0.83)
+   * - Ring 5: 1-20% (position 0.83-1.0)
+   * - Bust: >105% (position > 1.0)
    */
   private calculateZoneAndPosition(
     accuracyPercentage: number,
@@ -140,48 +153,73 @@ class CategoryAccuracyService {
       return { accuracyZone: 'unused', targetPosition: 0 };
     }
 
-    // Check each zone from center outward
+    // Bullseye: 96-100% (perfect)
     if (accuracyPercentage >= zoneConfig.bullseye.min && accuracyPercentage <= zoneConfig.bullseye.max) {
-      const centerDeviation = Math.abs(accuracyPercentage - 100) / 5; // 5% is bullseye range
-      return { accuracyZone: 'bullseye', targetPosition: centerDeviation * 0.2 }; // 0-0.2
+      // 100% = center (0), 96% = edge of bullseye (0.17)
+      const deviation = (100 - accuracyPercentage) / 4; // 4% range
+      return { accuracyZone: 'bullseye', targetPosition: deviation * 0.17 };
     }
 
-    if (accuracyPercentage >= zoneConfig.ring1.min && accuracyPercentage <= zoneConfig.ring1.max) {
-      const ring1Deviation = this.calculateRingPosition(accuracyPercentage, zoneConfig.ring1, 100);
-      return { accuracyZone: 'ring1', targetPosition: 0.2 + ring1Deviation * 0.2 }; // 0.2-0.4
+    // Ring 1 Upper: 101-105% (slightly over, still acceptable)
+    if (accuracyPercentage >= zoneConfig.ring1Upper.min && accuracyPercentage <= zoneConfig.ring1Upper.max) {
+      const deviation = (accuracyPercentage - 100) / 5; // 5% range
+      return { accuracyZone: 'ring1', targetPosition: 0.17 + deviation * 0.16 };
     }
 
+    // Ring 1 Lower: 81-95% (excellent underspend)
+    if (accuracyPercentage >= zoneConfig.ring1Lower.min && accuracyPercentage <= zoneConfig.ring1Lower.max) {
+      const deviation = (95 - accuracyPercentage) / 14; // 14% range (95-81)
+      return { accuracyZone: 'ring1', targetPosition: 0.17 + deviation * 0.16 };
+    }
+
+    // Ring 2: 61-80%
     if (accuracyPercentage >= zoneConfig.ring2.min && accuracyPercentage <= zoneConfig.ring2.max) {
-      const ring2Deviation = this.calculateRingPosition(accuracyPercentage, zoneConfig.ring2, 100);
-      return { accuracyZone: 'ring2', targetPosition: 0.4 + ring2Deviation * 0.2 }; // 0.4-0.6
+      const deviation = (80 - accuracyPercentage) / 19; // 19% range
+      return { accuracyZone: 'ring2', targetPosition: 0.33 + deviation * 0.17 };
     }
 
+    // Ring 3: 41-60%
     if (accuracyPercentage >= zoneConfig.ring3.min && accuracyPercentage <= zoneConfig.ring3.max) {
-      const ring3Deviation = this.calculateRingPosition(accuracyPercentage, zoneConfig.ring3, 100);
-      return { accuracyZone: 'ring3', targetPosition: 0.6 + ring3Deviation * 0.2 }; // 0.6-0.8
+      const deviation = (60 - accuracyPercentage) / 19; // 19% range
+      return { accuracyZone: 'ring3', targetPosition: 0.5 + deviation * 0.17 };
     }
 
+    // Ring 4: 21-40%
     if (accuracyPercentage >= zoneConfig.ring4.min && accuracyPercentage <= zoneConfig.ring4.max) {
-      const ring4Deviation = this.calculateRingPosition(accuracyPercentage, zoneConfig.ring4, 100);
-      return { accuracyZone: 'ring4', targetPosition: 0.8 + ring4Deviation * 0.2 }; // 0.8-1.0
+      const deviation = (40 - accuracyPercentage) / 19; // 19% range
+      return { accuracyZone: 'ring4', targetPosition: 0.67 + deviation * 0.16 };
     }
 
-    // Outside all rings = bust
-    const bustDistance = Math.abs(accuracyPercentage - 100) / 100;
-    return { accuracyZone: 'bust', targetPosition: 1.0 + Math.min(bustDistance, 0.5) }; // 1.0+
+    // Ring 5: 1-20% (edge of target)
+    if (accuracyPercentage >= zoneConfig.ring5.min && accuracyPercentage <= zoneConfig.ring5.max) {
+      const deviation = (20 - accuracyPercentage) / 19; // 19% range
+      return { accuracyZone: 'ring5', targetPosition: 0.83 + deviation * 0.17 };
+    }
+
+    // Bust: >105% (over budget, outside target)
+    if (accuracyPercentage > zoneConfig.ring1Upper.max) {
+      const bustDistance = (accuracyPercentage - 105) / 100;
+      return { accuracyZone: 'bust', targetPosition: 1.0 + Math.min(bustDistance, 0.5) };
+    }
+
+    // Edge case: 0% or negative (shouldn't happen but handle it)
+    return { accuracyZone: 'ring5', targetPosition: 1.0 };
   }
 
   /**
-   * Calculate position within a ring (0 = inner edge, 1 = outer edge)
+   * Generate a deterministic pseudo-random angle based on category name
+   * This ensures the same category always gets the same angle
    */
-  private calculateRingPosition(
-    percentage: number,
-    ring: { min: number; max: number },
-    center: number
-  ): number {
-    const distance = Math.abs(percentage - center);
-    const ringSize = Math.max(Math.abs(ring.min - center), Math.abs(ring.max - center));
-    return distance / ringSize;
+  private getRandomAngleForCategory(category: string): number {
+    // Simple hash function to convert category name to a number
+    let hash = 0;
+    for (let i = 0; i < category.length; i++) {
+      const char = category.charCodeAt(i);
+      hash = ((hash << 5) - hash) + char;
+      hash = hash & hash; // Convert to 32-bit integer
+    }
+    // Convert to angle between 0 and 2π
+    return (Math.abs(hash) % 360) * (Math.PI / 180);
   }
 
   /**
@@ -218,7 +256,8 @@ class CategoryAccuracyService {
       ring2: 'Good control',
       ring3: 'Needs attention',
       ring4: 'Poor accuracy',
-      bust: 'Significantly over budget',
+      ring5: 'Significantly under',
+      bust: 'Over budget',
       unused: 'No activity',
     };
     return labels[accuracyZone];

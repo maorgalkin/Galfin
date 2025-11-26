@@ -23,33 +23,30 @@ export const AccuracyTarget: React.FC<AccuracyTargetProps> = ({
   const center = size / 2;
   const maxRadius = size * 0.45; // Leave some margin
   
-  // Ring radii (from center outward)
+  // Ring radii (from center outward) - 6 rings now
   const rings = [
-    { radius: maxRadius * 0.2, zone: 'bullseye', opacity: 1 },
-    { radius: maxRadius * 0.4, zone: 'ring1', opacity: 0.85 },
-    { radius: maxRadius * 0.6, zone: 'ring2', opacity: 0.7 },
-    { radius: maxRadius * 0.8, zone: 'ring3', opacity: 0.55 },
-    { radius: maxRadius * 1.0, zone: 'ring4', opacity: 0.4 },
+    { radius: maxRadius * 0.17, zone: 'bullseye', opacity: 1 },
+    { radius: maxRadius * 0.33, zone: 'ring1', opacity: 0.9 },
+    { radius: maxRadius * 0.50, zone: 'ring2', opacity: 0.8 },
+    { radius: maxRadius * 0.67, zone: 'ring3', opacity: 0.7 },
+    { radius: maxRadius * 0.83, zone: 'ring4', opacity: 0.6 },
+    { radius: maxRadius * 1.00, zone: 'ring5', opacity: 0.5 },
   ];
 
-  // Calculate hit marker position
+  // Calculate hit marker position using the deterministic angle
   const hitMarkerPosition = () => {
     if (accuracy.isUnused) {
       return { x: center, y: center, show: false };
     }
 
-    // Position is based on targetPosition (0 = center, 1 = edge, >1 = outside)
-    const distance = Math.min(accuracy.targetPosition, 1.2) * maxRadius;
+    // Position based on targetPosition (0 = center, 1 = edge, >1 = outside)
+    const distance = Math.min(accuracy.targetPosition, 1.3) * maxRadius;
     
-    // For simplicity, we'll place the marker along the vertical axis
-    // Above center for under-budget, below for over-budget
-    const angle = accuracy.isOverBudget ? Math.PI / 2 : -Math.PI / 2; // Down or up
-    
-    // Add some horizontal offset based on how far off we are for visual variety
-    const horizontalOffset = (accuracy.targetPosition * 20) * (accuracy.variance > 0 ? 1 : -1);
+    // Use the deterministic angle from the accuracy data
+    const angle = accuracy.hitAngle;
     
     return {
-      x: center + horizontalOffset,
+      x: center + distance * Math.cos(angle),
       y: center + distance * Math.sin(angle),
       show: true,
     };
@@ -104,14 +101,14 @@ export const AccuracyTarget: React.FC<AccuracyTargetProps> = ({
           opacity={0.8}
         />
 
-        {/* Hit marker */}
+        {/* Hit marker - 25% larger */}
         {hitPos.show && (
           <>
             {/* Marker shadow */}
             <circle
               cx={hitPos.x}
               cy={hitPos.y + 2}
-              r={6}
+              r={8}
               fill="black"
               opacity={0.2}
             />
@@ -119,21 +116,29 @@ export const AccuracyTarget: React.FC<AccuracyTargetProps> = ({
             <circle
               cx={hitPos.x}
               cy={hitPos.y}
-              r={6}
+              r={8}
               fill={zoneStyle.color}
               stroke="white"
-              strokeWidth={2}
+              strokeWidth={2.5}
               className="transition-all duration-300"
+            />
+            {/* Inner highlight */}
+            <circle
+              cx={hitPos.x - 2}
+              cy={hitPos.y - 2}
+              r={2}
+              fill="white"
+              opacity={0.6}
             />
           </>
         )}
 
-        {/* Bust indicator (X mark) */}
+        {/* Bust indicator (X mark) - positioned at the hit location */}
         {accuracy.accuracyZone === 'bust' && (
-          <g transform={`translate(${center + maxRadius * 1.15}, ${center})`}>
-            <circle r={12} fill="#dc2626" opacity={0.9} />
-            <line x1={-6} y1={-6} x2={6} y2={6} stroke="white" strokeWidth={2.5} strokeLinecap="round" />
-            <line x1={6} y1={-6} x2={-6} y2={6} stroke="white" strokeWidth={2.5} strokeLinecap="round" />
+          <g transform={`translate(${hitPos.x}, ${hitPos.y})`}>
+            <circle r={14} fill="#dc2626" stroke="white" strokeWidth={2} />
+            <line x1={-6} y1={-6} x2={6} y2={6} stroke="white" strokeWidth={3} strokeLinecap="round" />
+            <line x1={6} y1={-6} x2={-6} y2={6} stroke="white" strokeWidth={3} strokeLinecap="round" />
           </g>
         )}
 
