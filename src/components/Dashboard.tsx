@@ -11,6 +11,7 @@ import { TransactionDetailsModal } from './TransactionDetailsModal';
 import EditTransactionModal from './EditTransactionModal';
 import HouseholdSettingsModal from './HouseholdSettingsModal';
 import { BudgetManagement } from '../pages/BudgetManagement';
+import { InsightsPage } from '../pages/InsightsPage';
 import { getUserFirstName } from '../utils/userHelpers';
 import { generateDummyTransactions, countDummyTransactions, isDummyTransaction } from '../utils/dummyData';
 import { useDashboardData } from '../hooks/useDashboardData';
@@ -26,6 +27,7 @@ import CustomDateRangeModal from './CustomDateRangeModal';
 import * as HouseholdService from '../services/householdService';
 import type { Transaction, BudgetConfiguration } from '../types';
 import type { Household, HouseholdMember } from '../services/householdService';
+import { getHeadingColor, getSubheadingColor } from '../utils/themeColors';
 
 const Dashboard: React.FC = () => {
   const { transactions, familyMembers, addTransaction, deleteTransaction } = useFinance();
@@ -47,10 +49,10 @@ const Dashboard: React.FC = () => {
   
   // Initialize activeTab from URL query parameter
   const tabParam = searchParams.get('tab');
-  const initialTab = (tabParam === 'budget' || tabParam === 'transactions' || tabParam === 'dashboard') 
+  const initialTab = (tabParam === 'budget' || tabParam === 'transactions' || tabParam === 'dashboard' || tabParam === 'insights') 
     ? tabParam 
     : 'dashboard';
-  const [activeTab, setActiveTab] = useState<'dashboard' | 'transactions' | 'budget'>(initialTab);
+  const [activeTab, setActiveTab] = useState<'dashboard' | 'transactions' | 'budget' | 'insights'>(initialTab);
   
   const [editingTransaction, setEditingTransaction] = useState<Transaction | null>(null);
   const [isHouseholdSettingsModalOpen, setIsHouseholdSettingsModalOpen] = useState(false);
@@ -207,7 +209,7 @@ const Dashboard: React.FC = () => {
   // Listen to URL changes and update activeTab accordingly
   useEffect(() => {
     const urlTab = searchParams.get('tab');
-    const targetTab = (urlTab === 'budget' || urlTab === 'transactions') ? urlTab : 'dashboard';
+    const targetTab = (urlTab === 'budget' || urlTab === 'transactions' || urlTab === 'insights') ? urlTab : 'dashboard';
     
     if (targetTab !== activeTab) {
       setActiveTab(targetTab);
@@ -311,6 +313,8 @@ const Dashboard: React.FC = () => {
         return 'bg-blue-100 dark:bg-blue-950/30';
       case 'budget':
         return 'bg-green-100 dark:bg-green-950/30';
+      case 'insights':
+        return 'bg-indigo-100 dark:bg-indigo-950/30';
       default:
         return 'bg-white dark:bg-gray-900';
     }
@@ -352,25 +356,35 @@ const Dashboard: React.FC = () => {
 
       {activeTab === 'dashboard' && (
         <div>
-          <div className="flex items-center justify-between mb-8">
-            <h1 className="text-3xl font-bold text-purple-900 dark:text-purple-100">Dashboard</h1>
-            
-            {/* Dummy Data Controls - Development Only */}
-            {import.meta.env.DEV && (
-              <div className="flex gap-2">
-                <DummyDataControls
-                  onAddDummyData={handleAddDummyData}
-                  onRemoveDummyData={handleRemoveDummyData}
-                />
-                <button
-                  onClick={handleClearViewedAlerts}
-                  className="px-3 py-1 text-xs bg-orange-500 text-white rounded hover:bg-orange-600 transition-colors"
-                  title="Clear viewed alerts (dev only)"
-                >
-                  Clear Alerts
-                </button>
+          {/* Header */}
+          <div className="mb-8">
+            <div className="flex items-center justify-between">
+              <div>
+                <h1 className={`text-3xl font-bold ${getHeadingColor('purple')} mb-2`}>
+                  Dashboard
+                </h1>
+                <p className={getSubheadingColor('purple')}>
+                  Your financial overview at a glance
+                </p>
               </div>
-            )}
+              
+              {/* Dummy Data Controls - Development Only */}
+              {import.meta.env.DEV && (
+                <div className="flex gap-2">
+                  <DummyDataControls
+                    onAddDummyData={handleAddDummyData}
+                    onRemoveDummyData={handleRemoveDummyData}
+                  />
+                  <button
+                    onClick={handleClearViewedAlerts}
+                    className="px-3 py-1 text-xs bg-orange-500 text-white rounded hover:bg-orange-600 transition-colors"
+                    title="Clear viewed alerts (dev only)"
+                  >
+                    Clear Alerts
+                  </button>
+                </div>
+              )}
+            </div>
           </div>
 
           {/* Budget Month Navigation - Carousel Style */}
@@ -460,16 +474,18 @@ const Dashboard: React.FC = () => {
 
       {activeTab === 'transactions' && (
         <div>
-          <h1 className="text-3xl font-bold text-blue-900 dark:text-blue-100 mb-8">Transactions</h1>
+          {/* Header */}
+          <div className="mb-8">
+            <h1 className={`text-3xl font-bold ${getHeadingColor('blue')} mb-2`}>
+              Transactions
+            </h1>
+            <p className={getSubheadingColor('blue')}>
+              View and manage your transaction history
+            </p>
+          </div>
           
           {/* Transaction Overview Section */}
           <div className="mb-8">
-            <div className="mb-6">
-              <h2 className="text-2xl font-semibold text-blue-900 dark:text-blue-100">
-                Transaction History
-              </h2>
-            </div>
-
             {/* Month Carousel Navigation with Arrows */}
             <div className="flex items-center justify-center gap-2 sm:gap-4 mb-6 w-full max-w-6xl mx-auto">
               {/* Left Arrow */}
@@ -670,6 +686,12 @@ const Dashboard: React.FC = () => {
       {activeTab === 'budget' && (
         <div>
           <BudgetManagement />
+        </div>
+      )}
+
+      {activeTab === 'insights' && (
+        <div>
+          <InsightsPage />
         </div>
       )}
 
