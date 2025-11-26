@@ -5,6 +5,21 @@ import type {
   BudgetConfiguration 
 } from '../types';
 
+// Helper to get category_id from category name
+const getCategoryId = async (categoryName: string, userId: string): Promise<string | null> => {
+  if (!categoryName) return null;
+  
+  const { data } = await supabase
+    .from('categories')
+    .select('id')
+    .eq('user_id', userId)
+    .eq('name', categoryName)
+    .is('deleted_at', null)
+    .single();
+  
+  return data?.id || null;
+};
+
 // Helper to get current user ID
 const getCurrentUserId = async (): Promise<string> => {
   const { data: { user }, error } = await supabase.auth.getUser();
@@ -61,6 +76,9 @@ export const getTransactions = async (): Promise<Transaction[]> => {
 export const addTransaction = async (transaction: Omit<Transaction, 'id'>): Promise<Transaction> => {
   const userId = await getCurrentUserId();
   const householdId = await getHouseholdId();
+  
+  // Look up category_id from category name
+  const categoryId = await getCategoryId(transaction.category, userId);
 
   const { data, error } = await supabase
     .from('transactions')
@@ -71,6 +89,7 @@ export const addTransaction = async (transaction: Omit<Transaction, 'id'>): Prom
       description: transaction.description,
       amount: transaction.amount,
       category: transaction.category,
+      category_id: categoryId,
       type: transaction.type,
       family_member_id: transaction.familyMember || null,
     })
@@ -93,7 +112,11 @@ export const addTransaction = async (transaction: Omit<Transaction, 'id'>): Prom
 };
 
 export const updateTransaction = async (id: string, transaction: Omit<Transaction, 'id'>): Promise<Transaction> => {
+  const userId = await getCurrentUserId();
   const householdId = await getHouseholdId();
+  
+  // Look up category_id from category name
+  const categoryId = await getCategoryId(transaction.category, userId);
 
   const { data, error } = await supabase
     .from('transactions')
@@ -102,6 +125,7 @@ export const updateTransaction = async (id: string, transaction: Omit<Transactio
       description: transaction.description,
       amount: transaction.amount,
       category: transaction.category,
+      category_id: categoryId,
       type: transaction.type,
       family_member_id: transaction.familyMember || null,
       updated_at: new Date().toISOString(),

@@ -4,6 +4,7 @@ export interface Transaction {
   description: string;
   amount: number;
   category: string;
+  category_id?: string;  // UUID reference to categories table (Phase 2+)
   type: 'income' | 'expense';
   familyMember?: string;
 }
@@ -68,3 +69,15 @@ export type {
   BudgetAlert,
   EnhancedBudget
 } from './budget';
+
+// Re-export category types
+export type {
+  Category,
+  CategoryCreateInput,
+  CategoryUpdateInput,
+  CategoryMergeResult,
+  CategoryMergeHistoryEntry,
+  CategoryMigrationResult
+} from './category';
+
+export { DEFAULT_CATEGORY_COLORS, getNextCategoryColor } from './category';
