@@ -25,7 +25,6 @@ class UserAlertViewService {
     }
 
     const alertIds = data?.map((row: { alert_id: string }) => row.alert_id) || [];
-    console.log('Fetched viewed alert IDs from DB:', alertIds);
     return new Set(alertIds);
   }
 
