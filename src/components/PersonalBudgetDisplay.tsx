@@ -146,24 +146,6 @@ export const PersonalBudgetDisplay: React.FC<PersonalBudgetDisplayProps> = ({
           </div>
         )}
       </div>
-
-      {/* Global Settings */}
-      {activeBudget.global_settings && (
-        <div className="px-6 py-4 border-t border-gray-200 dark:border-gray-700 bg-gray-50 dark:bg-gray-700/30">
-          <h4 className="text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
-            Settings
-          </h4>
-          <div className="flex flex-wrap gap-3 text-xs text-gray-600 dark:text-gray-400">
-            <span>Currency: {activeBudget.global_settings.currency || 'USD'}</span>
-            {activeBudget.global_settings.warningNotifications && (
-              <span className="text-green-600 dark:text-green-400">✓ Warning Notifications</span>
-            )}
-            {activeBudget.global_settings.emailAlerts && (
-              <span className="text-green-600 dark:text-green-400">✓ Email Alerts</span>
-            )}
-          </div>
-        </div>
-      )}
     </div>
   );
 };

@@ -180,6 +180,25 @@ export const BudgetSettings: React.FC<BudgetSettingsProps> = ({ className = '' }
         )}
       </div>
 
+      {/* Current Settings Summary */}
+      <div className="px-4 py-3 bg-gray-50 dark:bg-gray-700/30 rounded-lg border border-gray-200 dark:border-gray-700">
+        <h4 className="text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
+          Current Settings
+        </h4>
+        <div className="flex flex-wrap gap-3 text-sm text-gray-600 dark:text-gray-400">
+          <span>Currency: {getCurrencySymbol(currency)} ({currency})</span>
+          {warningNotifications && (
+            <span className="text-green-600 dark:text-green-400">✓ Warning Notifications</span>
+          )}
+          {emailAlerts && (
+            <span className="text-green-600 dark:text-green-400">✓ Email Alerts</span>
+          )}
+          {household && (
+            <span className="text-purple-600 dark:text-purple-400">✓ Household: {household.name}</span>
+          )}
+        </div>
+      </div>
+
       {/* Household Section */}
       <div className="bg-white dark:bg-gray-800 rounded-xl shadow-sm border border-gray-200 dark:border-gray-700 overflow-hidden">
         <button
