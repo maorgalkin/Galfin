@@ -180,6 +180,83 @@ export const BudgetSettings: React.FC<BudgetSettingsProps> = ({ className = '' }
         )}
       </div>
 
+      {/* Household Section */}
+      <div className="bg-white dark:bg-gray-800 rounded-xl shadow-sm border border-gray-200 dark:border-gray-700 overflow-hidden">
+        <button
+          onClick={() => toggleSection('household')}
+          className="w-full flex items-center justify-between p-4 hover:bg-gray-50 dark:hover:bg-gray-700/50 transition-colors"
+        >
+          <div className="flex items-center gap-3">
+            <div className="p-2 bg-purple-100 dark:bg-purple-900/30 rounded-lg">
+              <Home className="h-5 w-5 text-purple-600 dark:text-purple-400" />
+            </div>
+            <div className="text-left">
+              <h4 className="font-medium text-gray-900 dark:text-gray-100">Household</h4>
+              <p className="text-sm text-gray-500 dark:text-gray-400">
+                {loadingHousehold ? 'Loading...' : household?.name || 'No household'}
+              </p>
+            </div>
+          </div>
+          {expandedSections.household ? (
+            <ChevronUp className="h-5 w-5 text-gray-400" />
+          ) : (
+            <ChevronDown className="h-5 w-5 text-gray-400" />
+          )}
+        </button>
+        
+        {expandedSections.household && (
+          <div className="px-4 pb-4 pt-2 border-t border-gray-200 dark:border-gray-700">
+            {loadingHousehold ? (
+              <div className="flex items-center justify-center py-4">
+                <Loader2 className="h-5 w-5 animate-spin text-gray-400" />
+              </div>
+            ) : household ? (
+              <div className="space-y-4">
+                {/* Household Info Card */}
+                <div className="flex items-center justify-between p-4 bg-gradient-to-r from-purple-50 to-indigo-50 dark:from-purple-900/20 dark:to-indigo-900/20 rounded-lg border border-purple-200 dark:border-purple-800">
+                  <div className="flex items-center gap-3">
+                    <div className="p-2 bg-purple-100 dark:bg-purple-900/50 rounded-full">
+                      <Users className="h-5 w-5 text-purple-600 dark:text-purple-400" />
+                    </div>
+                    <div>
+                      <h5 className="font-semibold text-gray-900 dark:text-gray-100">
+                        {household.name}
+                      </h5>
+                      <p className="text-sm text-gray-500 dark:text-gray-400">
+                        Created {new Date(household.created_at).toLocaleDateString()}
+                      </p>
+                    </div>
+                  </div>
+                  
+                  <button
+                    onClick={() => setShowHouseholdModal(true)}
+                    className="px-4 py-2 bg-purple-600 text-white rounded-lg hover:bg-purple-700 transition-colors text-sm font-medium"
+                  >
+                    Manage
+                  </button>
+                </div>
+                
+                <p className="text-sm text-gray-500 dark:text-gray-400">
+                  Manage household members, invite participants, and configure member tags for transactions.
+                </p>
+              </div>
+            ) : (
+              <div className="text-center py-4">
+                <p className="text-gray-500 dark:text-gray-400 mb-3">
+                  No household configured
+                </p>
+                <button
+                  onClick={() => setShowHouseholdModal(true)}
+                  className="px-4 py-2 bg-purple-600 text-white rounded-lg hover:bg-purple-700 transition-colors text-sm font-medium"
+                >
+                  Set Up Household
+                </button>
+              </div>
+            )}
+          </div>
+        )}
+      </div>
+
       {/* Currency Section */}
       <div className="bg-white dark:bg-gray-800 rounded-xl shadow-sm border border-gray-200 dark:border-gray-700 overflow-hidden">
         <button
@@ -305,90 +382,13 @@ export const BudgetSettings: React.FC<BudgetSettingsProps> = ({ className = '' }
         )}
       </div>
 
-      {/* Household Section */}
-      <div className="bg-white dark:bg-gray-800 rounded-xl shadow-sm border border-gray-200 dark:border-gray-700 overflow-hidden">
-        <button
-          onClick={() => toggleSection('household')}
-          className="w-full flex items-center justify-between p-4 hover:bg-gray-50 dark:hover:bg-gray-700/50 transition-colors"
-        >
-          <div className="flex items-center gap-3">
-            <div className="p-2 bg-purple-100 dark:bg-purple-900/30 rounded-lg">
-              <Home className="h-5 w-5 text-purple-600 dark:text-purple-400" />
-            </div>
-            <div className="text-left">
-              <h4 className="font-medium text-gray-900 dark:text-gray-100">Household</h4>
-              <p className="text-sm text-gray-500 dark:text-gray-400">
-                {loadingHousehold ? 'Loading...' : household?.name || 'No household'}
-              </p>
-            </div>
-          </div>
-          {expandedSections.household ? (
-            <ChevronUp className="h-5 w-5 text-gray-400" />
-          ) : (
-            <ChevronDown className="h-5 w-5 text-gray-400" />
-          )}
-        </button>
-        
-        {expandedSections.household && (
-          <div className="px-4 pb-4 pt-2 border-t border-gray-200 dark:border-gray-700">
-            {loadingHousehold ? (
-              <div className="flex items-center justify-center py-4">
-                <Loader2 className="h-5 w-5 animate-spin text-gray-400" />
-              </div>
-            ) : household ? (
-              <div className="space-y-4">
-                {/* Household Info Card */}
-                <div className="flex items-center justify-between p-4 bg-gradient-to-r from-purple-50 to-indigo-50 dark:from-purple-900/20 dark:to-indigo-900/20 rounded-lg border border-purple-200 dark:border-purple-800">
-                  <div className="flex items-center gap-3">
-                    <div className="p-2 bg-purple-100 dark:bg-purple-900/50 rounded-full">
-                      <Users className="h-5 w-5 text-purple-600 dark:text-purple-400" />
-                    </div>
-                    <div>
-                      <h5 className="font-semibold text-gray-900 dark:text-gray-100">
-                        {household.name}
-                      </h5>
-                      <p className="text-sm text-gray-500 dark:text-gray-400">
-                        Created {new Date(household.created_at).toLocaleDateString()}
-                      </p>
-                    </div>
-                  </div>
-                  
-                  <button
-                    onClick={() => setShowHouseholdModal(true)}
-                    className="px-4 py-2 bg-purple-600 text-white rounded-lg hover:bg-purple-700 transition-colors text-sm font-medium"
-                  >
-                    Manage
-                  </button>
-                </div>
-                
-                <p className="text-sm text-gray-500 dark:text-gray-400">
-                  Manage household members, invite participants, and configure member tags for transactions.
-                </p>
-              </div>
-            ) : (
-              <div className="text-center py-4">
-                <p className="text-gray-500 dark:text-gray-400 mb-3">
-                  No household configured
-                </p>
-                <button
-                  onClick={() => setShowHouseholdModal(true)}
-                  className="px-4 py-2 bg-purple-600 text-white rounded-lg hover:bg-purple-700 transition-colors text-sm font-medium"
-                >
-                  Set Up Household
-                </button>
-              </div>
-            )}
-          </div>
-        )}
-      </div>
-
       {/* Tips */}
       <div className="text-sm text-gray-500 dark:text-gray-400 p-4 bg-green-50 dark:bg-green-900/20 rounded-lg">
         <p className="font-medium mb-2">💡 Settings Tips:</p>
         <ul className="list-disc list-inside space-y-1">
-          <li><strong>Currency:</strong> Changes how amounts are displayed, not the actual values</li>
-          <li><strong>Warnings:</strong> Get notified when you're close to exceeding category limits</li>
           <li><strong>Household:</strong> Share budgets and track spending across family members</li>
+          <li><strong>Currency:</strong> Changes how amounts are displayed, not the actual values</li>
+          <li><strong>Notifications:</strong> Get notified when you're close to exceeding category limits</li>
         </ul>
       </div>
 
