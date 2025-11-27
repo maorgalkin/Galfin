@@ -16,7 +16,8 @@ import {
   Palette,
   Calendar,
   TrendingUp,
-  TrendingDown
+  TrendingDown,
+  HelpCircle
 } from 'lucide-react';
 import { 
   useUpdateCategory, 
@@ -65,6 +66,7 @@ export const CategoryEditModal: React.FC<CategoryEditModalProps> = ({
   const [activeTab, setActiveTab] = useState<TabType>(initialTab);
   const [error, setError] = useState('');
   const [showDeleteConfirm, setShowDeleteConfirm] = useState(false);
+  const [showHelp, setShowHelp] = useState(false);
   
   // Edit tab state
   const [monthlyLimit, setMonthlyLimit] = useState('');
@@ -324,6 +326,31 @@ export const CategoryEditModal: React.FC<CategoryEditModalProps> = ({
             <h2 className="text-lg font-semibold text-gray-900 dark:text-gray-100">
               {category.name}
             </h2>
+            {/* Help tooltip trigger */}
+            <div className="relative">
+              <button
+                onClick={() => setShowHelp(!showHelp)}
+                className="p-1 text-gray-400 hover:text-gray-600 dark:hover:text-gray-300 rounded-full hover:bg-gray-100 dark:hover:bg-gray-700 transition-colors"
+                title="Help"
+              >
+                <HelpCircle className="h-4 w-4" />
+              </button>
+              {/* Tooltip */}
+              {showHelp && (
+                <>
+                  <div className="fixed inset-0 z-10" onClick={() => setShowHelp(false)} />
+                  <div className="absolute left-0 top-full mt-2 w-72 sm:w-80 p-3 bg-white dark:bg-gray-700 rounded-lg shadow-lg border border-gray-200 dark:border-gray-600 z-20 text-sm">
+                    <p className="font-medium text-gray-900 dark:text-gray-100 mb-2">Category Actions</p>
+                    <ul className="space-y-2 text-gray-600 dark:text-gray-300">
+                      <li><strong className="text-gray-800 dark:text-gray-100">Details:</strong> Change limits, colors, warnings — updates your budget template immediately</li>
+                      <li><strong className="text-gray-800 dark:text-gray-100">Next Month:</strong> Temporary adjustment for next month only. Great for holidays or one-time events</li>
+                      <li><strong className="text-gray-800 dark:text-gray-100">Merge:</strong> Combine categories — all transactions move to target</li>
+                      <li><strong className="text-gray-800 dark:text-gray-100">Rename:</strong> Change name — history is preserved</li>
+                    </ul>
+                  </div>
+                </>
+              )}
+            </div>
           </div>
           <button
             onClick={handleClose}
