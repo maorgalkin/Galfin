@@ -143,14 +143,22 @@ export const CategoryList: React.FC<CategoryListProps> = ({
                         </h4>
                       </div>
                       <div className="flex items-center gap-3 text-sm text-gray-500 dark:text-gray-400">
-                        <span>{formatCurrency(category.monthlyLimit)}</span>
+                        {/* Monthly limit - compact on small, full on medium+ */}
+                        <span>
+                          {formatCurrency(category.monthlyLimit)}
+                          <span className="hidden md:inline"> / month</span>
+                        </span>
+                        {/* Transaction count - icon only on small, with label on medium+ */}
                         <span className="flex items-center gap-1" title={`${transactionCount} transaction${transactionCount !== 1 ? 's' : ''}`}>
                           <Receipt className="h-3.5 w-3.5" />
-                          {transactionCount}
+                          <span>{transactionCount}</span>
+                          <span className="hidden md:inline">txn{transactionCount !== 1 ? 's' : ''}</span>
                         </span>
+                        {/* Warning threshold - icon only on small, with label on medium+ */}
                         {category.warningThreshold < 100 && (
                           <span className="flex items-center gap-1 text-amber-600 dark:text-amber-400" title={`Alert at ${category.warningThreshold}%`}>
                             <AlertCircle className="h-3.5 w-3.5" />
+                            <span className="hidden md:inline">Alert at </span>
                             {category.warningThreshold}%
                           </span>
                         )}
