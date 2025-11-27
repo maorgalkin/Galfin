@@ -6,7 +6,8 @@ import { PersonalBudgetDisplay } from '../components/PersonalBudgetDisplay';
 import { BudgetComparisonCard } from '../components/BudgetComparisonCard';
 import { BudgetAdjustmentScheduler } from '../components/BudgetAdjustmentScheduler';
 import { CategoryList } from '../components/categories';
-import { Wallet, Settings, Tag } from 'lucide-react';
+import { BudgetSettings } from '../components/settings';
+import { Wallet, Settings, Tag, Sliders } from 'lucide-react';
 import {
   getHeadingColor,
   getSubheadingColor,
@@ -16,7 +17,7 @@ import {
   getInactiveTextColor,
 } from '../utils/themeColors';
 
-type TabType = 'overview' | 'categories' | 'adjustments';
+type TabType = 'overview' | 'categories' | 'settings' | 'adjustments';
 
 export const BudgetManagement: React.FC = () => {
   const [searchParams, setSearchParams] = useSearchParams();
@@ -47,6 +48,7 @@ export const BudgetManagement: React.FC = () => {
   const tabs = [
     { id: 'overview' as TabType, label: 'Overview', icon: Wallet },
     { id: 'categories' as TabType, label: 'Categories', icon: Tag },
+    { id: 'settings' as TabType, label: 'Settings', icon: Sliders },
     { id: 'adjustments' as TabType, label: 'Adjustments', icon: Settings },
   ];
 
@@ -169,6 +171,10 @@ export const BudgetManagement: React.FC = () => {
                 </ul>
               </div>
             </div>
+          )}
+
+          {activeTab === 'settings' && (
+            <BudgetSettings />
           )}
 
           {activeTab === 'adjustments' && (

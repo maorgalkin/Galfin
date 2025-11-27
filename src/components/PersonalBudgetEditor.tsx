@@ -20,7 +20,6 @@ import {
   Loader2, 
   AlertCircle,
   CheckCircle,
-  Settings as SettingsIcon,
   RotateCcw
 } from 'lucide-react';
 import type { PersonalBudget, CategoryConfig } from '../types/budget';
@@ -404,66 +403,6 @@ Are you absolutely sure you want to continue?`;
                 placeholder="e.g., Summer 2025 Budget"
                 className="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-md bg-white dark:bg-gray-700 text-gray-900 dark:text-gray-100"
               />
-            </div>
-
-            {/* Global Settings - MOVED TO TOP */}
-            <div className="pt-2">
-              <div className="flex items-center gap-2 mb-3">
-                <SettingsIcon className="h-5 w-5 text-gray-600 dark:text-gray-400" />
-                <label className="block text-sm font-medium text-gray-700 dark:text-gray-300">
-                  Global Settings
-                </label>
-              </div>
-              
-              <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-                {/* Currency */}
-                <div>
-                  <label className="block text-xs font-medium text-gray-600 dark:text-gray-400 mb-1">
-                    Currency
-                  </label>
-                  <select
-                    value={currency}
-                    onChange={(e) => setCurrency(e.target.value)}
-                    className="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-md bg-white dark:bg-gray-700 text-gray-900 dark:text-gray-100 text-sm"
-                  >
-                    <option value="USD">USD ($)</option>
-                    <option value="EUR">EUR (€)</option>
-                    <option value="GBP">GBP (£)</option>
-                    <option value="ILS">ILS (₪)</option>
-                    <option value="JPY">JPY (¥)</option>
-                  </select>
-                </div>
-                
-                {/* Warning Notifications */}
-                <div>
-                  <label className="flex items-center h-full cursor-pointer">
-                    <input
-                      type="checkbox"
-                      checked={warningNotifications}
-                      onChange={(e) => setWarningNotifications(e.target.checked)}
-                      className="mr-2 h-4 w-4"
-                    />
-                    <span className="text-sm text-gray-700 dark:text-gray-300">
-                      Warning Notifications
-                    </span>
-                  </label>
-                </div>
-                
-                {/* Email Alerts */}
-                <div>
-                  <label className="flex items-center h-full cursor-pointer">
-                    <input
-                      type="checkbox"
-                      checked={emailAlerts}
-                      onChange={(e) => setEmailAlerts(e.target.checked)}
-                      className="mr-2 h-4 w-4"
-                    />
-                    <span className="text-sm text-gray-700 dark:text-gray-300">
-                      Email Alerts
-                    </span>
-                  </label>
-                </div>
-              </div>
             </div>
 
             {/* Categories Grid */}

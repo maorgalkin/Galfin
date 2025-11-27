@@ -339,31 +339,57 @@ CREATE POLICY "Users can view own merge history"
 
 ---
 
-### Phase 4: Category Management UI
-- [ ] Create CategoryList component
-- [ ] Implement Add Category (reuse modal)
-- [ ] Implement Edit Category (reuse modal)
-- [ ] Implement Rename Category (with preview)
-- [ ] Implement Delete Category (with reassignment option)
-- [ ] Implement Merge Categories wizard
+### Phase 4: Category Management UI ✅ COMPLETE
+- [x] Create CategoryList component
+- [x] Implement Add Category (reuse modal)
+- [x] Implement Edit Category (reuse modal)
+- [x] Implement Rename Category (with preview)
+- [x] Implement Delete Category (with reassignment option)
+- [x] Implement Merge Categories wizard
+- [x] Implement Edit Limit modal
+- [x] Migration 019: Add category type column
+- [x] Migration 020: Cleanup duplicate categories
 
 **Deliverables:**
-- Full category management in Categories tab
-- All category operations functional
-- Existing modals removed from Edit Budget
+- ✅ Full category management in Categories tab
+- ✅ All category operations functional (add, rename, delete, merge, edit limit)
+- ✅ Category type support (expense/income)
+- ✅ Duplicate category cleanup
+
+**Files Created:**
+- `src/components/categories/CategoryList.tsx`
+- `src/components/categories/AddCategoryModal.tsx`
+- `src/components/categories/RenameCategoryModal.tsx`
+- `src/components/categories/DeleteCategoryModal.tsx`
+- `src/components/categories/MergeCategoryModal.tsx`
+- `src/components/categories/EditLimitModal.tsx`
+- `src/components/categories/index.ts`
+- `src/hooks/useCategories.ts`
+- `supabase/migrations/019_add_category_type.sql`
+- `supabase/migrations/020_cleanup_duplicate_categories.sql`
 
 ---
 
-### Phase 5: Budget Settings Consolidation
-- [ ] Move Global Settings to Settings tab
-- [ ] Move Family Members to Settings tab
-- [ ] Integrate Household Management
-- [ ] Simplify/remove old Edit Budget modal
+### Phase 5: Budget Settings Consolidation ✅ COMPLETE
+- [x] Create BudgetSettings component
+- [x] Add Settings tab to Budget Management
+- [x] Move Global Settings (currency, notifications) to Settings tab
+- [x] Integrate Household Management into Settings tab
+- [x] Simplify PersonalBudgetEditor (remove global settings UI)
 
 **Deliverables:**
-- Settings tab complete
-- Edit Budget modal simplified or removed
-- Clean separation of concerns
+- ✅ Settings tab complete with collapsible sections
+- ✅ Currency, notifications, and household management consolidated
+- ✅ PersonalBudgetEditor simplified (focuses on categories only)
+- ✅ Clean separation of concerns
+
+**Files Created:**
+- `src/components/settings/BudgetSettings.tsx`
+- `src/components/settings/index.ts`
+
+**Files Modified:**
+- `src/pages/BudgetManagement.tsx` - Added Settings tab
+- `src/components/PersonalBudgetEditor.tsx` - Removed global settings UI
 
 ---
 
