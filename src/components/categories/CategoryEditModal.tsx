@@ -335,21 +335,6 @@ export const CategoryEditModal: React.FC<CategoryEditModalProps> = ({
               >
                 <HelpCircle className="h-4 w-4" />
               </button>
-              {/* Tooltip */}
-              {showHelp && (
-                <>
-                  <div className="fixed inset-0 z-10" onClick={() => setShowHelp(false)} />
-                  <div className="absolute left-0 top-full mt-2 w-72 sm:w-80 p-3 bg-white dark:bg-gray-700 rounded-lg shadow-lg border border-gray-200 dark:border-gray-600 z-20 text-sm">
-                    <p className="font-medium text-gray-900 dark:text-gray-100 mb-2">Category Actions</p>
-                    <ul className="space-y-2 text-gray-600 dark:text-gray-300">
-                      <li><strong className="text-gray-800 dark:text-gray-100">Details:</strong> Change limits, colors, warnings — updates your budget template immediately</li>
-                      <li><strong className="text-gray-800 dark:text-gray-100">Next Month:</strong> Temporary adjustment for next month only. Great for holidays or one-time events</li>
-                      <li><strong className="text-gray-800 dark:text-gray-100">Merge:</strong> Combine categories — all transactions move to target</li>
-                      <li><strong className="text-gray-800 dark:text-gray-100">Rename:</strong> Change name — history is preserved</li>
-                    </ul>
-                  </div>
-                </>
-              )}
             </div>
           </div>
           <button
@@ -360,6 +345,22 @@ export const CategoryEditModal: React.FC<CategoryEditModalProps> = ({
             <X className="h-5 w-5 text-gray-500" />
           </button>
         </div>
+
+        {/* Help Tooltip - positioned inside modal content area */}
+        {showHelp && (
+          <>
+            <div className="fixed inset-0 z-10" onClick={() => setShowHelp(false)} />
+            <div className="absolute left-4 right-4 top-16 p-3 bg-white dark:bg-gray-700 rounded-lg shadow-lg border border-gray-200 dark:border-gray-600 z-20 text-sm">
+              <p className="font-medium text-gray-900 dark:text-gray-100 mb-2">Category Actions</p>
+              <ul className="space-y-2 text-gray-600 dark:text-gray-300">
+                <li><strong className="text-gray-800 dark:text-gray-100">Details:</strong> Change limits, colors, warnings — updates your budget template immediately</li>
+                <li><strong className="text-gray-800 dark:text-gray-100">Next Month:</strong> Temporary adjustment for next month only. Great for holidays or one-time events</li>
+                <li><strong className="text-gray-800 dark:text-gray-100">Merge:</strong> Combine categories — all transactions move to target</li>
+                <li><strong className="text-gray-800 dark:text-gray-100">Rename:</strong> Change name — history is preserved</li>
+              </ul>
+            </div>
+          </>
+        )}
 
         {/* Tabs */}
         <div className="flex border-b border-gray-200 dark:border-gray-700">
