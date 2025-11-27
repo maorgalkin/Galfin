@@ -397,7 +397,7 @@ export const CategoryEditModal: React.FC<CategoryEditModalProps> = ({
         </div>
 
         {/* Content */}
-        <div className="p-4 space-y-4 max-h-[60vh] overflow-y-auto">
+        <div className="p-4 space-y-4 min-h-[280px] max-h-[60vh] overflow-y-auto">
           {/* Error display */}
           {error && (
             <div className="flex items-center gap-2 p-3 bg-red-50 dark:bg-red-900/20 text-red-600 dark:text-red-400 rounded-lg text-sm">
@@ -502,16 +502,6 @@ export const CategoryEditModal: React.FC<CategoryEditModalProps> = ({
                 </div>
               )}
 
-              {/* Save button */}
-              <div className="flex justify-end pt-2">
-                <button
-                  onClick={handleSaveEdit}
-                  disabled={isPending || !editHasChanges}
-                  className="px-4 py-2 bg-green-600 text-white rounded-lg hover:bg-green-700 disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
-                >
-                  {updateCategory.isPending ? 'Saving...' : 'Save Changes'}
-                </button>
-              </div>
             </div>
           )}
 
@@ -553,16 +543,6 @@ export const CategoryEditModal: React.FC<CategoryEditModalProps> = ({
                 </p>
               </div>
 
-              {/* Rename button */}
-              <div className="flex justify-end pt-2">
-                <button
-                  onClick={handleRename}
-                  disabled={isPending || newName.trim() === category.name}
-                  className="px-4 py-2 bg-green-600 text-white rounded-lg hover:bg-green-700 disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
-                >
-                  {renameCategory.isPending ? 'Renaming...' : 'Rename Category'}
-                </button>
-              </div>
             </div>
           )}
 
@@ -643,18 +623,6 @@ export const CategoryEditModal: React.FC<CategoryEditModalProps> = ({
                   Merging combines two categories. All transactions from "{category.name}" 
                   will be moved to the target category.
                 </p>
-              </div>
-
-              {/* Merge button */}
-              <div className="flex justify-end pt-2">
-                <button
-                  onClick={handleMerge}
-                  disabled={isPending || !targetCategoryId}
-                  className="flex items-center gap-2 px-4 py-2 bg-green-600 text-white rounded-lg hover:bg-green-700 disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
-                >
-                  <GitMerge className="h-4 w-4" />
-                  {mergeCategories.isPending ? 'Merging...' : 'Merge Categories'}
-                </button>
               </div>
             </div>
           )}
@@ -777,9 +745,53 @@ export const CategoryEditModal: React.FC<CategoryEditModalProps> = ({
                   </div>
                 </div>
               )}
+            </div>
+          )}
+        </div>
 
-              {/* Schedule button */}
-              <div className="flex justify-end pt-2">
+        {/* Footer with Delete and Action buttons */}
+        <div className="px-4 py-3 border-t border-gray-200 dark:border-gray-700 bg-gray-50 dark:bg-gray-800/50">
+          {!showDeleteConfirm ? (
+            <div className="flex items-center justify-between">
+              <button
+                onClick={() => setShowDeleteConfirm(true)}
+                disabled={isPending}
+                className="flex items-center gap-2 text-sm text-red-600 dark:text-red-400 hover:text-red-800 dark:hover:text-red-300 transition-colors disabled:opacity-50"
+              >
+                <Trash2 className="h-4 w-4" />
+                Delete this category
+              </button>
+              
+              {/* Tab-specific action button */}
+              {activeTab === 'edit' && (
+                <button
+                  onClick={handleSaveEdit}
+                  disabled={isPending || !editHasChanges}
+                  className="px-4 py-2 bg-green-600 text-white rounded-lg hover:bg-green-700 disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
+                >
+                  {updateCategory.isPending ? 'Saving...' : 'Save Changes'}
+                </button>
+              )}
+              {activeTab === 'rename' && (
+                <button
+                  onClick={handleRename}
+                  disabled={isPending || newName.trim() === category.name}
+                  className="px-4 py-2 bg-green-600 text-white rounded-lg hover:bg-green-700 disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
+                >
+                  {renameCategory.isPending ? 'Renaming...' : 'Rename Category'}
+                </button>
+              )}
+              {activeTab === 'merge' && (
+                <button
+                  onClick={handleMerge}
+                  disabled={isPending || !targetCategoryId}
+                  className="flex items-center gap-2 px-4 py-2 bg-green-600 text-white rounded-lg hover:bg-green-700 disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
+                >
+                  <GitMerge className="h-4 w-4" />
+                  {mergeCategories.isPending ? 'Merging...' : 'Merge Categories'}
+                </button>
+              )}
+              {activeTab === 'adjustment' && (
                 <button
                   onClick={handleScheduleAdjustment}
                   disabled={isPending || nextMonthLimit === '' || parseFloat(nextMonthLimit) === category.monthlyLimit}
@@ -788,22 +800,8 @@ export const CategoryEditModal: React.FC<CategoryEditModalProps> = ({
                   {scheduleAdjustment.isPending ? 'Scheduling...' : 
                    categoryAdjustment ? 'Update Adjustment' : 'Schedule Adjustment'}
                 </button>
-              </div>
+              )}
             </div>
-          )}
-        </div>
-
-        {/* Footer with Delete button */}
-        <div className="px-4 py-3 border-t border-gray-200 dark:border-gray-700 bg-gray-50 dark:bg-gray-800/50">
-          {!showDeleteConfirm ? (
-            <button
-              onClick={() => setShowDeleteConfirm(true)}
-              disabled={isPending}
-              className="flex items-center gap-2 text-sm text-red-600 dark:text-red-400 hover:text-red-800 dark:hover:text-red-300 transition-colors disabled:opacity-50"
-            >
-              <Trash2 className="h-4 w-4" />
-              Delete this category
-            </button>
           ) : (
             <div className="flex items-center justify-between">
               <p className="text-sm text-red-600 dark:text-red-400">
@@ -836,3 +834,4 @@ export const CategoryEditModal: React.FC<CategoryEditModalProps> = ({
     </div>
   );
 };
+
