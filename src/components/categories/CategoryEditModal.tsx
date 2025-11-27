@@ -1,5 +1,5 @@
 // Unified Category Edit Modal
-// Combines editing, renaming, merging, and deleting capabilities
+// Combines editing, renaming, merging, adjustments, and deleting capabilities
 
 import React, { useState, useEffect, useMemo } from 'react';
 import { 
@@ -13,7 +13,10 @@ import {
   Check,
   Info,
   ArrowRight,
-  Palette
+  Palette,
+  Calendar,
+  TrendingUp,
+  TrendingDown
 } from 'lucide-react';
 import { 
   useUpdateCategory, 
@@ -22,11 +25,17 @@ import {
   useMergeCategories,
   useCategories 
 } from '../../hooks/useCategories';
+import {
+  useNextMonthAdjustments,
+  useScheduleAdjustment,
+  useCancelAdjustment,
+  useActiveBudget
+} from '../../hooks/useBudgets';
 import { useFinance } from '../../context/FinanceContext';
 import type { Category } from '../../types/category';
 import { DEFAULT_CATEGORY_COLORS } from '../../types/category';
 
-type TabType = 'edit' | 'rename' | 'merge' | 'delete';
+type TabType = 'edit' | 'rename' | 'merge' | 'adjustment';
 
 interface CategoryEditModalProps {
   isOpen: boolean;
@@ -43,14 +52,19 @@ export const CategoryEditModal: React.FC<CategoryEditModalProps> = ({
 }) => {
   const { data: allCategories } = useCategories(false, 'expense');
   const { transactions } = useFinance();
+  const { data: nextMonthSummary } = useNextMonthAdjustments();
+  const { data: activeBudget } = useActiveBudget();
   
   const updateCategory = useUpdateCategory();
   const renameCategory = useRenameCategory();
   const deleteCategory = useDeleteCategory();
   const mergeCategories = useMergeCategories();
+  const scheduleAdjustment = useScheduleAdjustment();
+  const cancelAdjustment = useCancelAdjustment();
   
   const [activeTab, setActiveTab] = useState<TabType>(initialTab);
   const [error, setError] = useState('');
+  const [showDeleteConfirm, setShowDeleteConfirm] = useState(false);
   
   // Edit tab state
   const [monthlyLimit, setMonthlyLimit] = useState('');
@@ -63,8 +77,9 @@ export const CategoryEditModal: React.FC<CategoryEditModalProps> = ({
   // Merge tab state
   const [targetCategoryId, setTargetCategoryId] = useState('');
   
-  // Delete tab state
-  const [reassignTo, setReassignTo] = useState('');
+  // Adjustment tab state
+  const [nextMonthLimit, setNextMonthLimit] = useState('');
+  const [adjustmentReason, setAdjustmentReason] = useState('');
 
   // Calculate transaction count
   const transactionCount = useMemo(() => {
@@ -92,11 +107,29 @@ export const CategoryEditModal: React.FC<CategoryEditModalProps> = ({
     return category.monthlyLimit + targetCategory.monthlyLimit;
   }, [category, targetCategory]);
 
+  // Get pending adjustment for this category
+  const categoryAdjustment = useMemo(() => {
+    if (!nextMonthSummary || !category) return null;
+    return nextMonthSummary.adjustments.find(
+      adj => adj.category_name === category.name
+    );
+  }, [nextMonthSummary, category]);
+
+  // Format currency
+  const formatCurrency = (amount: number): string => {
+    const currency = activeBudget?.global_settings?.currency || 'ILS';
+    return new Intl.NumberFormat('en-US', {
+      style: 'currency',
+      currency: currency,
+    }).format(amount);
+  };
+
   // Reset form when category changes or modal opens
   useEffect(() => {
     if (isOpen && category) {
       setActiveTab(initialTab);
       setError('');
+      setShowDeleteConfirm(false);
       
       // Edit tab
       setMonthlyLimit(category.monthlyLimit.toString());
@@ -109,13 +142,15 @@ export const CategoryEditModal: React.FC<CategoryEditModalProps> = ({
       // Merge tab
       setTargetCategoryId('');
       
-      // Delete tab
-      setReassignTo('');
+      // Adjustment tab
+      setNextMonthLimit(categoryAdjustment?.new_limit.toString() || category.monthlyLimit.toString());
+      setAdjustmentReason('');
     }
-  }, [isOpen, category, initialTab]);
+  }, [isOpen, category, initialTab, categoryAdjustment]);
 
   const isPending = updateCategory.isPending || renameCategory.isPending || 
-                    deleteCategory.isPending || mergeCategories.isPending;
+                    deleteCategory.isPending || mergeCategories.isPending ||
+                    scheduleAdjustment.isPending || cancelAdjustment.isPending;
 
   // Check if edit form has changes
   const editHasChanges = category && (
@@ -193,6 +228,57 @@ export const CategoryEditModal: React.FC<CategoryEditModalProps> = ({
     }
   };
 
+  const handleScheduleAdjustment = async () => {
+    if (!category) return;
+    setError('');
+
+    const newLimitNum = parseFloat(nextMonthLimit);
+    if (isNaN(newLimitNum) || newLimitNum < 0) {
+      setError('Please enter a valid amount (0 or greater)');
+      return;
+    }
+
+    // If there's already an adjustment, cancel it first
+    if (categoryAdjustment) {
+      try {
+        await cancelAdjustment.mutateAsync(categoryAdjustment.id);
+      } catch (err) {
+        setError(err instanceof Error ? err.message : 'Failed to update adjustment');
+        return;
+      }
+    }
+
+    // If the new limit is the same as current, just cancel (already done above)
+    if (newLimitNum === category.monthlyLimit) {
+      onClose();
+      return;
+    }
+
+    try {
+      await scheduleAdjustment.mutateAsync({
+        categoryName: category.name,
+        currentLimit: category.monthlyLimit,
+        newLimit: newLimitNum,
+        reason: adjustmentReason || undefined,
+      });
+      onClose();
+    } catch (err) {
+      setError(err instanceof Error ? err.message : 'Failed to schedule adjustment');
+    }
+  };
+
+  const handleCancelAdjustment = async () => {
+    if (!categoryAdjustment) return;
+    setError('');
+
+    try {
+      await cancelAdjustment.mutateAsync(categoryAdjustment.id);
+      setNextMonthLimit(category?.monthlyLimit.toString() || '');
+    } catch (err) {
+      setError(err instanceof Error ? err.message : 'Failed to cancel adjustment');
+    }
+  };
+
   const handleDelete = async () => {
     if (!category) return;
     setError('');
@@ -207,6 +293,7 @@ export const CategoryEditModal: React.FC<CategoryEditModalProps> = ({
 
   const handleClose = () => {
     if (!isPending) {
+      setShowDeleteConfirm(false);
       onClose();
     }
   };
@@ -214,10 +301,10 @@ export const CategoryEditModal: React.FC<CategoryEditModalProps> = ({
   if (!isOpen || !category) return null;
 
   const tabs = [
-    { id: 'edit' as TabType, label: 'Edit', icon: Edit3 },
+    { id: 'edit' as TabType, label: 'Details', icon: Edit3 },
     { id: 'rename' as TabType, label: 'Rename', icon: Type },
     { id: 'merge' as TabType, label: 'Merge', icon: GitMerge },
-    { id: 'delete' as TabType, label: 'Delete', icon: Trash2 },
+    { id: 'adjustment' as TabType, label: 'Next Month', icon: Calendar },
   ];
 
   return (
@@ -252,7 +339,7 @@ export const CategoryEditModal: React.FC<CategoryEditModalProps> = ({
           {tabs.map((tab) => {
             const Icon = tab.icon;
             const isActive = activeTab === tab.id;
-            const isDelete = tab.id === 'delete';
+            const hasAdjustment = tab.id === 'adjustment' && categoryAdjustment;
             
             return (
               <button
@@ -260,13 +347,12 @@ export const CategoryEditModal: React.FC<CategoryEditModalProps> = ({
                 onClick={() => {
                   setActiveTab(tab.id);
                   setError('');
+                  setShowDeleteConfirm(false);
                 }}
                 disabled={isPending}
-                className={`flex-1 flex items-center justify-center gap-2 px-4 py-3 text-sm font-medium transition-colors
+                className={`flex-1 flex items-center justify-center gap-2 px-4 py-3 text-sm font-medium transition-colors relative
                   ${isActive 
-                    ? isDelete
-                      ? 'border-b-2 border-red-500 text-red-600 dark:text-red-400'
-                      : 'border-b-2 border-green-500 text-green-600 dark:text-green-400'
+                    ? 'border-b-2 border-green-500 text-green-600 dark:text-green-400'
                     : 'text-gray-500 hover:text-gray-700 dark:hover:text-gray-300'
                   }
                   disabled:opacity-50
@@ -274,6 +360,9 @@ export const CategoryEditModal: React.FC<CategoryEditModalProps> = ({
               >
                 <Icon className="h-4 w-4" />
                 <span className="hidden sm:inline">{tab.label}</span>
+                {hasAdjustment && (
+                  <span className="absolute top-1 right-1 sm:relative sm:top-0 sm:right-0 w-2 h-2 bg-orange-500 rounded-full" />
+                )}
               </button>
             );
           })}
@@ -542,73 +631,174 @@ export const CategoryEditModal: React.FC<CategoryEditModalProps> = ({
             </div>
           )}
 
-          {/* Delete Tab */}
-          {activeTab === 'delete' && (
+          {/* Adjustment Tab */}
+          {activeTab === 'adjustment' && (
             <div className="space-y-4">
-              {/* Category info */}
-              <div className="flex items-center gap-3 p-3 bg-gray-50 dark:bg-gray-700/50 rounded-lg">
-                <div
-                  className="w-4 h-4 rounded-full flex-shrink-0"
-                  style={{ backgroundColor: category.color }}
-                />
-                <div>
-                  <p className="font-medium text-gray-900 dark:text-gray-100">{category.name}</p>
-                  <p className="text-sm text-gray-500 dark:text-gray-400">
-                    {transactionCount} transaction{transactionCount !== 1 ? 's' : ''}
+              {/* Current vs Next Month */}
+              <div className="grid grid-cols-2 gap-4">
+                <div className="p-3 bg-gray-50 dark:bg-gray-700/50 rounded-lg">
+                  <p className="text-xs text-gray-500 dark:text-gray-400 uppercase mb-1">Current Limit</p>
+                  <p className="text-lg font-semibold text-gray-900 dark:text-gray-100">
+                    {formatCurrency(category.monthlyLimit)}
                   </p>
                 </div>
-              </div>
-
-              {/* Warning */}
-              <div className="flex items-start gap-3 p-3 bg-red-50 dark:bg-red-900/20 rounded-lg">
-                <AlertTriangle className="h-5 w-5 text-red-600 dark:text-red-400 flex-shrink-0 mt-0.5" />
-                <div className="text-sm text-red-700 dark:text-red-300">
-                  {transactionCount > 0 ? (
-                    <>
-                      <p className="font-medium mb-1">This category has transactions</p>
-                      <p>
-                        Deleting will hide this category from selection. Existing transactions 
-                        will keep their historical categorization.
+                <div className={`p-3 rounded-lg ${
+                  categoryAdjustment 
+                    ? categoryAdjustment.adjustment_type === 'increase'
+                      ? 'bg-green-50 dark:bg-green-900/20'
+                      : 'bg-red-50 dark:bg-red-900/20'
+                    : 'bg-gray-50 dark:bg-gray-700/50'
+                }`}>
+                  <p className="text-xs text-gray-500 dark:text-gray-400 uppercase mb-1">Next Month</p>
+                  {categoryAdjustment ? (
+                    <div className="flex items-center gap-2">
+                      {categoryAdjustment.adjustment_type === 'increase' ? (
+                        <TrendingUp className="h-4 w-4 text-green-600 dark:text-green-400" />
+                      ) : (
+                        <TrendingDown className="h-4 w-4 text-red-600 dark:text-red-400" />
+                      )}
+                      <p className={`text-lg font-semibold ${
+                        categoryAdjustment.adjustment_type === 'increase'
+                          ? 'text-green-600 dark:text-green-400'
+                          : 'text-red-600 dark:text-red-400'
+                      }`}>
+                        {formatCurrency(categoryAdjustment.new_limit)}
                       </p>
-                    </>
+                    </div>
                   ) : (
-                    <p>
-                      This will permanently delete the category. This action cannot be undone.
+                    <p className="text-lg font-semibold text-gray-400 dark:text-gray-500">
+                      No change
                     </p>
                   )}
                 </div>
               </div>
 
-              {/* Reassignment option */}
-              {transactionCount > 0 && otherCategories.length > 0 && (
-                <div>
-                  <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
-                    Reassign transactions to (optional):
-                  </label>
-                  <select
-                    value={reassignTo}
-                    onChange={(e) => setReassignTo(e.target.value)}
-                    className="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-700 text-gray-900 dark:text-gray-100 focus:ring-2 focus:ring-red-500 focus:border-transparent"
+              {/* Pending adjustment info */}
+              {categoryAdjustment && (
+                <div className="flex items-center justify-between p-3 bg-orange-50 dark:bg-orange-900/20 rounded-lg">
+                  <div className="flex items-center gap-2 text-orange-700 dark:text-orange-300">
+                    <Calendar className="h-4 w-4" />
+                    <span className="text-sm font-medium">Scheduled adjustment</span>
+                  </div>
+                  <button
+                    onClick={handleCancelAdjustment}
+                    disabled={isPending}
+                    className="text-sm text-orange-600 dark:text-orange-400 hover:text-orange-800 dark:hover:text-orange-200 font-medium"
                   >
-                    <option value="">Keep original categorization</option>
-                    {otherCategories.map((c) => (
-                      <option key={c.id} value={c.id}>
-                        {c.name}
-                      </option>
-                    ))}
-                  </select>
+                    Cancel
+                  </button>
                 </div>
               )}
 
-              {/* Delete button */}
+              {/* New limit input */}
+              <div>
+                <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
+                  <Calendar className="inline h-4 w-4 mr-1" />
+                  Next Month's Limit
+                </label>
+                <div className="relative">
+                  <span className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-500">₪</span>
+                  <input
+                    type="number"
+                    value={nextMonthLimit}
+                    onChange={(e) => setNextMonthLimit(e.target.value)}
+                    placeholder="0"
+                    min="0"
+                    step="50"
+                    className="w-full pl-8 pr-3 py-2 border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-700 text-gray-900 dark:text-gray-100 focus:ring-2 focus:ring-green-500 focus:border-transparent"
+                  />
+                </div>
+                <p className="text-xs text-gray-500 dark:text-gray-400 mt-1">
+                  Set to 0 to deactivate this category next month
+                </p>
+              </div>
+
+              {/* Reason */}
+              <div>
+                <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
+                  Reason (optional)
+                </label>
+                <textarea
+                  value={adjustmentReason}
+                  onChange={(e) => setAdjustmentReason(e.target.value)}
+                  placeholder="Why are you adjusting this category?"
+                  rows={2}
+                  className="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-700 text-gray-900 dark:text-gray-100 focus:ring-2 focus:ring-green-500 focus:border-transparent"
+                />
+              </div>
+
+              {/* Preview */}
+              {parseFloat(nextMonthLimit) !== category.monthlyLimit && nextMonthLimit !== '' && (
+                <div className={`p-3 rounded-lg ${
+                  parseFloat(nextMonthLimit) > category.monthlyLimit
+                    ? 'bg-green-50 dark:bg-green-900/20 text-green-700 dark:text-green-300'
+                    : 'bg-red-50 dark:bg-red-900/20 text-red-700 dark:text-red-300'
+                }`}>
+                  <div className="flex items-center gap-2 text-sm font-medium">
+                    {parseFloat(nextMonthLimit) > category.monthlyLimit ? (
+                      <>
+                        <TrendingUp className="h-4 w-4" />
+                        Increase of {formatCurrency(parseFloat(nextMonthLimit) - category.monthlyLimit)}
+                      </>
+                    ) : (
+                      <>
+                        <TrendingDown className="h-4 w-4" />
+                        Decrease of {formatCurrency(category.monthlyLimit - parseFloat(nextMonthLimit))}
+                      </>
+                    )}
+                  </div>
+                </div>
+              )}
+
+              {/* Schedule button */}
               <div className="flex justify-end pt-2">
+                <button
+                  onClick={handleScheduleAdjustment}
+                  disabled={isPending || nextMonthLimit === '' || parseFloat(nextMonthLimit) === category.monthlyLimit}
+                  className="px-4 py-2 bg-green-600 text-white rounded-lg hover:bg-green-700 disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
+                >
+                  {scheduleAdjustment.isPending ? 'Scheduling...' : 
+                   categoryAdjustment ? 'Update Adjustment' : 'Schedule Adjustment'}
+                </button>
+              </div>
+            </div>
+          )}
+        </div>
+
+        {/* Footer with Delete button */}
+        <div className="px-4 py-3 border-t border-gray-200 dark:border-gray-700 bg-gray-50 dark:bg-gray-800/50">
+          {!showDeleteConfirm ? (
+            <button
+              onClick={() => setShowDeleteConfirm(true)}
+              disabled={isPending}
+              className="flex items-center gap-2 text-sm text-red-600 dark:text-red-400 hover:text-red-800 dark:hover:text-red-300 transition-colors disabled:opacity-50"
+            >
+              <Trash2 className="h-4 w-4" />
+              Delete this category
+            </button>
+          ) : (
+            <div className="flex items-center justify-between">
+              <p className="text-sm text-red-600 dark:text-red-400">
+                {transactionCount > 0 
+                  ? `Delete? (${transactionCount} transactions will keep their categorization)`
+                  : 'Delete this category permanently?'
+                }
+              </p>
+              <div className="flex items-center gap-2">
+                <button
+                  onClick={() => setShowDeleteConfirm(false)}
+                  disabled={isPending}
+                  className="px-3 py-1 text-sm text-gray-600 dark:text-gray-400 hover:text-gray-800 dark:hover:text-gray-200"
+                >
+                  Cancel
+                </button>
                 <button
                   onClick={handleDelete}
                   disabled={isPending}
-                  className="flex items-center gap-2 px-4 py-2 bg-red-600 text-white rounded-lg hover:bg-red-700 disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
+                  className="flex items-center gap-1 px-3 py-1 text-sm bg-red-600 text-white rounded hover:bg-red-700 disabled:opacity-50"
                 >
-                  <Trash2 className="h-4 w-4" />
-                  {deleteCategory.isPending ? 'Deleting...' : 'Delete Category'}
+                  <Trash2 className="h-3 w-3" />
+                  {deleteCategory.isPending ? 'Deleting...' : 'Delete'}
                 </button>
               </div>
             </div>

@@ -1,14 +1,12 @@
 import React, { useState, useEffect, useCallback } from 'react';
 import { useSearchParams } from 'react-router-dom';
-import { useActiveBudget, useCurrentMonthBudget } from '../hooks/useBudgets';
+import { useActiveBudget } from '../hooks/useBudgets';
 import { useCategories } from '../hooks/useCategories';
 import { PersonalBudgetEditor } from '../components/PersonalBudgetEditor';
 import { PersonalBudgetDisplay } from '../components/PersonalBudgetDisplay';
-import { BudgetComparisonCard } from '../components/BudgetComparisonCard';
-import { BudgetAdjustmentScheduler } from '../components/BudgetAdjustmentScheduler';
 import { CategoryList } from '../components/categories';
 import { BudgetSettings } from '../components/settings';
-import { Wallet, Settings, Tag, Sliders } from 'lucide-react';
+import { Wallet, Tag, Sliders } from 'lucide-react';
 import {
   getHeadingColor,
   getSubheadingColor,
@@ -18,18 +16,14 @@ import {
   getInactiveTextColor,
 } from '../utils/themeColors';
 
-type TabType = 'overview' | 'categories' | 'settings' | 'adjustments';
+type TabType = 'overview' | 'categories' | 'settings';
 
 export const BudgetManagement: React.FC = () => {
   const [searchParams, setSearchParams] = useSearchParams();
   const [activeTab, setActiveTab] = useState<TabType>('overview');
   const [autoCreate, setAutoCreate] = useState(false);
   const [editCategoryName, setEditCategoryName] = useState<string | null>(null);
-  const currentDate = new Date();
-  const currentYear = currentDate.getFullYear();
-  const currentMonth = currentDate.getMonth() + 1;
   
-  const { data: monthlyBudget } = useCurrentMonthBudget();
   const { data: categories } = useCategories(false, 'expense');
   
   const themeColor = 'green';
@@ -68,7 +62,6 @@ export const BudgetManagement: React.FC = () => {
     { id: 'overview' as TabType, label: 'Overview', icon: Wallet },
     { id: 'categories' as TabType, label: 'Categories', icon: Tag },
     { id: 'settings' as TabType, label: 'Settings', icon: Sliders },
-    { id: 'adjustments' as TabType, label: 'Adjustments', icon: Settings },
   ];
 
   return (
@@ -166,10 +159,10 @@ export const BudgetManagement: React.FC = () => {
               <div className="text-sm text-gray-500 dark:text-gray-400 p-4 bg-green-50 dark:bg-green-900/20 rounded-lg">
                 <p className="font-medium mb-2">💡 Category Management Tips:</p>
                 <ul className="list-disc list-inside space-y-1">
-                  <li><strong>Rename:</strong> Change a category name without losing transaction history</li>
+                  <li><strong>Edit:</strong> Adjust limits, colors, and warning thresholds</li>
+                  <li><strong>Next Month:</strong> Schedule budget adjustments for next month</li>
                   <li><strong>Merge:</strong> Combine similar categories (e.g., "Food" + "Groceries")</li>
-                  <li><strong>Delete:</strong> Remove unused categories - they'll be hidden but history preserved</li>
-                  <li><strong>Add:</strong> Create new categories with custom colors and limits</li>
+                  <li><strong>Delete:</strong> Remove unused categories - history is preserved</li>
                 </ul>
               </div>
             </div>
@@ -177,53 +170,6 @@ export const BudgetManagement: React.FC = () => {
 
           {activeTab === 'settings' && (
             <BudgetSettings />
-          )}
-
-          {activeTab === 'adjustments' && (
-            <div className="space-y-6">
-              {/* Current Month's Changes */}
-              <div>
-                <h2 className="text-lg font-semibold text-gray-900 dark:text-gray-100 mb-3">
-                  This Month's Changes
-                </h2>
-                {monthlyBudget && monthlyBudget.adjustment_count === 0 ? (
-                  <div className="bg-white dark:bg-gray-800 rounded-lg shadow-md p-8 text-center">
-                    <p className="text-gray-500 dark:text-gray-400">
-                      No changes made to budget this month
-                    </p>
-                    <p className="text-sm text-gray-400 dark:text-gray-500 mt-2">
-                      Budget matches the month-start configuration
-                    </p>
-                  </div>
-                ) : (
-                  <BudgetComparisonCard 
-                    year={currentYear} 
-                    month={currentMonth}
-                    compareToOriginal={true}
-                  />
-                )}
-              </div>
-
-              {/* Schedule Future Changes */}
-              <div>
-                <h2 className="text-lg font-semibold text-gray-900 dark:text-gray-100 mb-3">
-                  Next Month Budget Adjustments
-                </h2>
-                <BudgetAdjustmentScheduler />
-              </div>
-
-              {/* Tips */}
-              <div className="text-sm text-gray-500 dark:text-gray-400 p-4 bg-orange-50 dark:bg-orange-900/20 rounded-lg">
-                <p className="font-medium mb-2">💡 Managing Adjustments:</p>
-                <ul className="list-disc list-inside space-y-1">
-                  <li><strong>Current Month:</strong> Shows changes made during this month compared to month start</li>
-                  <li><strong>Next Month:</strong> Schedule adjustments that will apply automatically</li>
-                  <li>Green indicates increases, red indicates decreases</li>
-                  <li>Scheduled adjustments can be reviewed and cancelled before they're applied</li>
-                  <li>Use insights to refine your budget configuration over time</li>
-                </ul>
-              </div>
-            </div>
           )}
       </div>
     </div>
