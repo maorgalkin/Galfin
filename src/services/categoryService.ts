@@ -105,7 +105,20 @@ export const getCategories = async (
     throw error;
   }
   
-  return (data || []).map(mapRowToCategory);
+  // Deduplicate by name (keep the one with household_id if exists, otherwise first)
+  const categoryMap = new Map<string, Category>();
+  for (const row of data || []) {
+    const category = mapRowToCategory(row);
+    const existing = categoryMap.get(category.name.toLowerCase());
+    if (!existing) {
+      categoryMap.set(category.name.toLowerCase(), category);
+    } else if (category.householdId && !existing.householdId) {
+      // Prefer the household version
+      categoryMap.set(category.name.toLowerCase(), category);
+    }
+  }
+  
+  return Array.from(categoryMap.values());
 };
 
 /**
