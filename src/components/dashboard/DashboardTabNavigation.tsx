@@ -33,7 +33,7 @@ export const DashboardTabNavigation: React.FC<DashboardTabNavigationProps> = ({
               </span>
             )}
             {activeTab === 'dashboard' && (
-              <span className="absolute bottom-0 left-1/2 -translate-x-1/2 w-2/3 h-0.5 bg-purple-500 rounded-full" />
+              <span className="absolute bottom-0 left-1/2 -translate-x-1/2 w-4 h-1 bg-purple-500 rounded-full" />
             )}
           </button>
           <button
@@ -46,7 +46,7 @@ export const DashboardTabNavigation: React.FC<DashboardTabNavigationProps> = ({
           >
             Transactions
             {activeTab === 'transactions' && (
-              <span className="absolute bottom-0 left-1/2 -translate-x-1/2 w-2/3 h-0.5 bg-blue-500 rounded-full" />
+              <span className="absolute bottom-0 left-1/2 -translate-x-1/2 w-4 h-1 bg-blue-500 rounded-full" />
             )}
           </button>
           <button
@@ -59,7 +59,7 @@ export const DashboardTabNavigation: React.FC<DashboardTabNavigationProps> = ({
           >
             Budget
             {activeTab === 'budget' && (
-              <span className="absolute bottom-0 left-1/2 -translate-x-1/2 w-2/3 h-0.5 bg-green-500 rounded-full" />
+              <span className="absolute bottom-0 left-1/2 -translate-x-1/2 w-4 h-1 bg-green-500 rounded-full" />
             )}
           </button>
           <button
@@ -72,7 +72,7 @@ export const DashboardTabNavigation: React.FC<DashboardTabNavigationProps> = ({
           >
             Insights
             {activeTab === 'insights' && (
-              <span className="absolute bottom-0 left-1/2 -translate-x-1/2 w-2/3 h-0.5 bg-indigo-500 rounded-full" />
+              <span className="absolute bottom-0 left-1/2 -translate-x-1/2 w-4 h-1 bg-indigo-500 rounded-full" />
             )}
           </button>
         </nav>
