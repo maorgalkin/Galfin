@@ -34,7 +34,7 @@ export const DashboardTabNavigation: React.FC<DashboardTabNavigationProps> = ({
                 </span>
               )}
             </span>
-            <span className={`mt-2 w-4 h-1 rounded-full translate-y-[4px] ${activeTab === 'dashboard' ? 'bg-purple-500' : 'bg-transparent'}`} />
+            <span className={`mt-2 w-4 h-1 rounded-full translate-y-[6px] ${activeTab === 'dashboard' ? 'bg-purple-500' : 'bg-transparent'}`} />
           </button>
           <button
             onClick={() => onTabChange('transactions')}
@@ -45,7 +45,7 @@ export const DashboardTabNavigation: React.FC<DashboardTabNavigationProps> = ({
             }`}
           >
             <span>Transactions</span>
-            <span className={`mt-2 w-4 h-1 rounded-full translate-y-[4px] ${activeTab === 'transactions' ? 'bg-blue-500' : 'bg-transparent'}`} />
+            <span className={`mt-2 w-4 h-1 rounded-full translate-y-[6px] ${activeTab === 'transactions' ? 'bg-blue-500' : 'bg-transparent'}`} />
           </button>
           <button
             onClick={() => onTabChange('budget')}
@@ -56,7 +56,7 @@ export const DashboardTabNavigation: React.FC<DashboardTabNavigationProps> = ({
             }`}
           >
             <span>Budget</span>
-            <span className={`mt-2 w-4 h-1 rounded-full translate-y-[4px] ${activeTab === 'budget' ? 'bg-green-500' : 'bg-transparent'}`} />
+            <span className={`mt-2 w-4 h-1 rounded-full translate-y-[6px] ${activeTab === 'budget' ? 'bg-green-500' : 'bg-transparent'}`} />
           </button>
           <button
             onClick={() => onTabChange('insights')}
@@ -67,7 +67,7 @@ export const DashboardTabNavigation: React.FC<DashboardTabNavigationProps> = ({
             }`}
           >
             <span>Insights</span>
-            <span className={`mt-2 w-4 h-1 rounded-full translate-y-[4px] ${activeTab === 'insights' ? 'bg-indigo-500' : 'bg-transparent'}`} />
+            <span className={`mt-2 w-4 h-1 rounded-full translate-y-[6px] ${activeTab === 'insights' ? 'bg-indigo-500' : 'bg-transparent'}`} />
           </button>
         </nav>
       </div>
