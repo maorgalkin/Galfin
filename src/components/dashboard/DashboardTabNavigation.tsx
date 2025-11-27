@@ -15,9 +15,9 @@ export const DashboardTabNavigation: React.FC<DashboardTabNavigationProps> = ({
   alertsCount = 0,
 }) => {
   return (
-    <div className="mb-6">
+    <div className="mb-6 overflow-hidden">
       <div className="border-b border-gray-200 dark:border-gray-700">
-        <nav className="-mb-px flex">
+        <nav className="-mb-px flex w-fit">
           <button
             onClick={() => onTabChange('dashboard')}
             className={`py-3 px-4 border-b-2 font-medium text-sm relative transition-colors ${
