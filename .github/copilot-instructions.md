@@ -8,7 +8,7 @@ This is a React TypeScript family finance tracking application built with Vite, 
 
 - **Framework**: React 19.1.1 with TypeScript 5.8.3
 - **Backend**: Supabase (PostgreSQL + Auth)
-- **Styling**: Tailwind CSS 4.1.12
+- **Styling**: Tailwind CSS 3.4.x (NOT v4)
 - **Testing**: Vitest 3.2.4 + React Testing Library
 - **Build Tool**: Vite 7.1.2
 
@@ -26,4 +26,55 @@ For complete project information, refer to:
 - User authentication required
 - Budget configuration includes family members and active categories in globalSettings
 - Row Level Security (RLS) enabled on all database tables
+
+---
+
+## Frontend Styling Guidelines
+
+### Tailwind CSS Configuration
+
+This project uses **Tailwind CSS v3.4.x** with a standard setup:
+
+- **Config file**: `tailwind.config.js` - JavaScript-based configuration
+- **PostCSS**: `postcss.config.mjs` - Standard Tailwind + Autoprefixer
+- **CSS entry**: `src/index.css` - Uses `@tailwind base/components/utilities`
+
+**DO NOT upgrade to Tailwind v4** - it uses a completely different CSS-first configuration system that is incompatible with our JS-based config.
+
+### Theme Colors
+
+The app uses a consistent theme color system. When adding UI that needs dynamic theming:
+
+1. **Primary theme colors**: `purple`, `blue`, `green`, `indigo`
+2. **Use safelist patterns** in `tailwind.config.js` for dynamically-generated classes
+3. **Dark mode**: Uses `media` strategy (OS preference)
+
+Example safelist pattern:
+```javascript
+{ pattern: /bg-(purple|blue|green|indigo)-(500|600)/, variants: ['hover', 'dark'] }
+```
+
+### CSS Best Practices
+
+1. **Prefer Tailwind utility classes** over custom CSS
+2. **Use `@layer components`** in `index.css` for reusable component styles
+3. **Avoid inline styles** - use Tailwind classes instead
+4. **Test both dev and build** - run `npm run build && npm run preview` to ensure consistency
+
+### Dev vs Production Parity
+
+To ensure dev and prod render identically:
+
+1. Always test with `npm run build && npm run preview` before pushing
+2. If a class works in dev but not prod, add it to `safelist` in `tailwind.config.js`
+3. Dynamic classes (string interpolation) MUST be safelisted
+
+### Reusable Component Patterns
+
+When creating UI components intended for reuse:
+
+1. Accept theme/color props as full class names, not color names
+2. Use Tailwind's design tokens (spacing, colors) consistently
+3. Support dark mode with `dark:` variants
+4. Keep components in `/src/components/` with clear naming
 
