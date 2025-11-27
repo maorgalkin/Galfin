@@ -159,10 +159,10 @@ export const BudgetManagement: React.FC = () => {
               <div className="text-sm text-gray-500 dark:text-gray-400 p-4 bg-green-50 dark:bg-green-900/20 rounded-lg">
                 <p className="font-medium mb-2">💡 Category Management Tips:</p>
                 <ul className="list-disc list-inside space-y-1">
-                  <li><strong>Edit:</strong> Adjust limits, colors, and warning thresholds</li>
-                  <li><strong>Next Month:</strong> Schedule budget adjustments for next month</li>
-                  <li><strong>Merge:</strong> Combine similar categories (e.g., "Food" + "Groceries")</li>
-                  <li><strong>Delete:</strong> Remove unused categories - history is preserved</li>
+                  <li><strong>Details:</strong> Change limits, colors, and warning thresholds — applies immediately to your budget template</li>
+                  <li><strong>Next Month:</strong> Schedule a temporary adjustment for next month only, without changing your base budget. Great for one-time events like holidays or vacations</li>
+                  <li><strong>Merge:</strong> Combine similar categories (e.g., "Food" + "Groceries") — all transactions move to the target</li>
+                  <li><strong>Delete:</strong> Remove unused categories — transaction history is preserved</li>
                 </ul>
               </div>
             </div>
