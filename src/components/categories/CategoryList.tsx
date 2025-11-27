@@ -45,8 +45,11 @@ export const CategoryList: React.FC<CategoryListProps> = ({
   }, [initialEditCategory, onInitialEditHandled]);
 
   // Calculate transaction counts for each category
-  const getTransactionCount = (categoryId: string): number => {
-    return transactions.filter(t => t.category_id === categoryId).length;
+  // Matches by category_id (new) or category name (legacy)
+  const getTransactionCount = (categoryId: string, categoryName: string): number => {
+    return transactions.filter(t => 
+      t.category_id === categoryId || t.category === categoryName
+    ).length;
   };
 
   // Format currency
@@ -117,7 +120,7 @@ export const CategoryList: React.FC<CategoryListProps> = ({
         <div className="bg-white dark:bg-gray-800 rounded-xl shadow-sm border border-gray-200 dark:border-gray-700 overflow-hidden">
           <div className="divide-y divide-gray-200 dark:divide-gray-700">
             {activeCategories.map((category) => {
-              const transactionCount = getTransactionCount(category.id);
+              const transactionCount = getTransactionCount(category.id, category.name);
               
               return (
                 <div
