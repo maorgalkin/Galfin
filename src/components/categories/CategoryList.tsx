@@ -7,7 +7,9 @@ import {
   Plus, 
   Edit3,
   DollarSign,
-  AlertTriangle
+  AlertTriangle,
+  AlertCircle,
+  Receipt
 } from 'lucide-react';
 import { useCategories } from '../../hooks/useCategories';
 import { useFinance } from '../../context/FinanceContext';
@@ -138,16 +140,16 @@ export const CategoryList: React.FC<CategoryListProps> = ({
                         </h4>
                       </div>
                       <div className="flex items-center gap-3 text-sm text-gray-500 dark:text-gray-400">
-                        <span>{formatCurrency(category.monthlyLimit)} / month</span>
-                        <span>•</span>
-                        <span>{transactionCount} transaction{transactionCount !== 1 ? 's' : ''}</span>
+                        <span>{formatCurrency(category.monthlyLimit)}</span>
+                        <span className="flex items-center gap-1" title={`${transactionCount} transaction${transactionCount !== 1 ? 's' : ''}`}>
+                          <Receipt className="h-3.5 w-3.5" />
+                          {transactionCount}
+                        </span>
                         {category.warningThreshold < 100 && (
-                          <>
-                            <span>•</span>
-                            <span className="text-amber-600 dark:text-amber-400">
-                              Alert at {category.warningThreshold}%
-                            </span>
-                          </>
+                          <span className="flex items-center gap-1 text-amber-600 dark:text-amber-400" title={`Alert at ${category.warningThreshold}%`}>
+                            <AlertCircle className="h-3.5 w-3.5" />
+                            {category.warningThreshold}%
+                          </span>
                         )}
                       </div>
                     </div>
