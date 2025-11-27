@@ -15,12 +15,12 @@ export const DashboardTabNavigation: React.FC<DashboardTabNavigationProps> = ({
   alertsCount = 0,
 }) => {
   return (
-    <div className="mb-6 overflow-hidden">
-      <div className="border-b border-gray-200 dark:border-gray-700">
-        <nav className="-mb-px flex w-fit">
+    <div className="mb-6">
+      <div className="border-b border-gray-200 dark:border-gray-700 overflow-x-auto">
+        <nav className="-mb-px flex">
           <button
             onClick={() => onTabChange('dashboard')}
-            className={`py-3 px-4 border-b-2 font-medium text-sm relative transition-colors ${
+            className={`py-3 px-4 border-b-2 font-medium text-sm relative transition-colors whitespace-nowrap flex-shrink-0 ${
               activeTab === 'dashboard'
                 ? 'border-purple-500 text-purple-600 dark:text-purple-400'
                 : 'border-transparent text-gray-500 dark:text-gray-400 hover:text-gray-700 dark:hover:text-gray-300 hover:border-gray-300 dark:hover:border-gray-600'
@@ -35,7 +35,7 @@ export const DashboardTabNavigation: React.FC<DashboardTabNavigationProps> = ({
           </button>
           <button
             onClick={() => onTabChange('transactions')}
-            className={`py-3 px-4 border-b-2 font-medium text-sm transition-colors ${
+            className={`py-3 px-4 border-b-2 font-medium text-sm transition-colors whitespace-nowrap flex-shrink-0 ${
               activeTab === 'transactions'
                 ? 'border-blue-500 text-blue-600 dark:text-blue-400'
                 : 'border-transparent text-gray-500 dark:text-gray-400 hover:text-gray-700 dark:hover:text-gray-300 hover:border-gray-300 dark:hover:border-gray-600'
@@ -45,7 +45,7 @@ export const DashboardTabNavigation: React.FC<DashboardTabNavigationProps> = ({
           </button>
           <button
             onClick={() => onTabChange('budget')}
-            className={`py-3 px-4 border-b-2 font-medium text-sm transition-colors ${
+            className={`py-3 px-4 border-b-2 font-medium text-sm transition-colors whitespace-nowrap flex-shrink-0 ${
               activeTab === 'budget'
                 ? 'border-green-500 text-green-600 dark:text-green-400'
                 : 'border-transparent text-gray-500 dark:text-gray-400 hover:text-gray-700 dark:hover:text-gray-300 hover:border-gray-300 dark:hover:border-gray-600'
@@ -55,7 +55,7 @@ export const DashboardTabNavigation: React.FC<DashboardTabNavigationProps> = ({
           </button>
           <button
             onClick={() => onTabChange('insights')}
-            className={`py-3 px-4 border-b-2 font-medium text-sm transition-colors ${
+            className={`py-3 px-4 border-b-2 font-medium text-sm transition-colors whitespace-nowrap flex-shrink-0 ${
               activeTab === 'insights'
                 ? 'border-indigo-500 text-indigo-600 dark:text-indigo-400'
                 : 'border-transparent text-gray-500 dark:text-gray-400 hover:text-gray-700 dark:hover:text-gray-300 hover:border-gray-300 dark:hover:border-gray-600'
