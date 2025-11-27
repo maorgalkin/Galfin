@@ -17,7 +17,7 @@ export const DashboardTabNavigation: React.FC<DashboardTabNavigationProps> = ({
   return (
     <div className="mb-6">
       <div className="border-b-2 border-gray-200 dark:border-gray-700">
-        <nav className="flex justify-between sm:justify-start">
+        <nav className="flex justify-start">
           <button
             onClick={() => onTabChange('dashboard')}
             className={`pt-3 pb-2 px-2 sm:px-4 font-medium text-sm transition-colors flex flex-col items-center ${
