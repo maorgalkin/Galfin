@@ -1,14 +1,11 @@
 // Category List Component
 // Part of Category Management Restructure (Phase 4)
+// Updated to use unified CategoryEditModal
 
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { 
   Plus, 
-  Edit3, 
-  Trash2, 
-  GitMerge, 
-  MoreVertical, 
-  ArrowUpDown,
+  Edit3,
   DollarSign,
   AlertTriangle
 } from 'lucide-react';
@@ -16,26 +13,34 @@ import { useCategories } from '../../hooks/useCategories';
 import { useFinance } from '../../context/FinanceContext';
 import type { Category } from '../../types/category';
 import { AddCategoryModal } from './AddCategoryModal';
-import { RenameCategoryModal } from './RenameCategoryModal';
-import { DeleteCategoryModal } from './DeleteCategoryModal';
-import { MergeCategoryModal } from './MergeCategoryModal';
-import { EditLimitModal } from './EditLimitModal';
+import { CategoryEditModal } from './CategoryEditModal';
 
 interface CategoryListProps {
   onCategorySelect?: (category: Category) => void;
+  /** Category to auto-open for editing (e.g., when navigating from Overview) */
+  initialEditCategory?: Category | null;
+  onInitialEditHandled?: () => void;
 }
 
-export const CategoryList: React.FC<CategoryListProps> = ({ onCategorySelect }) => {
+export const CategoryList: React.FC<CategoryListProps> = ({ 
+  onCategorySelect,
+  initialEditCategory,
+  onInitialEditHandled,
+}) => {
   const { data: categories, isLoading, error } = useCategories(false, 'expense');
   const { transactions } = useFinance();
   
   // Modal states
   const [showAddModal, setShowAddModal] = useState(false);
-  const [renameCategory, setRenameCategory] = useState<Category | null>(null);
-  const [deleteCategory, setDeleteCategory] = useState<Category | null>(null);
-  const [mergeCategory, setMergeCategory] = useState<Category | null>(null);
-  const [editLimitCategory, setEditLimitCategory] = useState<Category | null>(null);
-  const [openMenuId, setOpenMenuId] = useState<string | null>(null);
+  const [editCategory, setEditCategory] = useState<Category | null>(null);
+
+  // Handle initial edit category from navigation
+  useEffect(() => {
+    if (initialEditCategory) {
+      setEditCategory(initialEditCategory);
+      onInitialEditHandled?.();
+    }
+  }, [initialEditCategory, onInitialEditHandled]);
 
   // Calculate transaction counts for each category
   const getTransactionCount = (categoryId: string): number => {
@@ -148,74 +153,14 @@ export const CategoryList: React.FC<CategoryListProps> = ({ onCategorySelect }) 
                     </div>
                   </div>
 
-                  {/* Right side: Action menu */}
-                  <div className="relative">
-                    <button
-                      onClick={() => setOpenMenuId(openMenuId === category.id ? null : category.id)}
-                      className="p-2 hover:bg-gray-100 dark:hover:bg-gray-700 rounded-lg transition-colors"
-                    >
-                      <MoreVertical className="h-5 w-5 text-gray-500" />
-                    </button>
-
-                    {/* Dropdown menu */}
-                    {openMenuId === category.id && (
-                      <>
-                        {/* Backdrop to close menu */}
-                        <div 
-                          className="fixed inset-0 z-10" 
-                          onClick={() => setOpenMenuId(null)}
-                        />
-                        
-                        <div className="absolute right-0 top-full mt-1 w-48 bg-white dark:bg-gray-800 rounded-lg shadow-lg border border-gray-200 dark:border-gray-700 z-20 py-1">
-                          <button
-                            onClick={() => {
-                              setRenameCategory(category);
-                              setOpenMenuId(null);
-                            }}
-                            className="w-full flex items-center gap-2 px-4 py-2 text-sm text-gray-700 dark:text-gray-200 hover:bg-gray-100 dark:hover:bg-gray-700"
-                          >
-                            <Edit3 className="h-4 w-4" />
-                            Rename
-                          </button>
-                          
-                          <button
-                            onClick={() => {
-                              setMergeCategory(category);
-                              setOpenMenuId(null);
-                            }}
-                            className="w-full flex items-center gap-2 px-4 py-2 text-sm text-gray-700 dark:text-gray-200 hover:bg-gray-100 dark:hover:bg-gray-700"
-                          >
-                            <GitMerge className="h-4 w-4" />
-                            Merge into...
-                          </button>
-                          
-                          <button
-                            onClick={() => {
-                              setEditLimitCategory(category);
-                              setOpenMenuId(null);
-                            }}
-                            className="w-full flex items-center gap-2 px-4 py-2 text-sm text-gray-700 dark:text-gray-200 hover:bg-gray-100 dark:hover:bg-gray-700"
-                          >
-                            <ArrowUpDown className="h-4 w-4" />
-                            Edit Limit
-                          </button>
-                          
-                          <hr className="my-1 border-gray-200 dark:border-gray-700" />
-                          
-                          <button
-                            onClick={() => {
-                              setDeleteCategory(category);
-                              setOpenMenuId(null);
-                            }}
-                            className="w-full flex items-center gap-2 px-4 py-2 text-sm text-red-600 dark:text-red-400 hover:bg-red-50 dark:hover:bg-red-900/20"
-                          >
-                            <Trash2 className="h-4 w-4" />
-                            Delete
-                          </button>
-                        </div>
-                      </>
-                    )}
-                  </div>
+                  {/* Right side: Edit link */}
+                  <button
+                    onClick={() => setEditCategory(category)}
+                    className="flex items-center gap-1.5 px-3 py-1.5 text-sm text-green-600 dark:text-green-400 hover:bg-green-50 dark:hover:bg-green-900/20 rounded-lg transition-colors"
+                  >
+                    <Edit3 className="h-4 w-4" />
+                    Edit
+                  </button>
                 </div>
               );
             })}
@@ -229,30 +174,10 @@ export const CategoryList: React.FC<CategoryListProps> = ({ onCategorySelect }) 
         onClose={() => setShowAddModal(false)} 
       />
       
-      <RenameCategoryModal
-        isOpen={!!renameCategory}
-        category={renameCategory}
-        onClose={() => setRenameCategory(null)}
-      />
-      
-      <DeleteCategoryModal
-        isOpen={!!deleteCategory}
-        category={deleteCategory}
-        onClose={() => setDeleteCategory(null)}
-        transactionCount={deleteCategory ? getTransactionCount(deleteCategory.id) : 0}
-      />
-      
-      <MergeCategoryModal
-        isOpen={!!mergeCategory}
-        sourceCategory={mergeCategory}
-        allCategories={activeCategories}
-        onClose={() => setMergeCategory(null)}
-      />
-      
-      <EditLimitModal
-        isOpen={!!editLimitCategory}
-        category={editLimitCategory}
-        onClose={() => setEditLimitCategory(null)}
+      <CategoryEditModal
+        isOpen={!!editCategory}
+        category={editCategory}
+        onClose={() => setEditCategory(null)}
       />
     </div>
   );

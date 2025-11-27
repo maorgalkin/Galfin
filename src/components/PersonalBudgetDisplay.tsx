@@ -1,22 +1,21 @@
 import React from 'react';
 import { useActiveBudget } from '../hooks/useBudgets';
-import { Edit2, Loader2, DollarSign } from 'lucide-react';
+import { Loader2, DollarSign } from 'lucide-react';
 import type { CategoryConfig } from '../types/budget';
 import {
-  getPrimaryButtonBg,
-  getPrimaryButtonHoverBg,
   getInactiveBg,
   getIconColor,
 } from '../utils/themeColors';
 
 interface PersonalBudgetDisplayProps {
   className?: string;
-  onEdit?: () => void;
+  /** Called when a category tile is clicked (passes category name) */
+  onCategoryClick?: (categoryName: string) => void;
 }
 
 export const PersonalBudgetDisplay: React.FC<PersonalBudgetDisplayProps> = ({
   className = '',
-  onEdit,
+  onCategoryClick,
 }) => {
   const { data: activeBudget, isLoading } = useActiveBudget();
   const themeColor = 'green';
@@ -55,24 +54,13 @@ export const PersonalBudgetDisplay: React.FC<PersonalBudgetDisplayProps> = ({
     <div className={`bg-white dark:bg-gray-800 rounded-lg shadow-md ${className}`}>
       {/* Header */}
       <div className="px-6 py-4 border-b border-gray-200 dark:border-gray-700">
-        <div className="flex items-center justify-between">
-          <div>
-            <h3 className="text-lg font-semibold text-gray-900 dark:text-gray-100">
-              {activeBudget.name}
-            </h3>
-            <p className="text-sm text-gray-600 dark:text-gray-400 mt-1">
-              {activeCategories.length} categories • {formatCurrency(totalBudget)} monthly budget
-            </p>
-          </div>
-          {onEdit && (
-            <button
-              onClick={onEdit}
-              className={`flex items-center px-4 py-2 ${getPrimaryButtonBg(themeColor)} text-white rounded-md ${getPrimaryButtonHoverBg(themeColor)} transition-colors text-sm font-medium`}
-            >
-              <Edit2 className="h-4 w-4 mr-2" />
-              Edit Budget
-            </button>
-          )}
+        <div>
+          <h3 className="text-lg font-semibold text-gray-900 dark:text-gray-100">
+            {activeBudget.name}
+          </h3>
+          <p className="text-sm text-gray-600 dark:text-gray-400 mt-1">
+            {activeCategories.length} categories • {formatCurrency(totalBudget)} monthly budget
+          </p>
         </div>
       </div>
 
@@ -93,11 +81,17 @@ export const PersonalBudgetDisplay: React.FC<PersonalBudgetDisplayProps> = ({
 
       {/* Categories Grid */}
       <div className="px-6 py-4">
+        <div className="flex justify-between items-center mb-3">
+          <span className="text-sm text-gray-500 dark:text-gray-400">
+            Click a category to edit
+          </span>
+        </div>
         <div className="budget-category-grid">
           {activeCategories.map(([name, config]) => (
             <div
               key={name}
-              className="p-4 bg-white dark:bg-gray-700 rounded-lg border-2 border-gray-200 dark:border-gray-600 hover:shadow-md transition-all"
+              onClick={() => onCategoryClick?.(name)}
+              className={`p-4 bg-white dark:bg-gray-700 rounded-lg border-2 border-gray-200 dark:border-gray-600 hover:shadow-md transition-all ${onCategoryClick ? 'cursor-pointer hover:border-green-400 dark:hover:border-green-500' : ''}`}
             >
               <div className="flex items-start justify-between mb-2">
                 <div className="flex items-center gap-2 flex-1">

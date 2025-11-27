@@ -1,6 +1,7 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useCallback } from 'react';
 import { useSearchParams } from 'react-router-dom';
 import { useActiveBudget, useCurrentMonthBudget } from '../hooks/useBudgets';
+import { useCategories } from '../hooks/useCategories';
 import { PersonalBudgetEditor } from '../components/PersonalBudgetEditor';
 import { PersonalBudgetDisplay } from '../components/PersonalBudgetDisplay';
 import { BudgetComparisonCard } from '../components/BudgetComparisonCard';
@@ -23,17 +24,35 @@ export const BudgetManagement: React.FC = () => {
   const [searchParams, setSearchParams] = useSearchParams();
   const [activeTab, setActiveTab] = useState<TabType>('overview');
   const [autoCreate, setAutoCreate] = useState(false);
-  const [isEditingBudget, setIsEditingBudget] = useState(false);
+  const [editCategoryName, setEditCategoryName] = useState<string | null>(null);
   const currentDate = new Date();
   const currentYear = currentDate.getFullYear();
   const currentMonth = currentDate.getMonth() + 1;
   
   const { data: monthlyBudget } = useCurrentMonthBudget();
+  const { data: categories } = useCategories(false, 'expense');
   
   const themeColor = 'green';
 
   // Check if user has an active budget
   const { data: activeBudget, isLoading: loadingActiveBudget } = useActiveBudget();
+
+  // Get category object by name
+  const getEditCategory = useCallback(() => {
+    if (!editCategoryName || !categories) return null;
+    return categories.find(c => c.name === editCategoryName) || null;
+  }, [editCategoryName, categories]);
+
+  // Handle category click from Overview - navigate to Categories tab
+  const handleCategoryClick = useCallback((categoryName: string) => {
+    setEditCategoryName(categoryName);
+    setActiveTab('categories');
+  }, []);
+
+  // Clear edit category when handled
+  const handleInitialEditHandled = useCallback(() => {
+    setEditCategoryName(null);
+  }, []);
 
   // Check for 'create' parameter on mount
   useEffect(() => {
@@ -115,26 +134,6 @@ export const BudgetManagement: React.FC = () => {
                 
                 <PersonalBudgetEditor autoCreate={autoCreate} />
               </div>
-            ) : isEditingBudget ? (
-              // Editing mode - show editor
-              <div>
-                {/* Tips Block - at the top */}
-                <div className={`text-sm text-gray-500 dark:text-gray-400 mb-6 p-4 ${getInactiveBg(themeColor)} rounded-lg`}>
-                  <p className="font-medium mb-2">💡 Editing Your Budget:</p>
-                  <ul className="list-disc list-inside space-y-1">
-                    <li>Changes to your budget apply to future months automatically</li>
-                    <li>Add or remove categories based on your spending patterns</li>
-                    <li>Adjust limits and warning thresholds as needed</li>
-                  </ul>
-                </div>
-                
-                <PersonalBudgetEditor 
-                  autoCreate={false}
-                  autoEdit={true}
-                  onSaveComplete={() => setIsEditingBudget(false)}
-                  onCancelEdit={() => setIsEditingBudget(false)}
-                />
-              </div>
             ) : (
               // Display mode - show configured budget
               <div>
@@ -143,13 +142,13 @@ export const BudgetManagement: React.FC = () => {
                   <p className="font-medium mb-2">💡 Your Budget:</p>
                   <ul className="list-disc list-inside space-y-1">
                     <li>This is your configured budget used for all monthly budgets</li>
-                    <li>Click "Edit Budget" to modify categories, limits, or settings</li>
-                    <li>Changes will apply to future months automatically</li>
+                    <li>Click any category to edit its details, limits, or manage it</li>
+                    <li>Use the Categories tab for full category management</li>
                   </ul>
                 </div>
                 
                 <PersonalBudgetDisplay 
-                  onEdit={() => setIsEditingBudget(true)}
+                  onCategoryClick={handleCategoryClick}
                 />
               </div>
             )
@@ -158,7 +157,10 @@ export const BudgetManagement: React.FC = () => {
           {activeTab === 'categories' && (
             <div className="space-y-6">
               {/* Category List with full management UI */}
-              <CategoryList />
+              <CategoryList 
+                initialEditCategory={getEditCategory()}
+                onInitialEditHandled={handleInitialEditHandled}
+              />
 
               {/* Tips */}
               <div className="text-sm text-gray-500 dark:text-gray-400 p-4 bg-green-50 dark:bg-green-900/20 rounded-lg">
