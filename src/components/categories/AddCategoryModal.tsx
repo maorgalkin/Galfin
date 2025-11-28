@@ -1,14 +1,12 @@
 // Add Category Modal
 // Part of Category Management Restructure (Phase 4)
-// Updated: supports adding now or scheduling for next month
+// Updated: Single form with schedule toggle
 
 import React, { useState, useEffect } from 'react';
-import { X, AlertCircle, Calendar, Zap } from 'lucide-react';
+import { X, AlertCircle, HelpCircle } from 'lucide-react';
 import { useCreateCategory, useCategories } from '../../hooks/useCategories';
 import { useScheduleAdjustment, useNextMonthAdjustments } from '../../hooks/useBudgets';
-import { DEFAULT_CATEGORY_COLORS, getNextCategoryColor } from '../../types/category';
-
-type AddMode = 'now' | 'next-month';
+import { getNextCategoryColor } from '../../types/category';
 
 interface AddCategoryModalProps {
   isOpen: boolean;
@@ -21,7 +19,7 @@ export const AddCategoryModal: React.FC<AddCategoryModalProps> = ({ isOpen, onCl
   const createCategory = useCreateCategory();
   const scheduleAdjustment = useScheduleAdjustment();
   
-  const [addMode, setAddMode] = useState<AddMode>('now');
+  const [scheduleForNextMonth, setScheduleForNextMonth] = useState(false);
   const [name, setName] = useState('');
   const [color, setColor] = useState('#3B82F6');
   const [monthlyLimit, setMonthlyLimit] = useState('');
@@ -39,7 +37,7 @@ export const AddCategoryModal: React.FC<AddCategoryModalProps> = ({ isOpen, onCl
   // Reset form when modal opens
   useEffect(() => {
     if (isOpen) {
-      setAddMode('now');
+      setScheduleForNextMonth(false);
       setName('');
       setMonthlyLimit('');
       setWarningThreshold('80');
@@ -70,14 +68,14 @@ export const AddCategoryModal: React.FC<AddCategoryModalProps> = ({ isOpen, onCl
       return;
     }
 
-    // Check for duplicate in pending adjustments (for next-month mode)
-    if (addMode === 'next-month' && nameExistsInAdjustments(name.trim())) {
+    // Check for duplicate in pending adjustments (for scheduled mode)
+    if (scheduleForNextMonth && nameExistsInAdjustments(name.trim())) {
       setError('A category with this name is already scheduled for next month');
       return;
     }
 
     try {
-      if (addMode === 'now') {
+      if (!scheduleForNextMonth) {
         // Create category immediately
         await createCategory.mutateAsync({
           name: name.trim(),
@@ -124,7 +122,7 @@ export const AddCategoryModal: React.FC<AddCategoryModalProps> = ({ isOpen, onCl
           </button>
         </div>
 
-        {/* Form */}
+        {/* Content */}
         <form onSubmit={handleSubmit} className="p-4 space-y-4">
           {/* Error message */}
           {error && (
@@ -132,40 +130,6 @@ export const AddCategoryModal: React.FC<AddCategoryModalProps> = ({ isOpen, onCl
               <AlertCircle className="h-4 w-4 flex-shrink-0" />
               {error}
             </div>
-          )}
-
-          {/* Add Mode Toggle */}
-          <div className="flex rounded-lg border border-gray-200 dark:border-gray-700 overflow-hidden">
-            <button
-              type="button"
-              onClick={() => setAddMode('now')}
-              className={`flex-1 flex items-center justify-center gap-2 px-3 py-2 text-sm font-medium transition-colors ${
-                addMode === 'now'
-                  ? 'bg-green-600 text-white'
-                  : 'bg-gray-50 dark:bg-gray-700/50 text-gray-600 dark:text-gray-400 hover:bg-gray-100 dark:hover:bg-gray-700'
-              }`}
-            >
-              <Zap className="h-4 w-4" />
-              Add Now
-            </button>
-            <button
-              type="button"
-              onClick={() => setAddMode('next-month')}
-              className={`flex-1 flex items-center justify-center gap-2 px-3 py-2 text-sm font-medium transition-colors ${
-                addMode === 'next-month'
-                  ? 'bg-orange-500 text-white'
-                  : 'bg-gray-50 dark:bg-gray-700/50 text-gray-600 dark:text-gray-400 hover:bg-gray-100 dark:hover:bg-gray-700'
-              }`}
-            >
-              <Calendar className="h-4 w-4" />
-              Next Month
-            </button>
-          </div>
-          
-          {addMode === 'next-month' && (
-            <p className="text-xs text-orange-600 dark:text-orange-400 bg-orange-50 dark:bg-orange-900/20 px-3 py-2 rounded-lg">
-              This category will be created when the new month starts
-            </p>
           )}
 
           {/* Name */}
@@ -178,82 +142,97 @@ export const AddCategoryModal: React.FC<AddCategoryModalProps> = ({ isOpen, onCl
               value={name}
               onChange={(e) => setName(e.target.value)}
               placeholder="e.g., Groceries"
-              className="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-700 text-gray-900 dark:text-gray-100 focus:ring-2 focus:ring-green-500 focus:border-transparent"
+              className="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-700 text-gray-900 dark:text-gray-100 focus:ring-2 focus:ring-purple-500 focus:border-transparent"
               autoFocus
             />
           </div>
 
-          {/* Color - only for immediate add */}
-          {addMode === 'now' && (
+          {/* Color & Monthly Limit - Inline */}
+          <div className="flex gap-3">
+            {/* Native Color Picker */}
             <div>
               <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
                 Color
               </label>
-              <div className="flex flex-wrap gap-2">
-                {DEFAULT_CATEGORY_COLORS.map((c) => (
-                  <button
-                    key={c}
-                    type="button"
-                    onClick={() => setColor(c)}
-                    className={`w-8 h-8 rounded-full border-2 transition-all ${
-                      color === c 
-                        ? 'border-gray-900 dark:border-white scale-110' 
-                        : 'border-transparent hover:scale-105'
-                    }`}
-                    style={{ backgroundColor: c }}
-                  />
-                ))}
-              </div>
-            </div>
-          )}
-
-          {/* Monthly Limit */}
-          <div>
-            <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
-              Monthly Limit
-            </label>
-            <div className="relative">
-              <span className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-500">₪</span>
               <input
-                type="number"
-                value={monthlyLimit}
-                onChange={(e) => setMonthlyLimit(e.target.value)}
-                placeholder="0"
-                min="0"
-                step="50"
-                className="w-full pl-8 pr-3 py-2 border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-700 text-gray-900 dark:text-gray-100 focus:ring-2 focus:ring-green-500 focus:border-transparent"
+                type="color"
+                value={color}
+                onChange={(e) => setColor(e.target.value)}
+                className="color-picker-full w-10 h-10 rounded-lg border border-gray-300 dark:border-gray-600 cursor-pointer"
               />
+            </div>
+
+            {/* Monthly Limit */}
+            <div className="flex-1">
+              <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
+                Monthly Limit
+              </label>
+              <div className="relative">
+                <span className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-500">₪</span>
+                <input
+                  type="number"
+                  value={monthlyLimit}
+                  onChange={(e) => setMonthlyLimit(e.target.value)}
+                  placeholder="0"
+                  min="0"
+                  step="50"
+                  className="w-full pl-8 pr-3 py-2 border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-700 text-gray-900 dark:text-gray-100 focus:ring-2 focus:ring-purple-500 focus:border-transparent"
+                />
+              </div>
             </div>
           </div>
 
-          {/* Warning Threshold - only for immediate add */}
-          {addMode === 'now' && (
-            <div>
-              <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
-                Warning Threshold
-              </label>
-              <div className="flex items-center gap-3">
-                <input
-                  type="range"
-                  value={warningThreshold}
-                  onChange={(e) => setWarningThreshold(e.target.value)}
-                  min="50"
-                  max="100"
-                  step="5"
-                  className="flex-1"
-                />
-                <span className="text-sm text-gray-600 dark:text-gray-400 w-12 text-right">
-                  {warningThreshold}%
-                </span>
-              </div>
-              <p className="text-xs text-gray-500 dark:text-gray-400 mt-1">
-                Alert when spending reaches this percentage of the limit
-              </p>
+          {/* Warning Threshold */}
+          <div>
+            <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
+              Warning at
+            </label>
+            <div className="flex items-center gap-3">
+              <input
+                type="range"
+                value={warningThreshold}
+                onChange={(e) => setWarningThreshold(e.target.value)}
+                min="50"
+                max="100"
+                step="5"
+                className="flex-1"
+              />
+              <span className="text-sm text-gray-600 dark:text-gray-400 w-12 text-right">
+                {warningThreshold}%
+              </span>
             </div>
-          )}
+          </div>
 
-          {/* Actions */}
-          <div className="flex justify-end gap-3 pt-4">
+          {/* Schedule Toggle */}
+          <div className="flex items-center justify-between py-2 px-3 bg-gray-50 dark:bg-gray-700/50 rounded-lg">
+            <div className="flex items-center gap-2">
+              <span className="text-sm font-medium text-gray-700 dark:text-gray-300">
+                Schedule for next month
+              </span>
+              <div className="relative group">
+                <HelpCircle className="h-4 w-4 text-gray-400 cursor-help" />
+                <div className="absolute left-1/2 -translate-x-1/2 bottom-full mb-2 px-3 py-2 bg-gray-900 text-white text-xs rounded-lg opacity-0 group-hover:opacity-100 transition-opacity pointer-events-none w-48 z-10">
+                  Use this when planning ahead. The category will be created automatically when the new month starts.
+                </div>
+              </div>
+            </div>
+            <button
+              type="button"
+              onClick={() => setScheduleForNextMonth(!scheduleForNextMonth)}
+              className={`relative inline-flex h-6 w-11 items-center rounded-full transition-colors ${
+                scheduleForNextMonth ? 'bg-orange-500' : 'bg-gray-300 dark:bg-gray-600'
+              }`}
+            >
+              <span
+                className={`inline-block h-4 w-4 transform rounded-full bg-white transition-transform ${
+                  scheduleForNextMonth ? 'translate-x-6' : 'translate-x-1'
+                }`}
+              />
+            </button>
+          </div>
+
+          {/* Footer */}
+          <div className="flex justify-end gap-3 pt-2">
             <button
               type="button"
               onClick={onClose}
@@ -265,14 +244,14 @@ export const AddCategoryModal: React.FC<AddCategoryModalProps> = ({ isOpen, onCl
               type="submit"
               disabled={isPending}
               className={`px-4 py-2 text-white rounded-lg disabled:opacity-50 disabled:cursor-not-allowed transition-colors ${
-                addMode === 'now'
-                  ? 'bg-green-600 hover:bg-green-700'
-                  : 'bg-orange-500 hover:bg-orange-600'
+                scheduleForNextMonth
+                  ? 'bg-orange-500 hover:bg-orange-600'
+                  : 'bg-purple-600 hover:bg-purple-700'
               }`}
             >
               {isPending 
-                ? (addMode === 'now' ? 'Creating...' : 'Scheduling...') 
-                : (addMode === 'now' ? 'Create Category' : 'Schedule for Next Month')
+                ? (scheduleForNextMonth ? 'Scheduling...' : 'Creating...') 
+                : (scheduleForNextMonth ? 'Schedule for Next Month' : 'Create Category')
               }
             </button>
           </div>

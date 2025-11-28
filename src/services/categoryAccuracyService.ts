@@ -86,6 +86,15 @@ class CategoryAccuracyService {
     );
 
     const totalSpent = categoryTransactions.reduce((sum, t) => sum + t.amount, 0);
+    const transactionCount = categoryTransactions.length;
+
+    // Calculate day exceeded (for current month, when cumulative spending exceeded budget)
+    const dayExceeded = this.calculateDayExceeded(
+      categoryTransactions,
+      personalBudget?.categories[category]?.monthlyLimit || 0,
+      startDate,
+      endDate
+    );
 
     // Calculate averages
     const budgetAverage = monthsInRange > 0 ? totalBudgeted / monthsInRange : 0;
@@ -128,7 +137,45 @@ class CategoryAccuracyService {
       accuracyZone,
       targetPosition,
       hitAngle,
+      transactionCount,
+      dayExceeded,
     };
+  }
+
+  /**
+   * Calculate the day of the month when spending exceeded the budget
+   * Returns null if budget wasn't exceeded or if range spans multiple months
+   */
+  private calculateDayExceeded(
+    transactions: Transaction[],
+    monthlyLimit: number,
+    startDate: Date,
+    endDate: Date
+  ): number | null {
+    if (monthlyLimit <= 0 || transactions.length === 0) {
+      return null;
+    }
+
+    // Only calculate for single-month ranges
+    if (startDate.getMonth() !== endDate.getMonth() || startDate.getFullYear() !== endDate.getFullYear()) {
+      return null;
+    }
+
+    // Sort transactions by date
+    const sortedTransactions = [...transactions].sort(
+      (a, b) => new Date(a.date).getTime() - new Date(b.date).getTime()
+    );
+
+    // Calculate cumulative spending
+    let cumulative = 0;
+    for (const t of sortedTransactions) {
+      cumulative += t.amount;
+      if (cumulative > monthlyLimit) {
+        return new Date(t.date).getDate();
+      }
+    }
+
+    return null;
   }
 
   /**

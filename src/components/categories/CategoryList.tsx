@@ -97,24 +97,7 @@ export const CategoryList: React.FC<CategoryListProps> = ({
     setEditCategory(category);
   };
 
-  if (isLoading) {
-    return (
-      <div className="flex items-center justify-center py-12">
-        <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-green-600"></div>
-      </div>
-    );
-  }
-
-  if (error) {
-    return (
-      <div className="text-center py-12">
-        <AlertTriangle className="h-12 w-12 text-red-500 mx-auto mb-4" />
-        <p className="text-red-500">Failed to load categories</p>
-        <p className="text-sm text-gray-500 mt-2">{error.message}</p>
-      </div>
-    );
-  }
-
+  // Derive active categories (must be before useMemo that depends on it)
   const activeCategories = categories?.filter(c => c.isActive) || [];
 
   // Combined list: active categories + future categories from adjustments
@@ -139,6 +122,24 @@ export const CategoryList: React.FC<CategoryListProps> = ({
     // Sort by name
     return displayed.sort((a, b) => a.name.localeCompare(b.name));
   }, [activeCategories, newCategoryAdjustments]);
+
+  if (isLoading) {
+    return (
+      <div className="flex items-center justify-center py-12">
+        <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-green-600"></div>
+      </div>
+    );
+  }
+
+  if (error) {
+    return (
+      <div className="text-center py-12">
+        <AlertTriangle className="h-12 w-12 text-red-500 mx-auto mb-4" />
+        <p className="text-red-500">Failed to load categories</p>
+        <p className="text-sm text-gray-500 mt-2">{error.message}</p>
+      </div>
+    );
+  }
 
   return (
     <div className="space-y-4">

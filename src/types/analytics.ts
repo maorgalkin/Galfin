@@ -55,6 +55,12 @@ export interface CategoryAccuracy {
   
   /** Deterministic random angle (radians) for hit marker placement */
   hitAngle: number;
+  
+  /** Number of transactions in this category */
+  transactionCount: number;
+  
+  /** Day of month when budget was exceeded (if applicable, null otherwise) */
+  dayExceeded: number | null;
 }
 
 /**

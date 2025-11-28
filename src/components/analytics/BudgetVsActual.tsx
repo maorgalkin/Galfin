@@ -9,6 +9,10 @@ import { AlertTriangle, TrendingUp, TrendingDown, Minus, Loader2 } from 'lucide-
 interface BudgetVsActualProps {
   /** The selected date range type */
   selectedRange: DateRangeType;
+  /** Show only the summary cards (no chart) */
+  showSummaryOnly?: boolean;
+  /** Show only the chart (no header or summary) */
+  showChartOnly?: boolean;
 }
 
 const CATEGORY_WIDTH_DESKTOP = 100; // Width of each category column on desktop
@@ -19,7 +23,7 @@ const BAR_WIDTH_DESKTOP = 80; // Width of individual bars on desktop
 const BAR_WIDTH_MOBILE = 50; // Width of individual bars on mobile (thinner)
 const BAR_OVERLAP = 30; // Reduced from 85% for better clarity
 
-export const BudgetVsActual: React.FC<BudgetVsActualProps> = ({ selectedRange }) => {
+export const BudgetVsActual: React.FC<BudgetVsActualProps> = ({ selectedRange, showSummaryOnly = false, showChartOnly = false }) => {
   const containerRef = useRef<HTMLDivElement>(null);
   const [categoriesPerView, setCategoriesPerView] = useState(8);
   const [barWidth, setBarWidth] = useState(BAR_WIDTH_DESKTOP);
@@ -207,64 +211,71 @@ export const BudgetVsActual: React.FC<BudgetVsActualProps> = ({ selectedRange })
 
   return (
     <div className="space-y-6">
-      {/* Header */}
-      <div>
-        <h2 className="text-2xl font-bold text-gray-900 dark:text-gray-100 mb-2">
-          Budget vs Actual
-        </h2>
-        <p className="text-gray-600 dark:text-gray-400">
-          Compare budgeted amounts with actual spending across categories
-        </p>
-      </div>
-
-      {/* Summary Cards */}
-      <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-        <div className="bg-blue-50 dark:bg-blue-900/20 rounded-lg p-4">
-          <p className="text-sm font-medium text-gray-600 dark:text-gray-400 mb-1">
-            Original Budget
-          </p>
-          <p className="text-2xl font-bold text-blue-900 dark:text-blue-400">
-            {formatCurrency(summary.totalOriginal)}
-          </p>
-          <p className="text-xs text-gray-500 dark:text-gray-400 mt-1">
-            Planned at start of period
+      {/* Header - only show when not using split mode */}
+      {!showSummaryOnly && !showChartOnly && (
+        <div>
+          <h2 className="text-2xl font-bold text-gray-900 dark:text-gray-100 mb-2">
+            Budget vs Actual
+          </h2>
+          <p className="text-gray-600 dark:text-gray-400">
+            Compare budgeted amounts with actual spending across categories
           </p>
         </div>
+      )}
 
-        <div className="bg-purple-50 dark:bg-purple-900/20 rounded-lg p-4">
-          <p className="text-sm font-medium text-gray-600 dark:text-gray-400 mb-1">
-            Current Budget
-          </p>
-          <p className="text-2xl font-bold text-purple-900 dark:text-purple-400">
-            {formatCurrency(summary.totalCurrent)}
-          </p>
-          <p className="text-xs text-gray-500 dark:text-gray-400 mt-1">
-            {summary.totalCurrent !== summary.totalOriginal
-              ? `Adjusted ${summary.totalCurrent > summary.totalOriginal ? '+' : ''}${formatCurrency(summary.totalCurrent - summary.totalOriginal)}`
-              : 'No adjustments'}
-          </p>
+      {/* Summary Cards - show when not chart-only */}
+      {!showChartOnly && (
+        <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+          <div className="bg-blue-50 dark:bg-blue-900/20 rounded-lg p-4">
+            <p className="text-sm font-medium text-gray-600 dark:text-gray-400 mb-1">
+              Original Budget
+            </p>
+            <p className="text-2xl font-bold text-blue-900 dark:text-blue-400">
+              {formatCurrency(summary.totalOriginal)}
+            </p>
+            <p className="text-xs text-gray-500 dark:text-gray-400 mt-1">
+              Planned at start of period
+            </p>
+          </div>
+
+          <div className="bg-purple-50 dark:bg-purple-900/20 rounded-lg p-4">
+            <p className="text-sm font-medium text-gray-600 dark:text-gray-400 mb-1">
+              Current Budget
+            </p>
+            <p className="text-2xl font-bold text-purple-900 dark:text-purple-400">
+              {formatCurrency(summary.totalCurrent)}
+            </p>
+            <p className="text-xs text-gray-500 dark:text-gray-400 mt-1">
+              {summary.totalCurrent !== summary.totalOriginal
+                ? `Adjusted ${summary.totalCurrent > summary.totalOriginal ? '+' : ''}${formatCurrency(summary.totalCurrent - summary.totalOriginal)}`
+                : 'No adjustments'}
+            </p>
+          </div>
+
+          <div className="bg-orange-50 dark:bg-orange-900/20 rounded-lg p-4">
+            <p className="text-sm font-medium text-gray-600 dark:text-gray-400 mb-1">
+              Actual Spending
+            </p>
+            <p className="text-2xl font-bold text-orange-900 dark:text-orange-400">
+              {formatCurrency(summary.totalSpent)}
+            </p>
+            <p className="text-xs text-gray-500 dark:text-gray-400 mt-1">
+              {summary.totalCurrent > 0
+                ? `${((summary.totalSpent / summary.totalCurrent) * 100).toFixed(1)}% utilized`
+                : 'No budget set'}
+            </p>
+          </div>
         </div>
+      )}
 
-        <div className="bg-orange-50 dark:bg-orange-900/20 rounded-lg p-4">
-          <p className="text-sm font-medium text-gray-600 dark:text-gray-400 mb-1">
-            Actual Spending
-          </p>
-          <p className="text-2xl font-bold text-orange-900 dark:text-orange-400">
-            {formatCurrency(summary.totalSpent)}
-          </p>
-          <p className="text-xs text-gray-500 dark:text-gray-400 mt-1">
-            {summary.totalCurrent > 0
-              ? `${((summary.totalSpent / summary.totalCurrent) * 100).toFixed(1)}% utilized`
-              : 'No budget set'}
-          </p>
-        </div>
-      </div>
-
-      {/* Category Breakdown - Column Chart */}
-      <div className="bg-white dark:bg-gray-800 rounded-lg shadow-md p-6">
-        <h3 className="text-lg font-semibold text-gray-900 dark:text-gray-100 mb-6">
-          Category Breakdown
-        </h3>
+      {/* Category Breakdown - Column Chart - show when not summary-only */}
+      {!showSummaryOnly && (
+        <div className={showChartOnly ? "" : "bg-white dark:bg-gray-800 rounded-lg shadow-md p-6"}>
+          {!showChartOnly && (
+            <h3 className="text-lg font-semibold text-gray-900 dark:text-gray-100 mb-6">
+              Category Breakdown
+            </h3>
+          )}
 
         {categoryData.length === 0 ? (
           <p className="text-center text-gray-500 dark:text-gray-400 py-8">
@@ -514,6 +525,7 @@ export const BudgetVsActual: React.FC<BudgetVsActualProps> = ({ selectedRange })
           </>
         )}
       </div>
+      )}
     </div>
   );
 };

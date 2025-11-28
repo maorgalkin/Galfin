@@ -1,4 +1,4 @@
-import React, { useState, useMemo } from 'react';
+import React, { useState, useMemo, useRef } from 'react';
 import { useFinance } from '../context/FinanceContext';
 import { useActiveBudget } from '../hooks/useBudgets';
 import { BudgetVsActual } from '../components/analytics/BudgetVsActual';
@@ -13,9 +13,10 @@ import { getHeadingColor, getSubheadingColor } from '../utils/themeColors';
  * Moved from Budget Management > Analytics tab
  */
 export const InsightsPage: React.FC = () => {
-  const [dateRange, setDateRange] = useState<DateRangeType>('ytd');
+  const [dateRange, setDateRange] = useState<DateRangeType>('mtd');
   const { transactions } = useFinance();
   const { data: activeBudget, isLoading, error } = useActiveBudget();
+  const dateRangeRef = useRef<HTMLDivElement>(null);
 
   const themeColor = 'indigo';
 
@@ -50,7 +51,7 @@ export const InsightsPage: React.FC = () => {
   return (
     <div>
       {/* Header */}
-      <div className="mb-8 flex flex-col sm:flex-row sm:items-start sm:justify-between gap-4">
+      <div ref={dateRangeRef} className="mb-8 flex flex-col sm:flex-row sm:items-start sm:justify-between gap-4">
         <div>
           <h1 className={`text-3xl font-bold ${getHeadingColor(themeColor)} mb-2`}>
             Insights
@@ -70,7 +71,7 @@ export const InsightsPage: React.FC = () => {
 
       {/* Analytics Cards */}
       <div className="space-y-6">
-        {/* Budget vs Actual */}
+        {/* Budget Summary */}
         <div className="bg-white dark:bg-gray-800 rounded-xl shadow-lg border border-gray-200 dark:border-gray-700 overflow-hidden">
           <div className="p-4 sm:p-6 border-b border-gray-200 dark:border-gray-700 bg-gradient-to-r from-blue-50 to-indigo-50 dark:from-blue-900/20 dark:to-indigo-900/20">
             <div className="flex items-center gap-3">
@@ -79,22 +80,44 @@ export const InsightsPage: React.FC = () => {
               </div>
               <div>
                 <h2 className="text-lg font-semibold text-gray-900 dark:text-gray-100">
-                  Budget vs Actual
+                  Budget Summary
                 </h2>
                 <p className="text-sm text-gray-500 dark:text-gray-400">
-                  Compare planned spending against actual expenditure
+                  Overview of planned vs actual spending
                 </p>
               </div>
             </div>
           </div>
           <div className="p-4 sm:p-6">
-            <BudgetVsActual selectedRange={dateRange} />
+            <BudgetVsActual selectedRange={dateRange} showSummaryOnly />
+          </div>
+        </div>
+
+        {/* Category Performance */}
+        <div className="bg-white dark:bg-gray-800 rounded-xl shadow-lg border border-gray-200 dark:border-gray-700 overflow-hidden">
+          <div className="p-4 sm:p-6 border-b border-gray-200 dark:border-gray-700 bg-gradient-to-r from-purple-50 to-pink-50 dark:from-purple-900/20 dark:to-pink-900/20">
+            <div className="flex items-center gap-3">
+              <div className="p-2 bg-purple-100 dark:bg-purple-900/50 rounded-lg">
+                <Target className="h-5 w-5 text-purple-600 dark:text-purple-400" />
+              </div>
+              <div>
+                <h2 className="text-lg font-semibold text-gray-900 dark:text-gray-100">
+                  Original vs Current Budget Performance by Category
+                </h2>
+                <p className="text-sm text-gray-500 dark:text-gray-400">
+                  Compare budgeted amounts with actual spending across categories
+                </p>
+              </div>
+            </div>
+          </div>
+          <div className="p-4 sm:p-6">
+            <BudgetVsActual selectedRange={dateRange} showChartOnly />
           </div>
         </div>
 
         {/* Category Accuracy */}
-        <div className="bg-white dark:bg-gray-800 rounded-xl shadow-lg border border-gray-200 dark:border-gray-700 overflow-hidden">
-          <div className="p-4 sm:p-6 border-b border-gray-200 dark:border-gray-700 bg-gradient-to-r from-emerald-50 to-teal-50 dark:from-emerald-900/20 dark:to-teal-900/20">
+        <div className="bg-white dark:bg-gray-800 rounded-xl shadow-lg border border-gray-200 dark:border-gray-700">
+          <div className="p-4 sm:p-6 border-b border-gray-200 dark:border-gray-700 bg-gradient-to-r from-emerald-50 to-teal-50 dark:from-emerald-900/20 dark:to-teal-900/20 rounded-t-xl">
             <div className="flex items-center gap-3">
               <div className="p-2 bg-emerald-100 dark:bg-emerald-900/50 rounded-lg">
                 <Target className="h-5 w-5 text-emerald-600 dark:text-emerald-400" />
@@ -115,6 +138,9 @@ export const InsightsPage: React.FC = () => {
               personalBudget={activeBudget}
               currency={activeBudget?.global_settings?.currency || '$'}
               selectedRange={dateRange}
+              onScrollToDateRange={() => {
+                dateRangeRef.current?.scrollIntoView({ behavior: 'smooth', block: 'start' });
+              }}
             />
           </div>
         </div>

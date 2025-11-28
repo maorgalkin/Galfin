@@ -1,22 +1,18 @@
 // Unified Category Edit Modal
 // Combines editing, renaming, merging, adjustments, and deleting capabilities
+// Updated: Fixed size modal, compact color picker
 
 import React, { useState, useEffect, useMemo } from 'react';
 import { 
   X, 
   Edit3, 
-  Type, 
   GitMerge, 
   Trash2, 
-  DollarSign, 
   AlertTriangle,
   Check,
   Info,
   ArrowRight,
-  Palette,
-  Calendar,
-  TrendingUp,
-  TrendingDown,
+  Sliders,
   HelpCircle
 } from 'lucide-react';
 import { 
@@ -30,13 +26,14 @@ import {
   useNextMonthAdjustments,
   useScheduleAdjustment,
   useCancelAdjustment,
-  useActiveBudget
+  useActiveBudget,
+  useCurrentMonthBudget,
+  useUpdateCategoryLimit
 } from '../../hooks/useBudgets';
 import { useFinance } from '../../context/FinanceContext';
 import type { Category } from '../../types/category';
-import { DEFAULT_CATEGORY_COLORS } from '../../types/category';
 
-type TabType = 'edit' | 'rename' | 'merge' | 'adjustment';
+type TabType = 'edit' | 'merge' | 'adjustment';
 
 interface CategoryEditModalProps {
   isOpen: boolean;
@@ -56,17 +53,19 @@ export const CategoryEditModal: React.FC<CategoryEditModalProps> = ({
   const { data: nextMonthSummary } = useNextMonthAdjustments();
   const { data: activeBudget } = useActiveBudget();
   
+  const { data: currentMonthBudget } = useCurrentMonthBudget();
+  
   const updateCategory = useUpdateCategory();
   const renameCategory = useRenameCategory();
   const deleteCategory = useDeleteCategory();
   const mergeCategories = useMergeCategories();
   const scheduleAdjustment = useScheduleAdjustment();
   const cancelAdjustment = useCancelAdjustment();
+  const updateCategoryLimit = useUpdateCategoryLimit();
   
   const [activeTab, setActiveTab] = useState<TabType>(initialTab);
   const [error, setError] = useState('');
   const [showDeleteConfirm, setShowDeleteConfirm] = useState(false);
-  const [showHelp, setShowHelp] = useState(false);
   
   // Edit tab state
   const [monthlyLimit, setMonthlyLimit] = useState('');
@@ -152,65 +151,72 @@ export const CategoryEditModal: React.FC<CategoryEditModalProps> = ({
 
   const isPending = updateCategory.isPending || renameCategory.isPending || 
                     deleteCategory.isPending || mergeCategories.isPending ||
-                    scheduleAdjustment.isPending || cancelAdjustment.isPending;
+                    scheduleAdjustment.isPending || cancelAdjustment.isPending ||
+                    updateCategoryLimit.isPending;
 
   // Check if edit form has changes
   const editHasChanges = category && (
     parseFloat(monthlyLimit) !== category.monthlyLimit ||
     parseInt(warningThreshold) !== category.warningThreshold ||
-    color !== category.color
+    color !== category.color ||
+    newName.trim() !== category.name
   );
 
   const handleSaveEdit = async () => {
     if (!category) return;
     setError('');
 
-    try {
-      await updateCategory.mutateAsync({
-        categoryId: category.id,
-        input: {
-          monthlyLimit: parseFloat(monthlyLimit) || 0,
-          warningThreshold: Math.min(100, Math.max(0, parseInt(warningThreshold) || 80)),
-          color,
-        },
-      });
-      onClose();
-    } catch (err) {
-      setError(err instanceof Error ? err.message : 'Failed to update category');
-    }
-  };
-
-  const handleRename = async () => {
-    if (!category) return;
-    setError('');
-
+    // Validate name
     if (!newName.trim()) {
       setError('Category name is required');
       return;
     }
 
-    if (newName.trim() === category.name) {
-      onClose();
-      return;
-    }
-
-    // Check for duplicate name
-    const isDuplicate = allCategories?.some(
-      c => c.id !== category.id && c.name.toLowerCase() === newName.trim().toLowerCase()
-    );
-    if (isDuplicate) {
-      setError('A category with this name already exists');
-      return;
+    // Check for duplicate name (if name changed)
+    if (newName.trim() !== category.name) {
+      const isDuplicate = allCategories?.some(
+        c => c.id !== category.id && c.name.toLowerCase() === newName.trim().toLowerCase()
+      );
+      if (isDuplicate) {
+        setError('A category with this name already exists');
+        return;
+      }
     }
 
     try {
-      await renameCategory.mutateAsync({
-        categoryId: category.id,
-        newName: newName.trim(),
-      });
+      // First rename if needed (permanent - updates categories table)
+      if (newName.trim() !== category.name) {
+        await renameCategory.mutateAsync({
+          categoryId: category.id,
+          newName: newName.trim(),
+        });
+      }
+      
+      // Update color and warningThreshold permanently (these are category properties)
+      if (parseInt(warningThreshold) !== category.warningThreshold ||
+          color !== category.color) {
+        await updateCategory.mutateAsync({
+          categoryId: category.id,
+          input: {
+            warningThreshold: Math.min(100, Math.max(0, parseInt(warningThreshold) || 80)),
+            color,
+          },
+        });
+      }
+      
+      // Update limit in current monthly budget only (temporary - this month only)
+      if (parseFloat(monthlyLimit) !== category.monthlyLimit && currentMonthBudget) {
+        await updateCategoryLimit.mutateAsync({
+          monthlyBudgetId: currentMonthBudget.id,
+          categoryName: category.name,
+          newLimit: parseFloat(monthlyLimit) || 0,
+          notes: 'Mid-month adjustment',
+        });
+      }
+      
       onClose();
     } catch (err) {
-      setError(err instanceof Error ? err.message : 'Failed to rename category');
+      setError(err instanceof Error ? err.message : 'Failed to update category');
     }
   };
 
@@ -304,9 +310,8 @@ export const CategoryEditModal: React.FC<CategoryEditModalProps> = ({
 
   const tabs = [
     { id: 'edit' as TabType, label: 'Details', icon: Edit3 },
-    { id: 'rename' as TabType, label: 'Rename', icon: Type },
     { id: 'merge' as TabType, label: 'Merge', icon: GitMerge },
-    { id: 'adjustment' as TabType, label: 'Next Month', icon: Calendar },
+    { id: 'adjustment' as TabType, label: 'Adjust', icon: Sliders },
   ];
 
   return (
@@ -314,27 +319,25 @@ export const CategoryEditModal: React.FC<CategoryEditModalProps> = ({
       {/* Backdrop */}
       <div className="absolute inset-0 bg-black/50" onClick={handleClose} />
       
-      {/* Modal */}
-      <div className="relative bg-white dark:bg-gray-800 rounded-xl shadow-xl w-full max-w-lg overflow-hidden">
+      {/* Modal - Fixed size */}
+      <div className="relative bg-white dark:bg-gray-800 rounded-xl shadow-xl w-full max-w-lg overflow-hidden flex flex-col" style={{ height: '520px' }}>
         {/* Header */}
         <div className="flex items-center justify-between p-4 border-b border-gray-200 dark:border-gray-700">
-          <div className="flex items-center gap-3">
-            <div
-              className="w-5 h-5 rounded-full"
-              style={{ backgroundColor: activeTab === 'edit' ? color : category.color }}
-            />
+          <div className="flex items-center gap-2">
             <h2 className="text-lg font-semibold text-gray-900 dark:text-gray-100">
-              {category.name}
+              Edit Category
             </h2>
-            {/* Help tooltip trigger */}
-            <div className="relative">
-              <button
-                onClick={() => setShowHelp(!showHelp)}
-                className="p-1 text-gray-400 hover:text-gray-600 dark:hover:text-gray-300 rounded-full hover:bg-gray-100 dark:hover:bg-gray-700 transition-colors"
-                title="Help"
-              >
-                <HelpCircle className="h-4 w-4" />
-              </button>
+            {/* Help tooltip */}
+            <div className="relative group">
+              <HelpCircle className="h-4 w-4 text-gray-400 cursor-help" />
+              <div className="absolute left-1/2 -translate-x-1/2 top-full mt-2 px-3 py-2 bg-gray-900 text-white text-xs rounded-lg opacity-0 group-hover:opacity-100 transition-opacity pointer-events-none w-64 z-50">
+                <p className="font-medium mb-1">What do these tabs do?</p>
+                <ul className="space-y-1 text-gray-300">
+                  <li><strong className="text-white">Details:</strong> Quick fix for this month only (resets next month)</li>
+                  <li><strong className="text-white">Merge:</strong> Combine with another category</li>
+                  <li><strong className="text-white">Adjust:</strong> Change your planned budget permanently</li>
+                </ul>
+              </div>
             </div>
           </div>
           <button
@@ -345,22 +348,6 @@ export const CategoryEditModal: React.FC<CategoryEditModalProps> = ({
             <X className="h-5 w-5 text-gray-500" />
           </button>
         </div>
-
-        {/* Help Tooltip - positioned inside modal content area */}
-        {showHelp && (
-          <>
-            <div className="fixed inset-0 z-10" onClick={() => setShowHelp(false)} />
-            <div className="absolute left-4 right-4 top-16 p-3 bg-white dark:bg-gray-700 rounded-lg shadow-lg border border-gray-200 dark:border-gray-600 z-20 text-sm">
-              <p className="font-medium text-gray-900 dark:text-gray-100 mb-2">Category Actions</p>
-              <ul className="space-y-2 text-gray-600 dark:text-gray-300">
-                <li><strong className="text-gray-800 dark:text-gray-100">Details:</strong> Change limits, colors, warnings — updates your budget template immediately</li>
-                <li><strong className="text-gray-800 dark:text-gray-100">Next Month:</strong> Temporary adjustment for next month only. Great for holidays or one-time events</li>
-                <li><strong className="text-gray-800 dark:text-gray-100">Merge:</strong> Combine categories — all transactions move to target</li>
-                <li><strong className="text-gray-800 dark:text-gray-100">Rename:</strong> Change name — history is preserved</li>
-              </ul>
-            </div>
-          </>
-        )}
 
         {/* Tabs */}
         <div className="flex border-b border-gray-200 dark:border-gray-700">
@@ -396,8 +383,8 @@ export const CategoryEditModal: React.FC<CategoryEditModalProps> = ({
           })}
         </div>
 
-        {/* Content */}
-        <div className="p-4 space-y-4 min-h-[280px] max-h-[60vh] overflow-y-auto">
+        {/* Content - Flex grow to fill available space */}
+        <div className="p-4 space-y-4 overflow-y-auto flex-1">
           {/* Error display */}
           {error && (
             <div className="flex items-center gap-2 p-3 bg-red-50 dark:bg-red-900/20 text-red-600 dark:text-red-400 rounded-lg text-sm">
@@ -408,34 +395,38 @@ export const CategoryEditModal: React.FC<CategoryEditModalProps> = ({
 
           {/* Edit Tab */}
           {activeTab === 'edit' && (
-            <div className="space-y-4">
-              {/* Color */}
-              <div>
-                <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
-                  <Palette className="inline h-4 w-4 mr-1" />
-                  Color
-                </label>
-                <div className="flex flex-wrap gap-2">
-                  {DEFAULT_CATEGORY_COLORS.map((c) => (
-                    <button
-                      key={c}
-                      type="button"
-                      onClick={() => setColor(c)}
-                      className={`w-8 h-8 rounded-full border-2 transition-all ${
-                        color === c 
-                          ? 'border-gray-900 dark:border-white scale-110' 
-                          : 'border-transparent hover:scale-105'
-                      }`}
-                      style={{ backgroundColor: c }}
-                    />
-                  ))}
+            <div className="space-y-3">
+              {/* Name & Color - Inline */}
+              <div className="flex gap-3">
+                {/* Name */}
+                <div className="flex-1">
+                  <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
+                    Name
+                  </label>
+                  <input
+                    type="text"
+                    value={newName}
+                    onChange={(e) => setNewName(e.target.value)}
+                    className="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-700 text-gray-900 dark:text-gray-100 focus:ring-2 focus:ring-green-500 focus:border-transparent"
+                  />
+                </div>
+                {/* Native Color Picker */}
+                <div>
+                  <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
+                    Color
+                  </label>
+                  <input
+                    type="color"
+                    value={color}
+                    onChange={(e) => setColor(e.target.value)}
+                    className="color-picker-full w-10 h-10 rounded-lg border border-gray-300 dark:border-gray-600 cursor-pointer"
+                  />
                 </div>
               </div>
 
               {/* Monthly Limit */}
               <div>
                 <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
-                  <DollarSign className="inline h-4 w-4 mr-1" />
                   Monthly Limit
                 </label>
                 <div className="relative">
@@ -455,8 +446,7 @@ export const CategoryEditModal: React.FC<CategoryEditModalProps> = ({
               {/* Warning Threshold */}
               <div>
                 <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
-                  <AlertTriangle className="inline h-4 w-4 mr-1" />
-                  Warning Threshold
+                  Warning at
                 </label>
                 <div className="flex items-center gap-3">
                   <input
@@ -472,77 +462,7 @@ export const CategoryEditModal: React.FC<CategoryEditModalProps> = ({
                     {warningThreshold}%
                   </span>
                 </div>
-                <p className="text-xs text-gray-500 dark:text-gray-400 mt-1">
-                  Alert when spending reaches this percentage of the limit
-                </p>
               </div>
-
-              {/* Preview */}
-              {editHasChanges && (
-                <div className="bg-green-50 dark:bg-green-900/20 border border-green-200 dark:border-green-800 rounded-lg p-3">
-                  <h4 className="text-sm font-medium text-green-800 dark:text-green-200 mb-1">
-                    Changes Preview
-                  </h4>
-                  <ul className="text-sm text-green-700 dark:text-green-300 space-y-1">
-                    {color !== category.color && (
-                      <li className="flex items-center gap-2">
-                        <div className="w-3 h-3 rounded-full" style={{ backgroundColor: category.color }} />
-                        <ArrowRight className="h-3 w-3" />
-                        <div className="w-3 h-3 rounded-full" style={{ backgroundColor: color }} />
-                        Color changed
-                      </li>
-                    )}
-                    {parseFloat(monthlyLimit) !== category.monthlyLimit && (
-                      <li>Limit: ₪{category.monthlyLimit} → ₪{parseFloat(monthlyLimit) || 0}</li>
-                    )}
-                    {parseInt(warningThreshold) !== category.warningThreshold && (
-                      <li>Warning: {category.warningThreshold}% → {parseInt(warningThreshold) || 80}%</li>
-                    )}
-                  </ul>
-                </div>
-              )}
-
-            </div>
-          )}
-
-          {/* Rename Tab */}
-          {activeTab === 'rename' && (
-            <div className="space-y-4">
-              {/* Current name */}
-              <div className="flex items-center gap-3 p-3 bg-gray-50 dark:bg-gray-700/50 rounded-lg">
-                <div
-                  className="w-4 h-4 rounded-full flex-shrink-0"
-                  style={{ backgroundColor: category.color }}
-                />
-                <div>
-                  <span className="text-sm text-gray-500 dark:text-gray-400">Current name:</span>
-                  <p className="font-medium text-gray-900 dark:text-gray-100">{category.name}</p>
-                </div>
-              </div>
-
-              {/* New name input */}
-              <div>
-                <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
-                  New Name
-                </label>
-                <input
-                  type="text"
-                  value={newName}
-                  onChange={(e) => setNewName(e.target.value)}
-                  placeholder="Enter new name"
-                  className="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-700 text-gray-900 dark:text-gray-100 focus:ring-2 focus:ring-green-500 focus:border-transparent"
-                />
-              </div>
-
-              {/* Info */}
-              <div className="flex items-start gap-2 p-3 bg-blue-50 dark:bg-blue-900/20 text-blue-700 dark:text-blue-300 rounded-lg text-sm">
-                <Check className="h-4 w-4 flex-shrink-0 mt-0.5" />
-                <p>
-                  Renaming updates the name everywhere. All transactions and budget history 
-                  will automatically show the new name.
-                </p>
-              </div>
-
             </div>
           )}
 
@@ -629,79 +549,42 @@ export const CategoryEditModal: React.FC<CategoryEditModalProps> = ({
 
           {/* Adjustment Tab */}
           {activeTab === 'adjustment' && (
-            <div className="space-y-4">
-              {/* Current vs Next Month */}
-              <div className="grid grid-cols-2 gap-4">
-                <div className="p-3 bg-gray-50 dark:bg-gray-700/50 rounded-lg">
-                  <p className="text-xs text-gray-500 dark:text-gray-400 uppercase mb-1">Current Limit</p>
+            <div className="space-y-3">
+              {/* Current vs Next Month - Compact */}
+              <div className="flex items-center gap-3 p-3 bg-gray-50 dark:bg-gray-700/50 rounded-lg">
+                <div className="flex-1">
+                  <p className="text-xs text-gray-500 dark:text-gray-400 uppercase">Current</p>
                   <p className="text-lg font-semibold text-gray-900 dark:text-gray-100">
                     {formatCurrency(category.monthlyLimit)}
                   </p>
                 </div>
-                <div className={`p-3 rounded-lg ${
-                  categoryAdjustment 
-                    ? categoryAdjustment.adjustment_type === 'increase'
-                      ? 'bg-green-50 dark:bg-green-900/20'
-                      : categoryAdjustment.new_limit === 0
-                        ? 'bg-gray-100 dark:bg-gray-600/50'
-                        : 'bg-red-50 dark:bg-red-900/20'
-                    : 'bg-gray-50 dark:bg-gray-700/50'
-                }`}>
-                  <p className="text-xs text-gray-500 dark:text-gray-400 uppercase mb-1">Next Month</p>
+                <ArrowRight className="h-5 w-5 text-gray-400" />
+                <div className="flex-1 text-right">
+                  <p className="text-xs text-gray-500 dark:text-gray-400 uppercase">New Planned</p>
                   {categoryAdjustment ? (
-                    categoryAdjustment.new_limit === 0 ? (
-                      <p className="text-lg font-semibold text-gray-500 dark:text-gray-400">
-                        Deactivated
-                      </p>
-                    ) : (
-                      <div className="flex items-center gap-2">
-                        {categoryAdjustment.adjustment_type === 'increase' ? (
-                          <TrendingUp className="h-4 w-4 text-green-600 dark:text-green-400" />
-                        ) : (
-                          <TrendingDown className="h-4 w-4 text-red-600 dark:text-red-400" />
-                        )}
-                        <p className={`text-lg font-semibold ${
-                          categoryAdjustment.adjustment_type === 'increase'
-                            ? 'text-green-600 dark:text-green-400'
-                            : 'text-red-600 dark:text-red-400'
-                        }`}>
-                          {formatCurrency(categoryAdjustment.new_limit)}
-                        </p>
-                      </div>
-                    )
-                  ) : (
-                    <p className="text-lg font-semibold text-gray-400 dark:text-gray-500">
-                      No change
+                    <p className={`text-lg font-semibold ${
+                      categoryAdjustment.new_limit === 0
+                        ? 'text-gray-500 dark:text-gray-400'
+                        : categoryAdjustment.adjustment_type === 'increase'
+                          ? 'text-green-600 dark:text-green-400'
+                          : 'text-red-600 dark:text-red-400'
+                    }`}>
+                      {categoryAdjustment.new_limit === 0 ? 'Deactivated' : formatCurrency(categoryAdjustment.new_limit)}
                     </p>
+                  ) : (
+                    <p className="text-lg font-semibold text-gray-400 dark:text-gray-500">No change</p>
                   )}
                 </div>
               </div>
 
-              {/* Quick Actions */}
-              {!categoryAdjustment && category.monthlyLimit > 0 && (
-                <button
-                  onClick={() => {
-                    setNextMonthLimit('0');
-                    setAdjustmentReason('Deactivating category');
-                  }}
-                  className="w-full flex items-center justify-center gap-2 p-3 border-2 border-dashed border-gray-300 dark:border-gray-600 rounded-lg text-gray-600 dark:text-gray-400 hover:border-gray-400 dark:hover:border-gray-500 hover:bg-gray-50 dark:hover:bg-gray-700/50 transition-colors"
-                >
-                  <TrendingDown className="h-4 w-4" />
-                  Deactivate Next Month
-                </button>
-              )}
-
               {/* Pending adjustment info */}
               {categoryAdjustment && (
-                <div className="flex items-center justify-between p-3 bg-orange-50 dark:bg-orange-900/20 rounded-lg">
-                  <div className="flex items-center gap-2 text-orange-700 dark:text-orange-300">
-                    <Calendar className="h-4 w-4" />
-                    <span className="text-sm font-medium">Scheduled adjustment</span>
-                  </div>
+                <div className="flex items-center justify-between p-2 bg-orange-50 dark:bg-orange-900/20 rounded-lg text-sm">
+                  <span className="text-orange-700 dark:text-orange-300">Pending adjustment (takes effect next month)</span>
                   <button
                     onClick={handleCancelAdjustment}
                     disabled={isPending}
-                    className="text-sm text-orange-600 dark:text-orange-400 hover:text-orange-800 dark:hover:text-orange-200 font-medium"
+                    className="text-orange-600 dark:text-orange-400 hover:text-orange-800 dark:hover:text-orange-200 font-medium"
                   >
                     Cancel
                   </button>
@@ -711,8 +594,7 @@ export const CategoryEditModal: React.FC<CategoryEditModalProps> = ({
               {/* New limit input */}
               <div>
                 <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
-                  <Calendar className="inline h-4 w-4 mr-1" />
-                  Next Month's Limit
+                  New Limit
                 </label>
                 <div className="relative">
                   <span className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-500">₪</span>
@@ -726,46 +608,34 @@ export const CategoryEditModal: React.FC<CategoryEditModalProps> = ({
                     className="w-full pl-8 pr-3 py-2 border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-700 text-gray-900 dark:text-gray-100 focus:ring-2 focus:ring-green-500 focus:border-transparent"
                   />
                 </div>
-                <p className="text-xs text-gray-500 dark:text-gray-400 mt-1">
-                  Set to 0 to deactivate this category next month
-                </p>
               </div>
 
-              {/* Reason */}
+              {/* Reason - single line */}
               <div>
                 <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
                   Reason (optional)
                 </label>
-                <textarea
+                <input
+                  type="text"
                   value={adjustmentReason}
                   onChange={(e) => setAdjustmentReason(e.target.value)}
-                  placeholder="Why are you adjusting this category?"
-                  rows={2}
+                  placeholder="e.g., Holiday spending"
                   className="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-700 text-gray-900 dark:text-gray-100 focus:ring-2 focus:ring-green-500 focus:border-transparent"
                 />
               </div>
 
-              {/* Preview */}
-              {parseFloat(nextMonthLimit) !== category.monthlyLimit && nextMonthLimit !== '' && (
-                <div className={`p-3 rounded-lg ${
-                  parseFloat(nextMonthLimit) > category.monthlyLimit
-                    ? 'bg-green-50 dark:bg-green-900/20 text-green-700 dark:text-green-300'
-                    : 'bg-red-50 dark:bg-red-900/20 text-red-700 dark:text-red-300'
-                }`}>
-                  <div className="flex items-center gap-2 text-sm font-medium">
-                    {parseFloat(nextMonthLimit) > category.monthlyLimit ? (
-                      <>
-                        <TrendingUp className="h-4 w-4" />
-                        Increase of {formatCurrency(parseFloat(nextMonthLimit) - category.monthlyLimit)}
-                      </>
-                    ) : (
-                      <>
-                        <TrendingDown className="h-4 w-4" />
-                        Decrease of {formatCurrency(category.monthlyLimit - parseFloat(nextMonthLimit))}
-                      </>
-                    )}
-                  </div>
-                </div>
+              {/* Quick deactivate */}
+              {!categoryAdjustment && category.monthlyLimit > 0 && nextMonthLimit !== '0' && (
+                <button
+                  type="button"
+                  onClick={() => {
+                    setNextMonthLimit('0');
+                    setAdjustmentReason('Deactivating category');
+                  }}
+                  className="text-sm text-gray-500 dark:text-gray-400 hover:text-gray-700 dark:hover:text-gray-300"
+                >
+                  Or click to <span className="underline">deactivate permanently</span>
+                </button>
               )}
             </div>
           )}
@@ -784,33 +654,23 @@ export const CategoryEditModal: React.FC<CategoryEditModalProps> = ({
                 Delete this category
               </button>
               
-              {/* Tab-specific action button */}
+              {/* Tab-specific action button - Uniform style: no icons, consistent text */}
               {activeTab === 'edit' && (
                 <button
                   onClick={handleSaveEdit}
                   disabled={isPending || !editHasChanges}
                   className="px-4 py-2 bg-green-600 text-white rounded-lg hover:bg-green-700 disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
                 >
-                  {updateCategory.isPending ? 'Saving...' : 'Save Changes'}
-                </button>
-              )}
-              {activeTab === 'rename' && (
-                <button
-                  onClick={handleRename}
-                  disabled={isPending || newName.trim() === category.name}
-                  className="px-4 py-2 bg-green-600 text-white rounded-lg hover:bg-green-700 disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
-                >
-                  {renameCategory.isPending ? 'Renaming...' : 'Rename Category'}
+                  {(updateCategory.isPending || renameCategory.isPending) ? 'Saving...' : 'Save'}
                 </button>
               )}
               {activeTab === 'merge' && (
                 <button
                   onClick={handleMerge}
                   disabled={isPending || !targetCategoryId}
-                  className="flex items-center gap-2 px-4 py-2 bg-green-600 text-white rounded-lg hover:bg-green-700 disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
+                  className="px-4 py-2 bg-green-600 text-white rounded-lg hover:bg-green-700 disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
                 >
-                  <GitMerge className="h-4 w-4" />
-                  {mergeCategories.isPending ? 'Merging...' : 'Merge Categories'}
+                  {mergeCategories.isPending ? 'Merging...' : 'Merge'}
                 </button>
               )}
               {activeTab === 'adjustment' && (
@@ -819,8 +679,7 @@ export const CategoryEditModal: React.FC<CategoryEditModalProps> = ({
                   disabled={isPending || nextMonthLimit === '' || parseFloat(nextMonthLimit) === category.monthlyLimit}
                   className="px-4 py-2 bg-green-600 text-white rounded-lg hover:bg-green-700 disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
                 >
-                  {scheduleAdjustment.isPending ? 'Scheduling...' : 
-                   categoryAdjustment ? 'Update Adjustment' : 'Schedule Adjustment'}
+                  {scheduleAdjustment.isPending ? 'Saving...' : 'Save'}
                 </button>
               )}
             </div>

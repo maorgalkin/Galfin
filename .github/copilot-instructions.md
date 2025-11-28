@@ -78,3 +78,11 @@ When creating UI components intended for reuse:
 3. Support dark mode with `dark:` variants
 4. Keep components in `/src/components/` with clear naming
 
+### Modal Design Guidelines
+
+1. **No scrollbars in modals** - Design content to fit without scrolling
+2. Use flex layout (`flex flex-col`) instead of fixed heights
+3. Keep modals compact - reduce spacing (`space-y-3` vs `space-y-4`)
+4. Use native browser controls where possible (e.g., `<input type="color">`)
+5. Consistent footer pattern: delete/secondary action left, primary action right
+

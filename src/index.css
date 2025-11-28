@@ -11,6 +11,30 @@ body {
 	background-color: #f3f4f6; /* gray-100 */
 }
 
+/* Color input - fill the entire container */
+input[type="color"].color-picker-full {
+  -webkit-appearance: none;
+  -moz-appearance: none;
+  appearance: none;
+  padding: 0;
+  border: none;
+  background: none;
+}
+
+input[type="color"].color-picker-full::-webkit-color-swatch-wrapper {
+  padding: 0;
+}
+
+input[type="color"].color-picker-full::-webkit-color-swatch {
+  border: none;
+  border-radius: 0.5rem;
+}
+
+input[type="color"].color-picker-full::-moz-color-swatch {
+  border: none;
+  border-radius: 0.5rem;
+}
+
 /* Force responsive grid for budget categories */
 @layer components {
   .budget-category-grid {
