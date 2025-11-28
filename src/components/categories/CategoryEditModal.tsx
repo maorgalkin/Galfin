@@ -642,25 +642,33 @@ export const CategoryEditModal: React.FC<CategoryEditModalProps> = ({
                   categoryAdjustment 
                     ? categoryAdjustment.adjustment_type === 'increase'
                       ? 'bg-green-50 dark:bg-green-900/20'
-                      : 'bg-red-50 dark:bg-red-900/20'
+                      : categoryAdjustment.new_limit === 0
+                        ? 'bg-gray-100 dark:bg-gray-600/50'
+                        : 'bg-red-50 dark:bg-red-900/20'
                     : 'bg-gray-50 dark:bg-gray-700/50'
                 }`}>
                   <p className="text-xs text-gray-500 dark:text-gray-400 uppercase mb-1">Next Month</p>
                   {categoryAdjustment ? (
-                    <div className="flex items-center gap-2">
-                      {categoryAdjustment.adjustment_type === 'increase' ? (
-                        <TrendingUp className="h-4 w-4 text-green-600 dark:text-green-400" />
-                      ) : (
-                        <TrendingDown className="h-4 w-4 text-red-600 dark:text-red-400" />
-                      )}
-                      <p className={`text-lg font-semibold ${
-                        categoryAdjustment.adjustment_type === 'increase'
-                          ? 'text-green-600 dark:text-green-400'
-                          : 'text-red-600 dark:text-red-400'
-                      }`}>
-                        {formatCurrency(categoryAdjustment.new_limit)}
+                    categoryAdjustment.new_limit === 0 ? (
+                      <p className="text-lg font-semibold text-gray-500 dark:text-gray-400">
+                        Deactivated
                       </p>
-                    </div>
+                    ) : (
+                      <div className="flex items-center gap-2">
+                        {categoryAdjustment.adjustment_type === 'increase' ? (
+                          <TrendingUp className="h-4 w-4 text-green-600 dark:text-green-400" />
+                        ) : (
+                          <TrendingDown className="h-4 w-4 text-red-600 dark:text-red-400" />
+                        )}
+                        <p className={`text-lg font-semibold ${
+                          categoryAdjustment.adjustment_type === 'increase'
+                            ? 'text-green-600 dark:text-green-400'
+                            : 'text-red-600 dark:text-red-400'
+                        }`}>
+                          {formatCurrency(categoryAdjustment.new_limit)}
+                        </p>
+                      </div>
+                    )
                   ) : (
                     <p className="text-lg font-semibold text-gray-400 dark:text-gray-500">
                       No change
@@ -668,6 +676,20 @@ export const CategoryEditModal: React.FC<CategoryEditModalProps> = ({
                   )}
                 </div>
               </div>
+
+              {/* Quick Actions */}
+              {!categoryAdjustment && category.monthlyLimit > 0 && (
+                <button
+                  onClick={() => {
+                    setNextMonthLimit('0');
+                    setAdjustmentReason('Deactivating category');
+                  }}
+                  className="w-full flex items-center justify-center gap-2 p-3 border-2 border-dashed border-gray-300 dark:border-gray-600 rounded-lg text-gray-600 dark:text-gray-400 hover:border-gray-400 dark:hover:border-gray-500 hover:bg-gray-50 dark:hover:bg-gray-700/50 transition-colors"
+                >
+                  <TrendingDown className="h-4 w-4" />
+                  Deactivate Next Month
+                </button>
+              )}
 
               {/* Pending adjustment info */}
               {categoryAdjustment && (

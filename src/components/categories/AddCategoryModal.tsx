@@ -1,10 +1,14 @@
 // Add Category Modal
 // Part of Category Management Restructure (Phase 4)
+// Updated: supports adding now or scheduling for next month
 
 import React, { useState, useEffect } from 'react';
-import { X, AlertCircle } from 'lucide-react';
+import { X, AlertCircle, Calendar, Zap } from 'lucide-react';
 import { useCreateCategory, useCategories } from '../../hooks/useCategories';
+import { useScheduleAdjustment, useNextMonthAdjustments } from '../../hooks/useBudgets';
 import { DEFAULT_CATEGORY_COLORS, getNextCategoryColor } from '../../types/category';
+
+type AddMode = 'now' | 'next-month';
 
 interface AddCategoryModalProps {
   isOpen: boolean;
@@ -13,17 +17,29 @@ interface AddCategoryModalProps {
 
 export const AddCategoryModal: React.FC<AddCategoryModalProps> = ({ isOpen, onClose }) => {
   const { data: existingCategories } = useCategories();
+  const { data: nextMonthSummary } = useNextMonthAdjustments();
   const createCategory = useCreateCategory();
+  const scheduleAdjustment = useScheduleAdjustment();
   
+  const [addMode, setAddMode] = useState<AddMode>('now');
   const [name, setName] = useState('');
   const [color, setColor] = useState('#3B82F6');
   const [monthlyLimit, setMonthlyLimit] = useState('');
   const [warningThreshold, setWarningThreshold] = useState('80');
   const [error, setError] = useState('');
 
+  // Check if name already exists in pending adjustments
+  const nameExistsInAdjustments = (categoryName: string): boolean => {
+    if (!nextMonthSummary) return false;
+    return nextMonthSummary.adjustments.some(
+      adj => adj.category_name.toLowerCase() === categoryName.toLowerCase()
+    );
+  };
+
   // Reset form when modal opens
   useEffect(() => {
     if (isOpen) {
+      setAddMode('now');
       setName('');
       setMonthlyLimit('');
       setWarningThreshold('80');
@@ -45,7 +61,7 @@ export const AddCategoryModal: React.FC<AddCategoryModalProps> = ({ isOpen, onCl
       return;
     }
 
-    // Check for duplicate name
+    // Check for duplicate name in existing categories
     const isDuplicate = existingCategories?.some(
       c => c.name.toLowerCase() === name.trim().toLowerCase()
     );
@@ -54,18 +70,37 @@ export const AddCategoryModal: React.FC<AddCategoryModalProps> = ({ isOpen, onCl
       return;
     }
 
+    // Check for duplicate in pending adjustments (for next-month mode)
+    if (addMode === 'next-month' && nameExistsInAdjustments(name.trim())) {
+      setError('A category with this name is already scheduled for next month');
+      return;
+    }
+
     try {
-      await createCategory.mutateAsync({
-        name: name.trim(),
-        color,
-        monthlyLimit: parseFloat(monthlyLimit) || 0,
-        warningThreshold: parseInt(warningThreshold) || 80,
-      });
+      if (addMode === 'now') {
+        // Create category immediately
+        await createCategory.mutateAsync({
+          name: name.trim(),
+          color,
+          monthlyLimit: parseFloat(monthlyLimit) || 0,
+          warningThreshold: parseInt(warningThreshold) || 80,
+        });
+      } else {
+        // Schedule as adjustment for next month
+        await scheduleAdjustment.mutateAsync({
+          categoryName: name.trim(),
+          currentLimit: 0,
+          newLimit: parseFloat(monthlyLimit) || 0,
+          reason: 'New category scheduled for next month',
+        });
+      }
       onClose();
     } catch (err) {
       setError(err instanceof Error ? err.message : 'Failed to create category');
     }
   };
+
+  const isPending = createCategory.isPending || scheduleAdjustment.isPending;
 
   if (!isOpen) return null;
 
@@ -99,6 +134,40 @@ export const AddCategoryModal: React.FC<AddCategoryModalProps> = ({ isOpen, onCl
             </div>
           )}
 
+          {/* Add Mode Toggle */}
+          <div className="flex rounded-lg border border-gray-200 dark:border-gray-700 overflow-hidden">
+            <button
+              type="button"
+              onClick={() => setAddMode('now')}
+              className={`flex-1 flex items-center justify-center gap-2 px-3 py-2 text-sm font-medium transition-colors ${
+                addMode === 'now'
+                  ? 'bg-green-600 text-white'
+                  : 'bg-gray-50 dark:bg-gray-700/50 text-gray-600 dark:text-gray-400 hover:bg-gray-100 dark:hover:bg-gray-700'
+              }`}
+            >
+              <Zap className="h-4 w-4" />
+              Add Now
+            </button>
+            <button
+              type="button"
+              onClick={() => setAddMode('next-month')}
+              className={`flex-1 flex items-center justify-center gap-2 px-3 py-2 text-sm font-medium transition-colors ${
+                addMode === 'next-month'
+                  ? 'bg-orange-500 text-white'
+                  : 'bg-gray-50 dark:bg-gray-700/50 text-gray-600 dark:text-gray-400 hover:bg-gray-100 dark:hover:bg-gray-700'
+              }`}
+            >
+              <Calendar className="h-4 w-4" />
+              Next Month
+            </button>
+          </div>
+          
+          {addMode === 'next-month' && (
+            <p className="text-xs text-orange-600 dark:text-orange-400 bg-orange-50 dark:bg-orange-900/20 px-3 py-2 rounded-lg">
+              This category will be created when the new month starts
+            </p>
+          )}
+
           {/* Name */}
           <div>
             <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
@@ -114,27 +183,29 @@ export const AddCategoryModal: React.FC<AddCategoryModalProps> = ({ isOpen, onCl
             />
           </div>
 
-          {/* Color */}
-          <div>
-            <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
-              Color
-            </label>
-            <div className="flex flex-wrap gap-2">
-              {DEFAULT_CATEGORY_COLORS.map((c) => (
-                <button
-                  key={c}
-                  type="button"
-                  onClick={() => setColor(c)}
-                  className={`w-8 h-8 rounded-full border-2 transition-all ${
-                    color === c 
-                      ? 'border-gray-900 dark:border-white scale-110' 
-                      : 'border-transparent hover:scale-105'
-                  }`}
-                  style={{ backgroundColor: c }}
-                />
-              ))}
+          {/* Color - only for immediate add */}
+          {addMode === 'now' && (
+            <div>
+              <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
+                Color
+              </label>
+              <div className="flex flex-wrap gap-2">
+                {DEFAULT_CATEGORY_COLORS.map((c) => (
+                  <button
+                    key={c}
+                    type="button"
+                    onClick={() => setColor(c)}
+                    className={`w-8 h-8 rounded-full border-2 transition-all ${
+                      color === c 
+                        ? 'border-gray-900 dark:border-white scale-110' 
+                        : 'border-transparent hover:scale-105'
+                    }`}
+                    style={{ backgroundColor: c }}
+                  />
+                ))}
+              </div>
             </div>
-          </div>
+          )}
 
           {/* Monthly Limit */}
           <div>
@@ -155,29 +226,31 @@ export const AddCategoryModal: React.FC<AddCategoryModalProps> = ({ isOpen, onCl
             </div>
           </div>
 
-          {/* Warning Threshold */}
-          <div>
-            <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
-              Warning Threshold
-            </label>
-            <div className="flex items-center gap-3">
-              <input
-                type="range"
-                value={warningThreshold}
-                onChange={(e) => setWarningThreshold(e.target.value)}
-                min="50"
-                max="100"
-                step="5"
-                className="flex-1"
-              />
-              <span className="text-sm text-gray-600 dark:text-gray-400 w-12 text-right">
-                {warningThreshold}%
-              </span>
+          {/* Warning Threshold - only for immediate add */}
+          {addMode === 'now' && (
+            <div>
+              <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
+                Warning Threshold
+              </label>
+              <div className="flex items-center gap-3">
+                <input
+                  type="range"
+                  value={warningThreshold}
+                  onChange={(e) => setWarningThreshold(e.target.value)}
+                  min="50"
+                  max="100"
+                  step="5"
+                  className="flex-1"
+                />
+                <span className="text-sm text-gray-600 dark:text-gray-400 w-12 text-right">
+                  {warningThreshold}%
+                </span>
+              </div>
+              <p className="text-xs text-gray-500 dark:text-gray-400 mt-1">
+                Alert when spending reaches this percentage of the limit
+              </p>
             </div>
-            <p className="text-xs text-gray-500 dark:text-gray-400 mt-1">
-              Alert when spending reaches this percentage of the limit
-            </p>
-          </div>
+          )}
 
           {/* Actions */}
           <div className="flex justify-end gap-3 pt-4">
@@ -190,10 +263,17 @@ export const AddCategoryModal: React.FC<AddCategoryModalProps> = ({ isOpen, onCl
             </button>
             <button
               type="submit"
-              disabled={createCategory.isPending}
-              className="px-4 py-2 bg-green-600 text-white rounded-lg hover:bg-green-700 disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
+              disabled={isPending}
+              className={`px-4 py-2 text-white rounded-lg disabled:opacity-50 disabled:cursor-not-allowed transition-colors ${
+                addMode === 'now'
+                  ? 'bg-green-600 hover:bg-green-700'
+                  : 'bg-orange-500 hover:bg-orange-600'
+              }`}
             >
-              {createCategory.isPending ? 'Creating...' : 'Create Category'}
+              {isPending 
+                ? (addMode === 'now' ? 'Creating...' : 'Scheduling...') 
+                : (addMode === 'now' ? 'Create Category' : 'Schedule for Next Month')
+              }
             </button>
           </div>
         </form>
