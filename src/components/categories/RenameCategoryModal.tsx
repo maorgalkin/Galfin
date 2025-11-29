@@ -4,6 +4,7 @@
 import React, { useState, useEffect } from 'react';
 import { X, AlertCircle, Check } from 'lucide-react';
 import { useRenameCategory, useCategories } from '../../hooks/useCategories';
+import { useFinance } from '../../context/FinanceContext';
 import type { Category } from '../../types/category';
 
 interface RenameCategoryModalProps {
@@ -19,6 +20,7 @@ export const RenameCategoryModal: React.FC<RenameCategoryModalProps> = ({
 }) => {
   const { data: existingCategories } = useCategories();
   const renameCategory = useRenameCategory();
+  const { refreshTransactions } = useFinance();
   
   const [newName, setNewName] = useState('');
   const [error, setError] = useState('');
@@ -61,7 +63,10 @@ export const RenameCategoryModal: React.FC<RenameCategoryModalProps> = ({
       await renameCategory.mutateAsync({
         categoryId: category.id,
         newName: newName.trim(),
+        oldName: category.name,
       });
+      // Refresh transactions to update category names in UI
+      await refreshTransactions();
       onClose();
     } catch (err) {
       setError(err instanceof Error ? err.message : 'Failed to rename category');

@@ -87,6 +87,8 @@ export function useCreatePersonalBudget() {
       queryClient.invalidateQueries({ queryKey: ['personalBudget'] });
       // Invalidate monthly budgets since new personal budget created
       queryClient.invalidateQueries({ queryKey: ['monthlyBudget'] });
+      // Invalidate categories since they're synced from budget
+      queryClient.invalidateQueries({ queryKey: ['categories'] });
     },
   });
 }
@@ -106,6 +108,8 @@ export function useUpdatePersonalBudget() {
       queryClient.invalidateQueries({ queryKey: ['personalBudget'] });
       // Invalidate monthly budgets since categories might have changed
       queryClient.invalidateQueries({ queryKey: ['monthlyBudget'] });
+      // Invalidate categories since they're synced from budget
+      queryClient.invalidateQueries({ queryKey: ['categories'] });
     },
   });
 }

@@ -18,6 +18,7 @@ interface FinanceContextType {
   getTotalExpenses: () => number;
   getBalance: () => number;
   setTransactions: React.Dispatch<React.SetStateAction<Transaction[]>>;
+  refreshTransactions: () => Promise<void>;
 }
 
 const FinanceContext = React.createContext<FinanceContextType | undefined>(undefined);
@@ -214,6 +215,16 @@ export const FinanceProvider: React.FC<{ children: React.ReactNode }> = ({ child
     return getTotalIncome() - getTotalExpenses();
   };
 
+  const refreshTransactions = async () => {
+    if (!user) return;
+    try {
+      const txns = await SupabaseService.getTransactions();
+      setTransactions(txns);
+    } catch (error) {
+      console.error('Error refreshing transactions:', error);
+    }
+  };
+
   return (
     <FinanceContext.Provider value={{
       transactions,
@@ -230,6 +241,7 @@ export const FinanceProvider: React.FC<{ children: React.ReactNode }> = ({ child
       getTotalExpenses,
       getBalance,
       setTransactions,
+      refreshTransactions,
     }}>
       {children}
     </FinanceContext.Provider>

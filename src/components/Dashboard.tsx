@@ -2,7 +2,7 @@ import React, { useState, useEffect, useCallback, useMemo } from 'react';
 import { useSearchParams } from 'react-router-dom';
 import { useFinance } from '../context/FinanceContext';
 import { useAuth } from '../contexts/AuthContext';
-import { useActiveBudget } from '../hooks/useBudgets';
+import { useActiveBudget, useCurrentMonthBudget } from '../hooks/useBudgets';
 import { budgetService } from '../services/budgetService';
 import { userAlertViewService } from '../services/userAlertViewService';
 import { motion, AnimatePresence } from 'framer-motion';
@@ -32,6 +32,7 @@ import { getHeadingColor, getSubheadingColor } from '../utils/themeColors';
 const Dashboard: React.FC = () => {
   const { transactions, familyMembers, addTransaction, deleteTransaction } = useFinance();
   const { data: personalBudget } = useActiveBudget();
+  const { data: monthlyBudget } = useCurrentMonthBudget();
   const { user } = useAuth();
   const [searchParams, setSearchParams] = useSearchParams();
   const [activeMonthTab, setActiveMonthTab] = useState(0);
@@ -73,10 +74,15 @@ const Dashboard: React.FC = () => {
   const currentAlertsCount = useMemo(() => {
     if (!personalBudget) return 0;
     
+    // Use monthly budget categories if available (includes mid-month edits)
+    const categories = monthlyBudget?.categories 
+      ? { ...monthlyBudget.categories }
+      : { ...personalBudget.categories };
+    
     const budgetConfig: BudgetConfiguration = {
       version: "2.0.0",
-      lastUpdated: personalBudget.updated_at,
-      categories: personalBudget.categories,
+      lastUpdated: monthlyBudget?.updated_at || personalBudget.updated_at,
+      categories,
       globalSettings: personalBudget.global_settings
     };
     
@@ -106,7 +112,7 @@ const Dashboard: React.FC = () => {
     });
     
     return unviewedCategories.size;
-  }, [personalBudget, transactions, viewedAlertIds]);
+  }, [personalBudget, monthlyBudget, transactions, viewedAlertIds]);
 
   // Memoize callback to prevent effect re-runs
   const handleBreakdownVisible = useCallback((visible: boolean) => {
@@ -117,10 +123,15 @@ const Dashboard: React.FC = () => {
   const handleAlertsViewed = useCallback(async () => {
     if (!personalBudget || !user?.id || !household?.id) return;
     
+    // Use monthly budget categories if available (includes mid-month edits)
+    const categories = monthlyBudget?.categories 
+      ? { ...monthlyBudget.categories }
+      : { ...personalBudget.categories };
+    
     const budgetConfig: BudgetConfiguration = {
       version: "2.0.0",
-      lastUpdated: personalBudget.updated_at,
-      categories: personalBudget.categories,
+      lastUpdated: monthlyBudget?.updated_at || personalBudget.updated_at,
+      categories,
       globalSettings: personalBudget.global_settings
     };
     
@@ -147,7 +158,7 @@ const Dashboard: React.FC = () => {
       alertIds.forEach(id => newSet.add(id));
       return newSet;
     });
-  }, [personalBudget, transactions, user?.id, household?.id]);
+  }, [personalBudget, monthlyBudget, transactions, user?.id, household?.id]);
 
   // Handle category click from Budget Performance Card
   const handleCategoryClick = useCallback((category: string) => {

@@ -29,6 +29,38 @@ For complete project information, refer to:
 
 ---
 
+## UI Navigation Hierarchy
+
+**IMPORTANT:** When modifying navigation, tabs, or page structure, update this section to keep it current.
+
+```
+App
+├── Dashboard (/)
+│   ├── Tab: Dashboard - Month carousel, budget overview, alerts, recent transactions
+│   ├── Tab: Transactions - Full transaction list with filters
+│   ├── Tab: Budget → BudgetManagement page
+│   │   ├── Sub-tab: Overview - PersonalBudgetDisplay (view budget) or PersonalBudgetEditor (create)
+│   │   ├── Sub-tab: Categories - CategoryList (add, edit, rename, delete, merge categories)
+│   │   └── Sub-tab: Settings - BudgetSettings (name, currency, notifications, household, budget history)
+│   └── Tab: Insights → InsightsPage
+│       ├── Date Range Filter
+│       ├── Budget vs Actual Chart
+│       └── Category Accuracy Chart
+│
+└── Auth Pages
+    ├── /login
+    └── /signup
+```
+
+**Key Components:**
+- `PersonalBudgetDisplay` - Read-only view of active budget (shown in Overview when budget exists)
+- `PersonalBudgetEditor` - Create new budget (shown in Overview when no budget exists)
+- `CategoryList` - Full category management with inline actions
+- `BudgetSettings` - Currency, notifications, household, budget name, and **budget history**
+- `BudgetHistory` - View all budget versions, set active, delete old versions
+
+---
+
 ## Frontend Styling Guidelines
 
 ### Tailwind CSS Configuration

@@ -1,24 +1,42 @@
 # 📊 Galfin - Feature Summary
 
-**Last Updated:** November 6, 2025  
+**Last Updated:** November 29, 2025  
 **Platform:** Web Application (React + TypeScript + Supabase)
 
 ---
 
 ## 🎯 Overview
 
-Galfin is a modern family finance tracker for managing income, expenses, and budgets. Features include transaction tracking, budget management with monthly adjustments, visual analytics, and multi-user family support.
+Galfin is a modern family finance tracker for managing income, expenses, and budgets. Features include transaction tracking, budget management with monthly adjustments, visual analytics, and multi-user household support.
 
 ---
 
 ## 🏗️ Technology Stack
 
 **Frontend:** React 19.1.1, TypeScript 5.8.3, Vite 7.1.2  
-**Styling:** Tailwind CSS 4.1.12, Lucide Icons, Framer Motion  
+**Styling:** Tailwind CSS 3.4.x, Lucide Icons, Framer Motion  
 **Charts:** Recharts 3.1.2  
 **Backend:** Supabase 2.75.0 (PostgreSQL + Auth + Real-time)  
 **Testing:** Vitest 3.2.4, React Testing Library  
 **Routing:** React Router DOM 6.30.1
+
+---
+
+## 🗺️ Navigation Structure
+
+```
+App
+├── Dashboard (/)
+│   ├── Tab: Dashboard - Month carousel, budget overview, alerts, recent transactions
+│   ├── Tab: Transactions - Full transaction list with filters
+│   ├── Tab: Budget → BudgetManagement page
+│   │   ├── Sub-tab: Overview - Budget display or creation
+│   │   ├── Sub-tab: Categories - Full category management
+│   │   └── Sub-tab: Settings - Currency, notifications, household, budget history
+│   └── Tab: Insights - Analytics and charts
+│
+└── Auth Pages (/login, /signup)
+```
 
 ---
 
@@ -33,21 +51,22 @@ Galfin is a modern family finance tracker for managing income, expenses, and bud
 ### 2. Budget System
 - **Personal Budgets:** Template budgets with category limits and settings
 - **Monthly Budgets:** Month-specific budgets that can deviate from personal budget
-- **Budget Adjustments:** Schedule changes for next month
-- **Comparison View:** Personal vs Monthly budget side-by-side
-- **Category Management:** Set limits, thresholds, colors, active/inactive status
+- **Budget History:** View all budget versions, set active, delete old versions (in Settings)
+- **Category Management:** Add, edit, rename, merge, delete categories with limits
 - **Global Settings:** Currency, family members, notification preferences
+- **Household Support:** Multi-user households with invite codes
 
 ### 3. Dashboard & Analytics
 - **Summary Cards:** Income, expenses, balance, budget status
 - **Month Carousel:** Navigate through last 24 months
 - **Charts:** Expense breakdown (pie), Budget vs Actual (bar)
-- **Tabs:** Budget Analysis, Transactions, Budget Management
+- **Insights Tab:** Budget accuracy, category performance analysis
 
-### 4. Family Management
-- **Multi-user:** Track transactions by family member
-- **Color Coding:** Assign colors to each member
-- **Attribution:** Link transactions to specific family members
+### 4. Household Management
+- **Multi-user:** Share budgets and transactions within a household
+- **Invite System:** Join households via invite codes
+- **Member Roles:** Owner and member permissions
+- **Auto-creation:** New users automatically get a household
 
 ### 5. Authentication & Security
 - **Supabase Auth:** Email/password with verification

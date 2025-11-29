@@ -49,7 +49,7 @@ export const CategoryEditModal: React.FC<CategoryEditModalProps> = ({
   initialTab = 'edit',
 }) => {
   const { data: allCategories } = useCategories(false, 'expense');
-  const { transactions } = useFinance();
+  const { transactions, refreshTransactions } = useFinance();
   const { data: nextMonthSummary } = useNextMonthAdjustments();
   const { data: activeBudget } = useActiveBudget();
   
@@ -132,8 +132,9 @@ export const CategoryEditModal: React.FC<CategoryEditModalProps> = ({
       setError('');
       setShowDeleteConfirm(false);
       
-      // Edit tab
-      setMonthlyLimit(category.monthlyLimit.toString());
+      // Edit tab - use current month's limit if available (reflects mid-month edits)
+      const currentLimit = currentMonthBudget?.categories?.[category.name]?.monthlyLimit ?? category.monthlyLimit;
+      setMonthlyLimit(currentLimit.toString());
       setWarningThreshold(category.warningThreshold.toString());
       setColor(category.color);
       
@@ -147,16 +148,21 @@ export const CategoryEditModal: React.FC<CategoryEditModalProps> = ({
       setNextMonthLimit(categoryAdjustment?.new_limit.toString() || category.monthlyLimit.toString());
       setAdjustmentReason('');
     }
-  }, [isOpen, category, initialTab, categoryAdjustment]);
+  }, [isOpen, category, initialTab, categoryAdjustment, currentMonthBudget]);
 
   const isPending = updateCategory.isPending || renameCategory.isPending || 
                     deleteCategory.isPending || mergeCategories.isPending ||
                     scheduleAdjustment.isPending || cancelAdjustment.isPending ||
                     updateCategoryLimit.isPending;
 
+  // Get current month's limit for comparison
+  const currentMonthLimit = category 
+    ? (currentMonthBudget?.categories?.[category.name]?.monthlyLimit ?? category.monthlyLimit)
+    : 0;
+
   // Check if edit form has changes
   const editHasChanges = category && (
-    parseFloat(monthlyLimit) !== category.monthlyLimit ||
+    parseFloat(monthlyLimit) !== currentMonthLimit ||
     parseInt(warningThreshold) !== category.warningThreshold ||
     color !== category.color ||
     newName.trim() !== category.name
@@ -173,7 +179,8 @@ export const CategoryEditModal: React.FC<CategoryEditModalProps> = ({
     }
 
     // Check for duplicate name (if name changed)
-    if (newName.trim() !== category.name) {
+    const isRenamed = newName.trim() !== category.name;
+    if (isRenamed) {
       const isDuplicate = allCategories?.some(
         c => c.id !== category.id && c.name.toLowerCase() === newName.trim().toLowerCase()
       );
@@ -184,15 +191,20 @@ export const CategoryEditModal: React.FC<CategoryEditModalProps> = ({
     }
 
     try {
-      // First rename if needed (permanent - updates categories table)
-      if (newName.trim() !== category.name) {
+      // First rename if needed (permanent - updates categories table AND monthly budgets)
+      if (isRenamed) {
         await renameCategory.mutateAsync({
           categoryId: category.id,
           newName: newName.trim(),
+          oldName: category.name,
         });
+        // Refresh transactions to update category names in UI
+        await refreshTransactions();
       }
       
       // Update color and warningThreshold permanently (these are category properties)
+      // Use the NEW name if we renamed the category
+      const categoryNameForUpdate = isRenamed ? newName.trim() : category.name;
       if (parseInt(warningThreshold) !== category.warningThreshold ||
           color !== category.color) {
         await updateCategory.mutateAsync({
@@ -200,15 +212,20 @@ export const CategoryEditModal: React.FC<CategoryEditModalProps> = ({
           input: {
             warningThreshold: Math.min(100, Math.max(0, parseInt(warningThreshold) || 80)),
             color,
+            // NOTE: We do NOT update monthlyLimit here - that's a mid-month temporary change
           },
+          categoryName: categoryNameForUpdate,
         });
       }
       
       // Update limit in current monthly budget only (temporary - this month only)
-      if (parseFloat(monthlyLimit) !== category.monthlyLimit && currentMonthBudget) {
+      // This does NOT change the personal budget template or categories table
+      // Use the NEW name if we renamed the category
+      const categoryNameForBudget = isRenamed ? newName.trim() : category.name;
+      if (parseFloat(monthlyLimit) !== currentMonthLimit && currentMonthBudget) {
         await updateCategoryLimit.mutateAsync({
           monthlyBudgetId: currentMonthBudget.id,
-          categoryName: category.name,
+          categoryName: categoryNameForBudget,
           newLimit: parseFloat(monthlyLimit) || 0,
           notes: 'Mid-month adjustment',
         });
@@ -230,6 +247,8 @@ export const CategoryEditModal: React.FC<CategoryEditModalProps> = ({
         targetCategoryId,
         reason: `Merged ${category.name} into ${targetCategory?.name}`,
       });
+      // Refresh transactions to update category names in UI
+      await refreshTransactions();
       onClose();
     } catch (err) {
       setError(err instanceof Error ? err.message : 'Failed to merge categories');
@@ -292,7 +311,10 @@ export const CategoryEditModal: React.FC<CategoryEditModalProps> = ({
     setError('');
 
     try {
-      await deleteCategory.mutateAsync(category.id);
+      await deleteCategory.mutateAsync({
+        categoryId: category.id,
+        categoryName: category.name,
+      });
       onClose();
     } catch (err) {
       setError(err instanceof Error ? err.message : 'Failed to delete category');

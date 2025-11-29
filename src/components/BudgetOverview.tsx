@@ -1,6 +1,6 @@
 import React, { useState, useMemo } from 'react';
 import { useFinance } from '../context/FinanceContext';
-import { useActiveBudget } from '../hooks/useBudgets';
+import { useActiveBudget, useCurrentMonthBudget } from '../hooks/useBudgets';
 import { budgetService } from '../services/budgetService';
 import { AlertTriangle, CheckCircle, Target, HelpCircle, X } from 'lucide-react';
 import type { BudgetConfiguration } from '../types';
@@ -13,16 +13,23 @@ interface BudgetOverviewProps {
 const BudgetOverview: React.FC<BudgetOverviewProps> = ({ selectedMonth, isCompact = false }) => {
   const { transactions } = useFinance();
   const { data: personalBudget } = useActiveBudget();
+  const { data: monthlyBudget } = useCurrentMonthBudget();
   const [showDetails, setShowDetails] = useState(false);
   const [showProgressHelp, setShowProgressHelp] = useState(false);
 
-  // Convert personal budget to BudgetConfiguration format
+  // Convert budget to BudgetConfiguration format
+  // Use monthly budget categories (current month values including mid-month edits)
   const budgetConfig = useMemo((): BudgetConfiguration => {
     if (personalBudget) {
+      // Use monthly budget categories if available, otherwise personal budget
+      const categories = monthlyBudget?.categories 
+        ? { ...monthlyBudget.categories }
+        : { ...personalBudget.categories };
+      
       return {
         version: "2.0.0",
-        lastUpdated: personalBudget.updated_at,
-        categories: personalBudget.categories,
+        lastUpdated: monthlyBudget?.updated_at || personalBudget.updated_at,
+        categories,
         globalSettings: personalBudget.global_settings
       };
     }
@@ -37,7 +44,7 @@ const BudgetOverview: React.FC<BudgetOverviewProps> = ({ selectedMonth, isCompac
         emailAlerts: false
       }
     };
-  }, [personalBudget]);
+  }, [personalBudget, monthlyBudget]);
 
   // Get current month or use selected month
   const currentDate = selectedMonth || new Date();

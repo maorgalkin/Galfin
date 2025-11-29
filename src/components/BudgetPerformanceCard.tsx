@@ -120,13 +120,20 @@ export const BudgetPerformanceCard: React.FC<BudgetPerformanceCardProps> = ({
     return () => observer.disconnect();
   }, [onBreakdownVisible, isCompact, loadingActive, loadingMonthly]);
 
-  // Convert personal budget to BudgetConfiguration format for budgetService
+  // Convert budget to BudgetConfiguration format for budgetService
+  // Use monthly budget categories (current month values including mid-month edits)
+  // with fallback to personal budget
   const budgetConfig = useMemo((): BudgetConfiguration => {
     if (personalBudget) {
+      // Build categories from monthly budget if available, otherwise from personal budget
+      const categories = monthlyBudget?.categories 
+        ? { ...monthlyBudget.categories }
+        : { ...personalBudget.categories };
+      
       return {
         version: "2.0.0",
-        lastUpdated: personalBudget.updated_at,
-        categories: personalBudget.categories,
+        lastUpdated: monthlyBudget?.updated_at || personalBudget.updated_at,
+        categories,
         globalSettings: personalBudget.global_settings
       };
     }
@@ -141,7 +148,7 @@ export const BudgetPerformanceCard: React.FC<BudgetPerformanceCardProps> = ({
         emailAlerts: false
       }
     };
-  }, [personalBudget]);
+  }, [personalBudget, monthlyBudget]);
 
   // Get current month or use selected month
   const currentDate = selectedMonth || new Date();

@@ -27,6 +27,84 @@ const getHouseholdId = async (): Promise<string> => {
 };
 
 /**
+ * Sync budget categories to the categories table
+ * This ensures the categories table stays in sync with personal_budgets.categories JSONB
+ * Uses upsert to create new categories or update existing ones
+ */
+const syncCategoriesToTable = async (
+  categories: Record<string, CategoryConfig>,
+  householdId: string,
+  userId: string
+): Promise<void> => {
+  if (!categories || Object.keys(categories).length === 0) {
+    return;
+  }
+
+  // Get existing categories for this household
+  const { data: existingCategories, error: fetchError } = await supabase
+    .from('categories')
+    .select('id, name')
+    .eq('household_id', householdId);
+
+  if (fetchError) {
+    console.error('Error fetching existing categories:', fetchError);
+    // Don't throw - this is a sync operation, budget creation should still succeed
+    return;
+  }
+
+  const existingByName = new Map(
+    (existingCategories || []).map(c => [c.name.toLowerCase(), c.id])
+  );
+
+  // Prepare categories for upsert
+  const categoriesToUpsert = Object.entries(categories).map(([name, config], index) => {
+    const existingId = existingByName.get(name.toLowerCase());
+    return {
+      ...(existingId && { id: existingId }), // Include ID if updating
+      user_id: userId,
+      household_id: householdId,
+      name: name,
+      type: 'expense' as const,
+      color: config.color || '#3B82F6',
+      monthly_limit: config.monthlyLimit || 0,
+      warning_threshold: config.warningThreshold || 80,
+      is_active: config.isActive ?? true,
+      sort_order: index,
+      is_system: false,
+    };
+  });
+
+  // Split into inserts (no id) and updates (has id)
+  const toInsert = categoriesToUpsert.filter(c => !('id' in c));
+  const toUpdate = categoriesToUpsert.filter(c => 'id' in c);
+
+  // Insert new categories
+  if (toInsert.length > 0) {
+    const { error: insertError } = await supabase
+      .from('categories')
+      .insert(toInsert);
+
+    if (insertError) {
+      console.error('Error inserting categories:', insertError);
+      // Don't throw - budget creation should still succeed
+    }
+  }
+
+  // Update existing categories
+  for (const cat of toUpdate) {
+    const { id, ...updateData } = cat;
+    const { error: updateError } = await supabase
+      .from('categories')
+      .update(updateData)
+      .eq('id', id);
+
+    if (updateError) {
+      console.error(`Error updating category ${cat.name}:`, updateError);
+    }
+  }
+};
+
+/**
  * Personal Budget Service
  * Manages user's baseline/ideal budget configuration
  * Serves as the reference point for all monthly budgets
@@ -115,6 +193,7 @@ export class PersonalBudgetService {
   /**
    * Create a new personal budget
    * This is typically done during onboarding or when creating a new baseline
+   * Also syncs categories to the categories table for consistency
    */
   static async createBudget(
     budget: Omit<PersonalBudget, 'id' | 'user_id' | 'version' | 'created_at' | 'updated_at' | 'is_active' | 'household_id'>
@@ -157,6 +236,9 @@ export class PersonalBudgetService {
         throw error;
       }
 
+      // Sync categories to the categories table
+      await syncCategoriesToTable(budget.categories, householdId, user.id);
+
       return data;
     } catch (error) {
       console.error('Error creating personal budget:', error);
@@ -167,6 +249,7 @@ export class PersonalBudgetService {
   /**
    * Update the active personal budget (creates a new version)
    * This is called when scheduled adjustments are applied
+   * Also syncs categories to the categories table for consistency
    */
   static async updateBudget(
     budgetId: string,
@@ -193,13 +276,16 @@ export class PersonalBudgetService {
       // Get next version number
       const nextVersion = await this.getNextVersion();
 
+      // Merge categories - use updates if provided, otherwise existing
+      const finalCategories = updates.categories ?? existingBudget.categories;
+
       // Create new version with updates
       const newBudget: Omit<PersonalBudget, 'id' | 'created_at' | 'updated_at'> = {
         user_id: user.id,
         household_id: householdId,
         version: nextVersion,
         name: updates.name ?? existingBudget.name,
-        categories: updates.categories ?? existingBudget.categories,
+        categories: finalCategories,
         global_settings: updates.global_settings ?? existingBudget.global_settings,
         is_active: true,
         notes: updates.notes ?? existingBudget.notes
@@ -212,6 +298,9 @@ export class PersonalBudgetService {
         .single();
 
       if (error) throw error;
+
+      // Sync categories to the categories table
+      await syncCategoriesToTable(finalCategories, householdId, user.id);
 
       return data;
     } catch (error) {
@@ -481,6 +570,153 @@ export class PersonalBudgetService {
       return result;
     } catch (error) {
       console.error('Error resetting budgets:', error);
+      throw error;
+    }
+  }
+
+  /**
+   * Rename a category in all personal budgets
+   * Updates the key in the categories JSONB object AND in global_settings.activeExpenseCategories
+   */
+  static async renameCategoryInAllBudgets(
+    oldName: string,
+    newName: string
+  ): Promise<void> {
+    try {
+      const householdId = await getHouseholdId();
+
+      // Get all personal budgets for this household
+      const { data: budgets, error: fetchError } = await supabase
+        .from('personal_budgets')
+        .select('*')
+        .eq('household_id', householdId);
+
+      if (fetchError) throw fetchError;
+      if (!budgets || budgets.length === 0) return;
+
+      // Update each budget that has the old category name
+      for (const budget of budgets) {
+        const updates: { categories?: Record<string, unknown>; global_settings?: Record<string, unknown> } = {};
+        
+        // Update categories JSONB key
+        if (budget.categories && budget.categories[oldName]) {
+          const updatedCategories = { ...budget.categories };
+          // Copy the category data to the new key
+          updatedCategories[newName] = updatedCategories[oldName];
+          // Delete the old key
+          delete updatedCategories[oldName];
+          updates.categories = updatedCategories;
+        }
+        
+        // Update activeExpenseCategories in global_settings
+        if (budget.global_settings?.activeExpenseCategories) {
+          const activeCategories = budget.global_settings.activeExpenseCategories as string[];
+          const oldIndex = activeCategories.indexOf(oldName);
+          if (oldIndex !== -1) {
+            const updatedActiveCategories = [...activeCategories];
+            updatedActiveCategories[oldIndex] = newName;
+            updates.global_settings = {
+              ...budget.global_settings,
+              activeExpenseCategories: updatedActiveCategories,
+            };
+          }
+        }
+        
+        // Only update if there are changes
+        if (Object.keys(updates).length > 0) {
+          const { error: updateError } = await supabase
+            .from('personal_budgets')
+            .update(updates)
+            .eq('id', budget.id);
+
+          if (updateError) {
+            console.error(`Error updating personal budget ${budget.id}:`, updateError);
+          }
+        }
+      }
+    } catch (error) {
+      console.error('Error renaming category in personal budgets:', error);
+      throw error;
+    }
+  }
+
+  /**
+   * Rename a category in all transactions
+   * Updates the category string column
+   */
+  static async renameCategoryInTransactions(
+    oldName: string,
+    newName: string
+  ): Promise<number> {
+    try {
+      const householdId = await getHouseholdId();
+
+      // Update all transactions with the old category name
+      const { data, error } = await supabase
+        .from('transactions')
+        .update({ category: newName })
+        .eq('household_id', householdId)
+        .eq('category', oldName)
+        .select('id');
+
+      if (error) throw error;
+
+      return data?.length || 0;
+    } catch (error) {
+      console.error('Error renaming category in transactions:', error);
+      throw error;
+    }
+  }
+
+  /**
+   * Update a category's properties (color, warningThreshold, monthlyLimit) in all personal budgets
+   * This syncs the categories table changes to the personal_budgets.categories JSONB
+   */
+  static async updateCategoryInAllBudgets(
+    categoryName: string,
+    updates: { color?: string; warningThreshold?: number; monthlyLimit?: number }
+  ): Promise<void> {
+    try {
+      const householdId = await getHouseholdId();
+
+      // Get all personal budgets for this household
+      const { data: budgets, error: fetchError } = await supabase
+        .from('personal_budgets')
+        .select('*')
+        .eq('household_id', householdId);
+
+      if (fetchError) throw fetchError;
+      if (!budgets || budgets.length === 0) return;
+
+      // Filter out undefined values
+      const cleanUpdates: Record<string, unknown> = {};
+      if (updates.color !== undefined) cleanUpdates.color = updates.color;
+      if (updates.warningThreshold !== undefined) cleanUpdates.warningThreshold = updates.warningThreshold;
+      if (updates.monthlyLimit !== undefined) cleanUpdates.monthlyLimit = updates.monthlyLimit;
+
+      if (Object.keys(cleanUpdates).length === 0) return;
+
+      // Update each budget that has this category
+      for (const budget of budgets) {
+        if (budget.categories && budget.categories[categoryName]) {
+          const updatedCategories = { ...budget.categories };
+          updatedCategories[categoryName] = {
+            ...updatedCategories[categoryName],
+            ...cleanUpdates,
+          };
+
+          const { error: updateError } = await supabase
+            .from('personal_budgets')
+            .update({ categories: updatedCategories })
+            .eq('id', budget.id);
+
+          if (updateError) {
+            console.error(`Error updating personal budget ${budget.id}:`, updateError);
+          }
+        }
+      }
+    } catch (error) {
+      console.error('Error updating category in personal budgets:', error);
       throw error;
     }
   }

@@ -45,7 +45,10 @@ export const DeleteCategoryModal: React.FC<DeleteCategoryModalProps> = ({
         // For now, we'll just delete the category (transactions keep their category_id but category is soft-deleted)
       }
 
-      await deleteCategory.mutateAsync(category.id);
+      await deleteCategory.mutateAsync({
+        categoryId: category.id,
+        categoryName: category.name,
+      });
       onClose();
     } catch (err) {
       setError(err instanceof Error ? err.message : 'Failed to delete category');

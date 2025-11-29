@@ -18,7 +18,7 @@ import {
 } from 'lucide-react';
 import { useCategories } from '../../hooks/useCategories';
 import { useFinance } from '../../context/FinanceContext';
-import { useNextMonthAdjustments, useCancelAdjustment, useActiveBudget } from '../../hooks/useBudgets';
+import { useNextMonthAdjustments, useCancelAdjustment, useActiveBudget, useCurrentMonthBudget } from '../../hooks/useBudgets';
 import type { Category } from '../../types/category';
 import { AddCategoryModal } from './AddCategoryModal';
 import { CategoryEditModal } from './CategoryEditModal';
@@ -39,7 +39,16 @@ export const CategoryList: React.FC<CategoryListProps> = ({
   const { transactions } = useFinance();
   const { data: nextMonthSummary } = useNextMonthAdjustments();
   const { data: activeBudget } = useActiveBudget();
+  const { data: currentMonthBudget } = useCurrentMonthBudget();
   const cancelAdjustment = useCancelAdjustment();
+
+  // Get the current month's limit for a category (from monthly budget, with fallback to category table)
+  const getCurrentMonthLimit = (categoryName: string, fallbackLimit: number): number => {
+    if (currentMonthBudget?.categories?.[categoryName]) {
+      return currentMonthBudget.categories[categoryName].monthlyLimit;
+    }
+    return fallbackLimit;
+  };
   
   // Modal states
   const [showAddModal, setShowAddModal] = useState(false);
@@ -232,9 +241,9 @@ export const CategoryList: React.FC<CategoryListProps> = ({
                           )}
                         </div>
                         <div className="flex items-center gap-3 text-sm text-gray-500 dark:text-gray-400">
-                          {/* Monthly limit - compact on small, full on medium+ */}
+                          {/* Monthly limit - shows current month's value (includes mid-month edits) */}
                           <span>
-                            {formatCurrency(category.monthlyLimit)}
+                            {formatCurrency(getCurrentMonthLimit(category.name, category.monthlyLimit))}
                             <span className="hidden md:inline"> / month</span>
                           </span>
                           {/* Transaction count - icon only on small, with label on medium+ */}

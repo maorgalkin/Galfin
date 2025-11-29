@@ -447,6 +447,113 @@ export class MonthlyBudgetService {
   }
 
   /**
+   * Rename a category in all monthly budgets
+   * Updates the key in the categories JSON object
+   */
+  static async renameCategoryInAllBudgets(
+    oldName: string,
+    newName: string
+  ): Promise<void> {
+    try {
+      const householdId = await getHouseholdId();
+
+      // Get all monthly budgets that contain this category
+      const { data: budgets, error: fetchError } = await supabase
+        .from('monthly_budgets')
+        .select('*')
+        .eq('household_id', householdId);
+
+      if (fetchError) throw fetchError;
+      if (!budgets || budgets.length === 0) return;
+
+      // Update each budget that has the old category name
+      for (const budget of budgets) {
+        if (budget.categories && budget.categories[oldName]) {
+          const updatedCategories = { ...budget.categories };
+          // Copy the category data to the new key
+          updatedCategories[newName] = updatedCategories[oldName];
+          // Delete the old key
+          delete updatedCategories[oldName];
+
+          // Also update original_categories if it exists
+          let updatedOriginalCategories = budget.original_categories;
+          if (updatedOriginalCategories && updatedOriginalCategories[oldName]) {
+            updatedOriginalCategories = { ...updatedOriginalCategories };
+            updatedOriginalCategories[newName] = updatedOriginalCategories[oldName];
+            delete updatedOriginalCategories[oldName];
+          }
+
+          const { error: updateError } = await supabase
+            .from('monthly_budgets')
+            .update({
+              categories: updatedCategories,
+              original_categories: updatedOriginalCategories
+            })
+            .eq('id', budget.id);
+
+          if (updateError) {
+            console.error(`Error updating budget ${budget.id}:`, updateError);
+          }
+        }
+      }
+    } catch (error) {
+      console.error('Error renaming category in budgets:', error);
+      throw error;
+    }
+  }
+
+  /**
+   * Remove a category from all monthly budgets
+   * Used when a category is deleted
+   */
+  static async removeCategoryFromAllBudgets(
+    categoryName: string
+  ): Promise<void> {
+    try {
+      const householdId = await getHouseholdId();
+
+      // Get all monthly budgets that contain this category
+      const { data: budgets, error: fetchError } = await supabase
+        .from('monthly_budgets')
+        .select('*')
+        .eq('household_id', householdId);
+
+      if (fetchError) throw fetchError;
+      if (!budgets || budgets.length === 0) return;
+
+      // Update each budget that has this category
+      for (const budget of budgets) {
+        if (budget.categories && budget.categories[categoryName]) {
+          const updatedCategories = { ...budget.categories };
+          delete updatedCategories[categoryName];
+
+          // Also update original_categories if it exists
+          let updatedOriginalCategories = budget.original_categories;
+          if (updatedOriginalCategories && updatedOriginalCategories[categoryName]) {
+            updatedOriginalCategories = { ...updatedOriginalCategories };
+            delete updatedOriginalCategories[categoryName];
+          }
+
+          const { error: updateError } = await supabase
+            .from('monthly_budgets')
+            .update({
+              categories: updatedCategories,
+              original_categories: updatedOriginalCategories
+            })
+            .eq('id', budget.id);
+
+          if (updateError) {
+            console.error(`Error updating budget ${budget.id}:`, updateError);
+          }
+        }
+      }
+    } catch (error) {
+      console.error('Error removing category from budgets:', error);
+      throw error;
+    }
+  }
+
+  /**
    * Lock a monthly budget (prevent further modifications)
    * Typically done for past months
    */

@@ -60,18 +60,19 @@ export const BudgetVsActual: React.FC<BudgetVsActualProps> = ({ selectedRange, s
       cat => personalBudget.categories[cat].isActive
     );
 
-    // Calculate number of months in the date range
-    const monthsInRange = monthlyBudgets.length;
-
     activeCategories.forEach(categoryName => {
       const personalConfig = personalBudget.categories[categoryName];
 
-      // Original budget: personal budget × number of months
-      // (Assumes personal budget is constant across the period)
-      const originalBudget = personalConfig.monthlyLimit * monthsInRange;
+      // Original budget: sum of original_categories from each monthly budget
+      // This is the snapshot at the beginning of each month (never modified by mid-month edits)
+      const originalBudget = monthlyBudgets.reduce((sum, mb) => {
+        // Use original_categories if available, fallback to personal budget
+        const originalConfig = mb.original_categories?.[categoryName];
+        return sum + (originalConfig?.monthlyLimit || personalConfig.monthlyLimit);
+      }, 0);
 
       // Current budget: sum of all monthly budgets for this category
-      // (Includes any adjustments made in each month)
+      // (Includes any mid-month adjustments made in each month)
       const currentBudget = monthlyBudgets.reduce((sum, mb) => {
         const monthlyConfig = mb.categories[categoryName];
         return sum + (monthlyConfig?.monthlyLimit || personalConfig.monthlyLimit);

@@ -1,7 +1,6 @@
 import React from 'react';
-import { useActiveBudget } from '../hooks/useBudgets';
+import { useActiveBudget, useCurrentMonthBudget } from '../hooks/useBudgets';
 import { Loader2, DollarSign } from 'lucide-react';
-import type { CategoryConfig } from '../types/budget';
 import {
   getInactiveBg,
   getIconColor,
@@ -18,6 +17,7 @@ export const PersonalBudgetDisplay: React.FC<PersonalBudgetDisplayProps> = ({
   onCategoryClick,
 }) => {
   const { data: activeBudget, isLoading } = useActiveBudget();
+  const { data: currentMonthBudget } = useCurrentMonthBudget();
   const themeColor = 'green';
 
   const formatCurrency = (amount: number): string => {
@@ -25,6 +25,14 @@ export const PersonalBudgetDisplay: React.FC<PersonalBudgetDisplayProps> = ({
       style: 'currency',
       currency: activeBudget?.global_settings?.currency || 'USD',
     }).format(amount);
+  };
+
+  // Get the current month's limit for a category (from monthly budget, with fallback to personal budget)
+  const getCurrentMonthLimit = (categoryName: string, fallbackLimit: number): number => {
+    if (currentMonthBudget?.categories?.[categoryName]) {
+      return currentMonthBudget.categories[categoryName].monthlyLimit;
+    }
+    return fallbackLimit;
   };
 
   if (isLoading) {
@@ -42,13 +50,14 @@ export const PersonalBudgetDisplay: React.FC<PersonalBudgetDisplayProps> = ({
     return null;
   }
 
-  const totalBudget = Object.values(activeBudget.categories)
-    .filter(cat => cat.isActive)
-    .reduce((sum, cat: CategoryConfig) => sum + cat.monthlyLimit, 0);
-
+  // Use current month budget values for totals (includes mid-month edits)
   const activeCategories = Object.entries(activeBudget.categories).filter(
     ([_, cat]) => cat.isActive
   );
+
+  const totalBudget = activeCategories.reduce((sum, [name, cat]) => {
+    return sum + getCurrentMonthLimit(name, cat.monthlyLimit);
+  }, 0);
 
   return (
     <div className={`bg-white dark:bg-gray-800 rounded-lg shadow-md ${className}`}>
@@ -115,7 +124,7 @@ export const PersonalBudgetDisplay: React.FC<PersonalBudgetDisplayProps> = ({
                 <div className="flex justify-between items-baseline">
                   <span className="text-xs text-gray-500 dark:text-gray-400">Limit</span>
                   <span className="text-lg font-bold text-gray-900 dark:text-gray-100">
-                    {formatCurrency(config.monthlyLimit)}
+                    {formatCurrency(getCurrentMonthLimit(name, config.monthlyLimit))}
                   </span>
                 </div>
                 

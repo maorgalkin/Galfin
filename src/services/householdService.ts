@@ -281,8 +281,17 @@ export const leaveHousehold = async (): Promise<void> => {
 /**
  * Delete a household (only owner can do this)
  * WARNING: This deletes ALL household data including budgets, transactions, etc.
+ * After deletion, a new empty household is automatically created for the user
+ * unless skipAutoCreate is true (used when joining another household).
+ * 
+ * @param householdId - The household to delete
+ * @param skipAutoCreate - If true, don't auto-create a new household (caller will handle it)
+ * @returns The new household if created, or null if skipped
  */
-export const deleteHousehold = async (householdId: string): Promise<void> => {
+export const deleteHousehold = async (
+  householdId: string, 
+  skipAutoCreate: boolean = false
+): Promise<Household | null> => {
   const userId = await getCurrentUserId();
 
   // Verify user is the owner
@@ -301,7 +310,7 @@ export const deleteHousehold = async (householdId: string): Promise<void> => {
     throw new Error('Only the household owner can delete the household');
   }
 
-  // Delete the household (CASCADE will delete all related data)
+  // Delete the household (CASCADE will delete all related data including household_members)
   const { error } = await supabase
     .from('households')
     .delete()
@@ -311,6 +320,15 @@ export const deleteHousehold = async (householdId: string): Promise<void> => {
     console.error('Error deleting household:', error);
     throw error;
   }
+
+  // Create a new household for the user so they're not left in a broken state
+  // Unless caller explicitly opts out (e.g., when joining another household)
+  if (!skipAutoCreate) {
+    const newHousehold = await createHousehold('My Household');
+    return newHousehold;
+  }
+  
+  return null;
 };
 
 /**
@@ -407,7 +425,7 @@ export const acceptInvitationAndJoin = async (
 
     // Delete current household if user is sole owner
     if (isSoleOwner && currentMember) {
-      await deleteHousehold(currentMember.household_id);
+      await deleteHousehold(currentMember.household_id, true); // skipAutoCreate - joining another household
     } else if (currentMember) {
       // Just leave the household if not owner
       await leaveHousehold();
@@ -498,13 +516,13 @@ export const leaveAndCreateNewHousehold = async (
 
   // If user is owner, delete the household (CASCADE handles members)
   if (currentMember.role === 'owner') {
-    await deleteHousehold(currentMember.household_id);
+    await deleteHousehold(currentMember.household_id, true); // skipAutoCreate - creating with custom name
   } else {
     // If member/admin, just leave
     await leaveHousehold();
   }
 
-  // Create new personal household
+  // Create new personal household with the user's preferred name
   const newHousehold = await createHousehold(householdName);
 
   return newHousehold;

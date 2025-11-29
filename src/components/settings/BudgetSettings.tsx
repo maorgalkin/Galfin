@@ -12,8 +12,11 @@ import {
   Home,
   Save,
   Loader2,
-  Check
+  Check,
+  FileText,
+  Edit2
 } from 'lucide-react';
+import { BudgetHistory } from './BudgetHistory';
 import { useActiveBudget, useUpdatePersonalBudget } from '../../hooks/useBudgets';
 import HouseholdSettingsModal from '../HouseholdSettingsModal';
 import * as HouseholdService from '../../services/householdService';
@@ -34,6 +37,10 @@ export const BudgetSettings: React.FC<BudgetSettingsProps> = ({ className = '' }
   const [hasChanges, setHasChanges] = useState(false);
   const [saveSuccess, setSaveSuccess] = useState(false);
   
+  // Budget name state
+  const [budgetName, setBudgetName] = useState('');
+  const [isEditingName, setIsEditingName] = useState(false);
+  
   // Household state
   const [household, setHousehold] = useState<Household | null>(null);
   const [loadingHousehold, setLoadingHousehold] = useState(true);
@@ -41,10 +48,13 @@ export const BudgetSettings: React.FC<BudgetSettingsProps> = ({ className = '' }
 
   // Load settings from active budget
   useEffect(() => {
-    if (activeBudget?.global_settings) {
-      setCurrency(activeBudget.global_settings.currency || 'ILS');
-      setWarningNotifications(activeBudget.global_settings.warningNotifications ?? true);
-      setEmailAlerts(activeBudget.global_settings.emailAlerts ?? false);
+    if (activeBudget) {
+      setBudgetName(activeBudget.name || '');
+      if (activeBudget.global_settings) {
+        setCurrency(activeBudget.global_settings.currency || 'ILS');
+        setWarningNotifications(activeBudget.global_settings.warningNotifications ?? true);
+        setEmailAlerts(activeBudget.global_settings.emailAlerts ?? false);
+      }
       setHasChanges(false);
     }
   }, [activeBudget]);
@@ -78,11 +88,13 @@ export const BudgetSettings: React.FC<BudgetSettingsProps> = ({ className = '' }
       await updateBudget.mutateAsync({
         budgetId: activeBudget.id,
         updates: {
+          name: budgetName.trim() || activeBudget.name,
           global_settings: updatedGlobalSettings,
         },
       });
 
       setHasChanges(false);
+      setIsEditingName(false);
       setSaveSuccess(true);
       setTimeout(() => setSaveSuccess(false), 2000);
     } catch (error) {
@@ -93,6 +105,12 @@ export const BudgetSettings: React.FC<BudgetSettingsProps> = ({ className = '' }
 
   const handleSettingChange = <T,>(setter: React.Dispatch<React.SetStateAction<T>>, value: T) => {
     setter(value);
+    setHasChanges(true);
+    setSaveSuccess(false);
+  };
+  
+  const handleNameChange = (value: string) => {
+    setBudgetName(value);
     setHasChanges(true);
     setSaveSuccess(false);
   };
@@ -166,6 +184,45 @@ export const BudgetSettings: React.FC<BudgetSettingsProps> = ({ className = '' }
       {/* Main Settings Card */}
       <div className="bg-white dark:bg-gray-800 rounded-xl shadow-sm border border-gray-200 dark:border-gray-700 divide-y divide-gray-200 dark:divide-gray-700">
         
+        {/* Budget Name Row */}
+        <div className="p-4">
+          <div className="flex items-center justify-between">
+            <div className="flex items-center gap-3">
+              <div className="p-2 bg-indigo-100 dark:bg-indigo-900/30 rounded-lg">
+                <FileText className="h-5 w-5 text-indigo-600 dark:text-indigo-400" />
+              </div>
+              <div className="flex-1">
+                <h4 className="font-medium text-gray-900 dark:text-gray-100">Budget Name</h4>
+                {isEditingName ? (
+                  <input
+                    type="text"
+                    value={budgetName}
+                    onChange={(e) => handleNameChange(e.target.value)}
+                    onBlur={() => !hasChanges && setIsEditingName(false)}
+                    autoFocus
+                    className="mt-1 w-full max-w-xs px-2 py-1 text-sm border border-gray-300 dark:border-gray-600 rounded bg-white dark:bg-gray-700 text-gray-900 dark:text-gray-100 focus:ring-2 focus:ring-indigo-500 focus:border-transparent"
+                    placeholder="e.g., Summer 2025 Budget"
+                  />
+                ) : (
+                  <p className="text-sm text-gray-500 dark:text-gray-400">
+                    {budgetName || 'Unnamed budget'}
+                    <span className="ml-2 text-xs text-gray-400">v{activeBudget?.version}</span>
+                  </p>
+                )}
+              </div>
+            </div>
+            {!isEditingName && (
+              <button
+                onClick={() => setIsEditingName(true)}
+                className="p-2 text-indigo-600 dark:text-indigo-400 hover:bg-indigo-50 dark:hover:bg-indigo-900/20 rounded-lg transition-colors"
+                title="Rename budget"
+              >
+                <Edit2 className="h-4 w-4" />
+              </button>
+            )}
+          </div>
+        </div>
+
         {/* Household Row */}
         <div className="p-4">
           <div className="flex items-center justify-between">
@@ -274,6 +331,9 @@ export const BudgetSettings: React.FC<BudgetSettingsProps> = ({ className = '' }
           </div>
         </div>
       </div>
+
+      {/* Budget History Section */}
+      <BudgetHistory currency={currency} />
 
       {/* Household Settings Modal */}
       <HouseholdSettingsModal
