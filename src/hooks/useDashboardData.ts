@@ -45,12 +45,15 @@ export function useDashboardData({
   // Generate last 4 months (current month + 3 previous)
   const months = useMemo(() => getLastNMonths(4), []);
 
-  // Filter transactions by date range
-  const getTransactionsForMonth = (start: Date, end: Date) =>
-    transactions.filter(t => {
-      const d = new Date(t.date);
-      return isDateInRange(d, start, end);
-    });
+  // Filter transactions by date range (memoized to avoid stale closures)
+  const getTransactionsForMonth = useMemo(
+    () => (start: Date, end: Date) =>
+      transactions.filter(t => {
+        const d = new Date(t.date);
+        return isDateInRange(d, start, end);
+      }),
+    [transactions]
+  );
 
   // Get selected month data
   const selectedMonthStart = months[activeMonthIndex].start;
