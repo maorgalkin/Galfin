@@ -186,16 +186,14 @@ export const ExpenseChart: React.FC<ExpenseChartProps> = ({
                         ))}
                       </div>
 
-                      {/* Button container with fixed height to prevent layout shift */}
-                      <div className="mt-4 min-h-[40px]">
-                        {totalTransactions > 5 && (
-                          <button
-                            onClick={() => onViewAllTransactions(selectedDesktopCategory)}
-                            className="w-full px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors text-sm font-medium"
-                          >
-                            See All {selectedDesktopCategory} Expenses ({totalTransactions})
-                          </button>
-                        )}
+                      {/* Button container - always show See All button */}
+                      <div className="mt-4">
+                        <button
+                          onClick={() => onViewAllTransactions(selectedDesktopCategory)}
+                          className="w-full px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors text-sm font-medium"
+                        >
+                          See All {selectedDesktopCategory} Expenses ({totalTransactions})
+                        </button>
                       </div>
                     </>
                   );

@@ -1,16 +1,19 @@
-import React from 'react';
+import React, { useState } from 'react';
 import { motion } from 'framer-motion';
-import { X, User } from 'lucide-react';
+import { X, User, ChevronDown, ExternalLink } from 'lucide-react';
 import type { Transaction } from '../../types';
 
 interface CategoryTransactionsModalProps {
   isOpen: boolean;
   category: string;
+  categories: string[]; // All available categories for dropdown
   transactions: Transaction[];
   formatCurrency: (amount: number) => string;
   getFamilyMemberName: (id: string | undefined) => string | undefined;
   onClose: () => void;
   onEditTransaction: (transaction: Transaction) => void;
+  onCategoryChange: (category: string) => void;
+  onViewInTransactions: (category: string) => void;
 }
 
 /**
@@ -20,12 +23,17 @@ interface CategoryTransactionsModalProps {
 export const CategoryTransactionsModal: React.FC<CategoryTransactionsModalProps> = ({
   isOpen,
   category,
+  categories,
   transactions,
   formatCurrency,
   getFamilyMemberName,
   onClose,
   onEditTransaction,
+  onCategoryChange,
+  onViewInTransactions,
 }) => {
+  const [isDropdownOpen, setIsDropdownOpen] = useState(false);
+  
   if (!isOpen) return null;
 
   const categoryTotal = transactions.reduce((sum, t) => sum + t.amount, 0);
@@ -43,7 +51,41 @@ export const CategoryTransactionsModal: React.FC<CategoryTransactionsModalProps>
         <div className="bg-gradient-to-r from-blue-600 to-purple-600 text-white p-6">
           <div className="flex justify-between items-center">
             <div>
-              <h2 className="text-2xl font-bold">{category} Expenses</h2>
+              <div className="flex items-center gap-2">
+                <span className="text-2xl font-bold">Category</span>
+                {/* Category Dropdown */}
+                <div className="relative">
+                  <button
+                    onClick={() => setIsDropdownOpen(!isDropdownOpen)}
+                    className="flex items-center gap-1 px-3 py-1 bg-white/20 hover:bg-white/30 rounded-lg transition-colors text-xl font-bold"
+                  >
+                    {category}
+                    <ChevronDown className="w-5 h-5" />
+                  </button>
+                  
+                  {isDropdownOpen && (
+                    <div className="absolute top-full left-0 mt-1 bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-700 rounded-lg shadow-lg z-50 min-w-[200px] max-h-[300px] overflow-y-auto">
+                      {categories.map(cat => (
+                        <div
+                          key={cat}
+                          onClick={() => {
+                            onCategoryChange(cat);
+                            setIsDropdownOpen(false);
+                          }}
+                          className={`px-4 py-2 cursor-pointer transition-colors ${
+                            cat === category 
+                              ? 'bg-blue-100 dark:bg-blue-900/50 text-blue-700 dark:text-blue-300 font-medium' 
+                              : 'text-gray-700 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-700'
+                          }`}
+                        >
+                          {cat}
+                        </div>
+                      ))}
+                    </div>
+                  )}
+                </div>
+                <span className="text-2xl font-bold">Expenses</span>
+              </div>
               <p className="text-blue-100 dark:text-blue-200 mt-1">All transactions in this category</p>
             </div>
             <button
@@ -56,7 +98,7 @@ export const CategoryTransactionsModal: React.FC<CategoryTransactionsModalProps>
         </div>
 
         {/* Modal Body */}
-        <div className="p-6 overflow-y-auto max-h-[calc(90vh-140px)]">
+        <div className="p-6 overflow-y-auto max-h-[calc(90vh-200px)]">
           {/* Summary Stats */}
           <div className="grid grid-cols-3 gap-4 mb-6">
             <div className="bg-gray-50 dark:bg-gray-700 rounded-lg p-4">
@@ -117,6 +159,20 @@ export const CategoryTransactionsModal: React.FC<CategoryTransactionsModalProps>
               ))}
             </div>
           )}
+        </div>
+
+        {/* Modal Footer - Link to Transactions page */}
+        <div className="px-6 py-4 bg-gray-50 dark:bg-gray-900/50 border-t border-gray-200 dark:border-gray-700">
+          <button
+            onClick={() => {
+              onViewInTransactions(category);
+              onClose();
+            }}
+            className="w-full flex items-center justify-center gap-2 px-4 py-2 text-blue-600 dark:text-blue-400 hover:bg-blue-50 dark:hover:bg-blue-900/20 rounded-lg transition-colors font-medium"
+          >
+            <ExternalLink className="w-4 h-4" />
+            View in Transactions Page
+          </button>
         </div>
       </motion.div>
     </div>

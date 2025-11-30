@@ -61,13 +61,10 @@ export function useDashboardData({
   const selectedMonthDate = months[activeMonthIndex].start;
 
   // Filter transactions for the selected month
-  const monthTransactions = useMemo(() => {
-    const result = getTransactionsForMonth(selectedMonthStart, selectedMonthEnd);
-    console.log('[useDashboardData] Input transactions:', transactions.length);
-    console.log('[useDashboardData] Month range:', selectedMonthStart.toISOString(), 'to', selectedMonthEnd.toISOString());
-    console.log('[useDashboardData] Filtered monthTransactions:', result.length);
-    return result;
-  }, [getTransactionsForMonth, selectedMonthStart, selectedMonthEnd]);
+  const monthTransactions = useMemo(
+    () => getTransactionsForMonth(selectedMonthStart, selectedMonthEnd),
+    [getTransactionsForMonth, selectedMonthStart, selectedMonthEnd]
+  );
 
   // Calculate category-wise expenses for the selected month
   const monthCategoryData = useMemo(() => {

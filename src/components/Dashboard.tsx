@@ -40,6 +40,7 @@ const Dashboard: React.FC = () => {
   const [transactionTypeFilter, setTransactionTypeFilter] = useState<'all' | 'income' | 'expense'>('all');
   const [transactionMemberFilter, setTransactionMemberFilter] = useState<string>('all');
   const [transactionMonthFilter, setTransactionMonthFilter] = useState<string>('carousel-0'); // Start with current month
+  const [transactionCategoryFilter, setTransactionCategoryFilter] = useState<string>('all');
   const [isDarkMode, setIsDarkMode] = useState(() => {
     // Check OS/browser dark mode preference
     if (typeof window !== 'undefined') {
@@ -633,7 +634,9 @@ const Dashboard: React.FC = () => {
               typeFilter={transactionTypeFilter}
               memberFilter={transactionMemberFilter}
               monthFilter={transactionMonthFilter}
+              categoryFilter={transactionCategoryFilter}
               familyMembers={familyMembers}
+              categories={monthCategoryData.map(c => c.category).sort()}
               months={months}
               activeMonthIndex={activeMonthTab}
               onTypeChange={setTransactionTypeFilter}
@@ -645,6 +648,7 @@ const Dashboard: React.FC = () => {
                   setActiveMonthTab(monthIndex);
                 }
               }}
+              onCategoryChange={setTransactionCategoryFilter}
               onMoreClick={() => {
                 // Coming soon placeholder
               }}
@@ -679,6 +683,11 @@ const Dashboard: React.FC = () => {
                 // Apply member filter
                 if (transactionMemberFilter !== 'all') {
                   filtered = filtered.filter(t => t.familyMember === transactionMemberFilter);
+                }
+                
+                // Apply category filter
+                if (transactionCategoryFilter !== 'all') {
+                  filtered = filtered.filter(t => t.category === transactionCategoryFilter);
                 }
                 
                 return filtered;
@@ -723,6 +732,7 @@ const Dashboard: React.FC = () => {
       <CategoryTransactionsModal
         isOpen={isCategoryModalOpen && selectedDesktopCategory !== null}
         category={selectedDesktopCategory || ''}
+        categories={monthCategoryData.map(c => c.category).sort()}
         transactions={monthTransactions
           .filter(t => t.type === 'expense' && t.category === selectedDesktopCategory)
           .sort((a, b) => new Date(b.date).getTime() - new Date(a.date).getTime())}
@@ -733,6 +743,15 @@ const Dashboard: React.FC = () => {
           setSelectedDesktopCategory(null);
         }}
         onEditTransaction={setViewingTransactionDetails}
+        onCategoryChange={(category) => {
+          setSelectedDesktopCategory(category);
+        }}
+        onViewInTransactions={(category) => {
+          // Navigate to Transactions tab with category filter
+          setActiveTab('transactions');
+          setTransactionCategoryFilter(category);
+          setSearchParams({ tab: 'transactions' });
+        }}
       />
 
       {/* Custom Date Range Modal */}

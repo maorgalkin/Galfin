@@ -14,12 +14,15 @@ interface TransactionFiltersProps {
   typeFilter: 'all' | 'income' | 'expense';
   memberFilter: string; // 'all' or member ID
   monthFilter: string; // 'current' or YYYY-MM format or month index as string
+  categoryFilter: string; // 'all' or category name
   familyMembers: FamilyMember[];
+  categories: string[]; // Available categories
   months: MonthData[]; // Available months from carousel
   activeMonthIndex: number; // Currently selected month in carousel
   onTypeChange: (type: 'all' | 'income' | 'expense') => void;
   onMemberChange: (memberId: string) => void;
   onMonthChange: (month: string, monthIndex?: number) => void;
+  onCategoryChange: (category: string) => void;
   onMoreClick: () => void;
 }
 
@@ -27,12 +30,15 @@ export const TransactionFilters: React.FC<TransactionFiltersProps> = ({
   typeFilter,
   memberFilter,
   monthFilter,
+  categoryFilter,
   familyMembers,
+  categories,
   months,
   activeMonthIndex,
   onTypeChange,
   onMemberChange,
   onMonthChange,
+  onCategoryChange,
   onMoreClick,
 }) => {
   const [openDropdown, setOpenDropdown] = useState<string | null>(null);
@@ -215,6 +221,50 @@ export const TransactionFilters: React.FC<TransactionFiltersProps> = ({
                 className={memberFilter === member.id ? activeOptionClasses : optionClasses}
               >
                 {member.name}
+              </div>
+            ))}
+          </div>
+        )}
+      </div>
+
+      {/* Category Filter */}
+      <div 
+        ref={el => { dropdownRefs.current['category'] = el; }}
+        className="relative"
+        onMouseEnter={() => setOpenDropdown('category')}
+        onMouseLeave={() => setOpenDropdown(null)}
+      >
+        <button
+          onClick={() => toggleDropdown('category')}
+          className={getButtonClasses(categoryFilter !== 'all')}
+        >
+          <span className="flex items-center gap-1">
+            {categoryFilter === 'all' ? 'All Categories' : categoryFilter}
+            <ChevronDown className="h-4 w-4" />
+          </span>
+        </button>
+        
+        {openDropdown === 'category' && (
+          <div className={dropdownClasses}>
+            <div
+              onClick={() => {
+                onCategoryChange('all');
+                setOpenDropdown(null);
+              }}
+              className={categoryFilter === 'all' ? activeOptionClasses : optionClasses}
+            >
+              All Categories
+            </div>
+            {categories.map(category => (
+              <div
+                key={category}
+                onClick={() => {
+                  onCategoryChange(category);
+                  setOpenDropdown(null);
+                }}
+                className={categoryFilter === category ? activeOptionClasses : optionClasses}
+              >
+                {category}
               </div>
             ))}
           </div>
