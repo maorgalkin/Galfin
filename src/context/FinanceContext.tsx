@@ -56,6 +56,8 @@ export const FinanceProvider: React.FC<{ children: React.ReactNode }> = ({ child
           SupabaseService.getFamilyMembers(),
         ]);
 
+        console.log('[FinanceContext] Loaded transactions:', txns.length, 'transactions');
+        console.log('[FinanceContext] First 3 transactions:', txns.slice(0, 3));
         setTransactions(txns);
         
         // Load family members from database

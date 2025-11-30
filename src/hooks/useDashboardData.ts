@@ -63,7 +63,7 @@ export function useDashboardData({
   // Filter transactions for the selected month
   const monthTransactions = useMemo(
     () => getTransactionsForMonth(selectedMonthStart, selectedMonthEnd),
-    [transactions, selectedMonthStart, selectedMonthEnd]
+    [getTransactionsForMonth, selectedMonthStart, selectedMonthEnd]
   );
 
   // Calculate category-wise expenses for the selected month
