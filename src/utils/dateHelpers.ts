@@ -32,10 +32,13 @@ export const getMonthStart = (date: Date): Date => {
 };
 
 /**
- * Get last day of the month
+ * Get last day of the month (at end of day 23:59:59.999)
  */
 export const getMonthEnd = (date: Date): Date => {
-  return new Date(date.getFullYear(), date.getMonth() + 1, 0);
+  // Get the last day of the month at 23:59:59.999 to include the full day
+  const lastDay = new Date(date.getFullYear(), date.getMonth() + 1, 0);
+  lastDay.setHours(23, 59, 59, 999);
+  return lastDay;
 };
 
 /**
