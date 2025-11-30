@@ -76,6 +76,38 @@ export const CategoryList: React.FC<CategoryListProps> = ({
     return nextMonthSummary.adjustments.filter(adj => !existingNames.has(adj.category_name));
   }, [nextMonthSummary, categories]);
 
+  // Calculate dynamic summary totals based on current month limits (not stored adjustment_amount)
+  const dynamicSummary = useMemo(() => {
+    if (!nextMonthSummary || !categories) {
+      return { totalIncrease: 0, totalDecrease: 0, adjustmentCount: 0, effectiveDate: '' };
+    }
+    
+    let totalIncrease = 0;
+    let totalDecrease = 0;
+    
+    for (const adj of nextMonthSummary.adjustments) {
+      // Find the category to get its current month limit
+      const category = categories.find(c => c.name === adj.category_name);
+      const currentLimit = category 
+        ? getCurrentMonthLimit(category.name, category.monthlyLimit)
+        : adj.current_limit; // Fallback for new categories
+      
+      const diff = adj.new_limit - currentLimit;
+      if (diff > 0) {
+        totalIncrease += diff;
+      } else {
+        totalDecrease += Math.abs(diff);
+      }
+    }
+    
+    return {
+      totalIncrease,
+      totalDecrease,
+      adjustmentCount: nextMonthSummary.adjustmentCount,
+      effectiveDate: nextMonthSummary.effectiveDate
+    };
+  }, [nextMonthSummary, categories, currentMonthBudget]);
+
   // Calculate transaction counts for each category
   // Matches by category_id (new) or category name (legacy)
   const getTransactionCount = (categoryId: string, categoryName: string): number => {
@@ -217,28 +249,33 @@ export const CategoryList: React.FC<CategoryListProps> = ({
                           <h4 className="font-medium text-gray-900 dark:text-gray-100 truncate">
                             {category.name}
                           </h4>
-                          {/* Adjustment badge */}
-                          {adjustment && (
-                            <button
-                              onClick={() => handleEditWithTab(category, 'adjustment')}
-                              className={`flex items-center gap-1 px-1.5 py-0.5 rounded text-xs font-medium ${
-                                adjustment.adjustment_type === 'increase'
-                                  ? 'bg-green-100 text-green-700 dark:bg-green-900/30 dark:text-green-400'
-                                  : 'bg-red-100 text-red-700 dark:bg-red-900/30 dark:text-red-400'
-                              }`}
-                              title={`Next month: ${formatCurrency(adjustment.new_limit)}`}
-                            >
-                              {adjustment.adjustment_type === 'increase' ? (
-                                <TrendingUp className="h-3 w-3" />
-                              ) : (
-                                <TrendingDown className="h-3 w-3" />
-                              )}
-                              <span className="hidden sm:inline">
-                                {adjustment.adjustment_type === 'increase' ? '+' : '-'}
-                                {formatCurrency(adjustment.adjustment_amount)}
-                              </span>
-                            </button>
-                          )}
+                          {/* Adjustment badge - calculates difference dynamically from current month limit */}
+                          {adjustment && (() => {
+                            const currentLimit = getCurrentMonthLimit(category.name, category.monthlyLimit);
+                            const dynamicDiff = adjustment.new_limit - currentLimit;
+                            const isIncrease = dynamicDiff > 0;
+                            return (
+                              <button
+                                onClick={() => handleEditWithTab(category, 'adjustment')}
+                                className={`flex items-center gap-1 px-1.5 py-0.5 rounded text-xs font-medium ${
+                                  isIncrease
+                                    ? 'bg-green-100 text-green-700 dark:bg-green-900/30 dark:text-green-400'
+                                    : 'bg-red-100 text-red-700 dark:bg-red-900/30 dark:text-red-400'
+                                }`}
+                                title={`Next month: ${formatCurrency(adjustment.new_limit)}`}
+                              >
+                                {isIncrease ? (
+                                  <TrendingUp className="h-3 w-3" />
+                                ) : (
+                                  <TrendingDown className="h-3 w-3" />
+                                )}
+                                <span className="hidden sm:inline">
+                                  {isIncrease ? '+' : '-'}
+                                  {formatCurrency(Math.abs(dynamicDiff))}
+                                </span>
+                              </button>
+                            );
+                          })()}
                         </div>
                         <div className="flex items-center gap-3 text-sm text-gray-500 dark:text-gray-400">
                           {/* Monthly limit - shows current month's value (includes mid-month edits) */}
@@ -331,7 +368,7 @@ export const CategoryList: React.FC<CategoryListProps> = ({
       )}
 
       {/* Adjustments Summary - Only show if there are adjustments to existing categories */}
-      {nextMonthSummary && nextMonthSummary.adjustmentCount > 0 && (
+      {dynamicSummary.adjustmentCount > 0 && (
         <div className="bg-orange-50 dark:bg-orange-900/20 rounded-xl border border-orange-200 dark:border-orange-800 overflow-hidden">
           <div className="px-4 py-3 border-b border-orange-200 dark:border-orange-800">
             <div className="flex items-center justify-between">
@@ -342,24 +379,24 @@ export const CategoryList: React.FC<CategoryListProps> = ({
                 </h3>
               </div>
               <span className="text-sm text-orange-600 dark:text-orange-400">
-                {nextMonthSummary.effectiveDate}
+                {dynamicSummary.effectiveDate}
               </span>
             </div>
           </div>
           
-          {/* Summary stats */}
+          {/* Summary stats - calculated dynamically from current month limits */}
           <div className="px-4 py-3 grid grid-cols-3 gap-4 text-center">
             <div>
               <p className="text-xs text-orange-600 dark:text-orange-400 uppercase">Changes</p>
-              <p className="text-lg font-semibold text-orange-800 dark:text-orange-200">{nextMonthSummary.adjustmentCount}</p>
+              <p className="text-lg font-semibold text-orange-800 dark:text-orange-200">{dynamicSummary.adjustmentCount}</p>
             </div>
             <div>
               <p className="text-xs text-green-600 dark:text-green-400 uppercase">Increases</p>
-              <p className="text-lg font-semibold text-green-600 dark:text-green-400">+{formatCurrency(nextMonthSummary.totalIncrease)}</p>
+              <p className="text-lg font-semibold text-green-600 dark:text-green-400">+{formatCurrency(dynamicSummary.totalIncrease)}</p>
             </div>
             <div>
               <p className="text-xs text-red-600 dark:text-red-400 uppercase">Decreases</p>
-              <p className="text-lg font-semibold text-red-600 dark:text-red-400">-{formatCurrency(nextMonthSummary.totalDecrease)}</p>
+              <p className="text-lg font-semibold text-red-600 dark:text-red-400">-{formatCurrency(dynamicSummary.totalDecrease)}</p>
             </div>
           </div>
         </div>

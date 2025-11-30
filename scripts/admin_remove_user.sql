@@ -13,7 +13,7 @@
 DO $$
 DECLARE
   -- ⚠️ CHANGE THIS to the user ID you want to remove
-  user_id_to_remove UUID := 'REPLACE_WITH_USER_ID';  -- e.g., '5e84ffa6-a3c6-4771-86a2-5ec886e45e82'
+  user_id_to_remove UUID := '5e84ffa6-a3c6-4771-86a2-5ec886e45e82';  -- e.g., '5e84ffa6-a3c6-4771-86a2-5ec886e45e82'
   
   -- Internal variables
   user_email TEXT;

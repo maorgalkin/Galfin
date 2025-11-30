@@ -144,8 +144,10 @@ export const CategoryEditModal: React.FC<CategoryEditModalProps> = ({
       // Merge tab
       setTargetCategoryId('');
       
-      // Adjustment tab
-      setNextMonthLimit(categoryAdjustment?.new_limit.toString() || category.monthlyLimit.toString());
+      // Adjustment tab - use current month's limit as the starting point
+      // If there's already a pending adjustment, show that value instead
+      const currentLimitForAdjustment = currentMonthBudget?.categories?.[category.name]?.monthlyLimit ?? category.monthlyLimit;
+      setNextMonthLimit(categoryAdjustment?.new_limit.toString() || currentLimitForAdjustment.toString());
       setAdjustmentReason('');
     }
   }, [isOpen, category, initialTab, categoryAdjustment, currentMonthBudget]);
@@ -275,8 +277,11 @@ export const CategoryEditModal: React.FC<CategoryEditModalProps> = ({
       }
     }
 
+    // Get current month's limit (includes mid-month edits)
+    const currentLimitValue = currentMonthBudget?.categories?.[category.name]?.monthlyLimit ?? category.monthlyLimit;
+
     // If the new limit is the same as current, just cancel (already done above)
-    if (newLimitNum === category.monthlyLimit) {
+    if (newLimitNum === currentLimitValue) {
       onClose();
       return;
     }
@@ -284,7 +289,7 @@ export const CategoryEditModal: React.FC<CategoryEditModalProps> = ({
     try {
       await scheduleAdjustment.mutateAsync({
         categoryName: category.name,
-        currentLimit: category.monthlyLimit,
+        currentLimit: currentLimitValue,
         newLimit: newLimitNum,
         reason: adjustmentReason || undefined,
       });
@@ -300,7 +305,9 @@ export const CategoryEditModal: React.FC<CategoryEditModalProps> = ({
 
     try {
       await cancelAdjustment.mutateAsync(categoryAdjustment.id);
-      setNextMonthLimit(category?.monthlyLimit.toString() || '');
+      // Reset to current month's limit (includes mid-month edits)
+      const currentLimitValue = currentMonthBudget?.categories?.[category?.name || '']?.monthlyLimit ?? category?.monthlyLimit;
+      setNextMonthLimit(currentLimitValue?.toString() || '');
     } catch (err) {
       setError(err instanceof Error ? err.message : 'Failed to cancel adjustment');
     }
@@ -577,7 +584,7 @@ export const CategoryEditModal: React.FC<CategoryEditModalProps> = ({
                 <div className="flex-1">
                   <p className="text-xs text-gray-500 dark:text-gray-400 uppercase">Current</p>
                   <p className="text-lg font-semibold text-gray-900 dark:text-gray-100">
-                    {formatCurrency(category.monthlyLimit)}
+                    {formatCurrency(currentMonthLimit)}
                   </p>
                 </div>
                 <ArrowRight className="h-5 w-5 text-gray-400" />
