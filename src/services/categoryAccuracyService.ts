@@ -67,9 +67,12 @@ class CategoryAccuracyService {
     personalBudget?: PersonalBudget
   ): CategoryAccuracy {
     // Calculate total budgeted amount across all months
+    // Use original_categories to measure accuracy against the ORIGINAL plan (not mid-month edits)
     let totalBudgeted = monthlyBudgets.reduce((sum, mb) => {
-      const categoryConfig = mb.categories[category];
-      return sum + (categoryConfig?.monthlyBudget || 0);
+      // Prefer original_categories (month-start snapshot), fallback to categories
+      const originalCategories = mb.original_categories || mb.categories;
+      const categoryConfig = originalCategories[category];
+      return sum + (categoryConfig?.monthlyLimit || categoryConfig?.monthlyBudget || 0);
     }, 0);
     
     // If no monthly budgets exist, fall back to personal budget * months
