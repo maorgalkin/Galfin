@@ -1,7 +1,7 @@
 import React, { useState, useMemo, useEffect, useRef } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useFinance } from '../context/FinanceContext';
-import { useActiveBudget, useCurrentMonthBudget, useNextMonthAdjustments } from '../hooks/useBudgets';
+import { useActiveBudget, useMonthlyBudget, useNextMonthAdjustments } from '../hooks/useBudgets';
 import { budgetService } from '../services/budgetService';
 import { 
   AlertTriangle, 
@@ -39,7 +39,12 @@ export const BudgetPerformanceCard: React.FC<BudgetPerformanceCardProps> = ({
   const navigate = useNavigate();
   const { transactions } = useFinance();
   const { data: personalBudget, isLoading: loadingActive } = useActiveBudget();
-  const { data: monthlyBudget, isLoading: loadingMonthly } = useCurrentMonthBudget();
+  
+  // Extract year and month from selectedMonth to fetch the correct monthly budget
+  const selectedYear = selectedMonth ? selectedMonth.getFullYear() : undefined;
+  const selectedMonthNum = selectedMonth ? selectedMonth.getMonth() + 1 : undefined; // 1-indexed
+  
+  const { data: monthlyBudget, isLoading: loadingMonthly } = useMonthlyBudget(selectedYear, selectedMonthNum);
   const { data: adjustments } = useNextMonthAdjustments();
   const [showDetails, setShowDetails] = useState(false);
   const [viewingAlerts, setViewingAlerts] = useState(false);
