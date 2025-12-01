@@ -18,6 +18,7 @@ import { useDashboardData } from '../hooks/useDashboardData';
 import { DashboardTabNavigation } from './dashboard/DashboardTabNavigation';
 import { MonthNavigator } from './dashboard/MonthNavigator';
 import { ExpenseChart } from './dashboard/ExpenseChart';
+import { formatCurrencyFromSettings } from '../utils/formatCurrency';
 import { DummyDataControls } from './dashboard/DummyDataControls';
 import { FamilyMembersCard } from './dashboard/FamilyMembersCard';
 import { TransactionsList } from './dashboard/TransactionsList';
@@ -264,10 +265,7 @@ const Dashboard: React.FC = () => {
   });
 
   const formatCurrency = (amount: number) => {
-    return new Intl.NumberFormat('he-IL', {
-      style: 'currency',
-      currency: 'ILS',
-    }).format(amount);
+    return formatCurrencyFromSettings(amount, personalBudget?.global_settings);
   };
 
   // Dummy data handlers
