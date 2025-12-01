@@ -69,7 +69,7 @@ export function useCreateCategory() {
 /**
  * Hook to update a category
  * Syncs color/warningThreshold to personal budgets JSONB (these are permanent properties)
- * NOTE: monthlyLimit is NOT synced here - it's handled separately for mid-month edits
+ * NOTE: monthlyLimit is NOT synced here - it's handled separately for monthly budget edits
  */
 export function useUpdateCategory() {
   const queryClient = useQueryClient();
@@ -80,7 +80,7 @@ export function useUpdateCategory() {
       const updatedCategory = await categoryService.updateCategory(categoryId, input);
       
       // 2. Sync to personal budgets JSONB (only color and warningThreshold, NOT monthlyLimit)
-      // monthlyLimit changes are temporary mid-month adjustments - handled by updateCategoryLimit
+      // monthlyLimit changes are permanent for each monthly budget - handled by updateCategoryLimit
       const nameToUpdate = categoryName || updatedCategory.name;
       const budgetUpdates: { color?: string; warningThreshold?: number } = {};
       

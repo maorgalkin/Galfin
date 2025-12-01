@@ -164,6 +164,7 @@ export const PersonalBudgetEditor: React.FC<PersonalBudgetEditorProps> = ({
           currency,
           warningNotifications,
           emailAlerts,
+          showRoundedAmounts: true, // Default to rounded amounts
           familyMembers: familyMembers.map(fm => ({
             id: fm.id,
             name: fm.name,
@@ -187,6 +188,7 @@ export const PersonalBudgetEditor: React.FC<PersonalBudgetEditorProps> = ({
           currency,
           warningNotifications,
           emailAlerts,
+          showRoundedAmounts: activeBudget?.global_settings?.showRoundedAmounts ?? true,
           familyMembers: familyMembers.map(fm => ({
             id: fm.id,
             name: fm.name,

@@ -130,10 +130,10 @@ MonthlyBudgetService.createMonthlyBudget(year, month)
 // Sets both original_categories and categories to personal budget
 ```
 
-**Adjusting During Month:**
+**Editing Monthly Budget:**
 ```typescript
 MonthlyBudgetService.updateCategoryLimit(budgetId, categoryName, newLimit)
-// Only modifies categories, NOT original_categories
+// Only modifies categories, NOT original_categories (permanent for this month)
 // Increments adjustment_count
 ```
 

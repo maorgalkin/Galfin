@@ -53,6 +53,7 @@ export const BudgetVsActual: React.FC<BudgetVsActualProps> = ({ selectedRange, s
       currentBudget: number;
       actualSpending: number;
       color: string;
+      monthsWithBudget: number;
     }[] = [];
 
     // Get all active categories
@@ -63,20 +64,34 @@ export const BudgetVsActual: React.FC<BudgetVsActualProps> = ({ selectedRange, s
     activeCategories.forEach(categoryName => {
       const personalConfig = personalBudget.categories[categoryName];
 
-      // Original budget: sum of original_categories from each monthly budget
-      // This is the snapshot at the beginning of each month (never modified by mid-month edits)
-      const originalBudget = monthlyBudgets.reduce((sum, mb) => {
-        // Use original_categories if available, fallback to personal budget
-        const originalConfig = mb.original_categories?.[categoryName];
-        return sum + (originalConfig?.monthlyLimit || personalConfig.monthlyLimit);
-      }, 0);
+      // Count months and calculate sums (skip months with zero budget)
+      let originalSum = 0;
+      let currentSum = 0;
+      let monthsWithOriginal = 0;
+      let monthsWithCurrent = 0;
 
-      // Current budget: sum of all monthly budgets for this category
-      // (Includes any mid-month adjustments made in each month)
-      const currentBudget = monthlyBudgets.reduce((sum, mb) => {
+      monthlyBudgets.forEach(mb => {
+        // Original budget from original_categories (month-start snapshot)
+        const originalConfig = mb.original_categories?.[categoryName];
+        const originalLimit = originalConfig?.monthlyLimit || 0;
+        if (originalLimit > 0) {
+          originalSum += originalLimit;
+          monthsWithOriginal++;
+        }
+
+        // Current budget from categories (includes edits)
         const monthlyConfig = mb.categories[categoryName];
-        return sum + (monthlyConfig?.monthlyLimit || personalConfig.monthlyLimit);
-      }, 0);
+        const currentLimit = monthlyConfig?.monthlyLimit || 0;
+        if (currentLimit > 0) {
+          currentSum += currentLimit;
+          monthsWithCurrent++;
+        }
+      });
+
+      // Calculate averages (avoid division by zero)
+      const originalBudget = monthsWithOriginal > 0 ? originalSum / monthsWithOriginal : 0;
+      const currentBudget = monthsWithCurrent > 0 ? currentSum / monthsWithCurrent : 0;
+      const monthsWithBudget = Math.max(monthsWithOriginal, monthsWithCurrent);
 
       // Actual spending (from filtered transactions)
       const actualSpending = filteredTransactions
@@ -89,6 +104,7 @@ export const BudgetVsActual: React.FC<BudgetVsActualProps> = ({ selectedRange, s
         currentBudget,
         actualSpending,
         color: personalConfig.color || '#3B82F6',
+        monthsWithBudget,
       });
     });
 
@@ -229,40 +245,40 @@ export const BudgetVsActual: React.FC<BudgetVsActualProps> = ({ selectedRange, s
         <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
           <div className="bg-blue-50 dark:bg-blue-900/20 rounded-lg p-4">
             <p className="text-sm font-medium text-gray-600 dark:text-gray-400 mb-1">
-              Original Budget
+              Avg Original Budget
             </p>
             <p className="text-2xl font-bold text-blue-900 dark:text-blue-400">
               {formatCurrency(summary.totalOriginal)}
             </p>
             <p className="text-xs text-gray-500 dark:text-gray-400 mt-1">
-              Planned at start of period
+              Average planned at month start
             </p>
           </div>
 
           <div className="bg-purple-50 dark:bg-purple-900/20 rounded-lg p-4">
             <p className="text-sm font-medium text-gray-600 dark:text-gray-400 mb-1">
-              Current Budget
+              Avg Current Budget
             </p>
             <p className="text-2xl font-bold text-purple-900 dark:text-purple-400">
               {formatCurrency(summary.totalCurrent)}
             </p>
             <p className="text-xs text-gray-500 dark:text-gray-400 mt-1">
               {summary.totalCurrent !== summary.totalOriginal
-                ? `Adjusted ${summary.totalCurrent > summary.totalOriginal ? '+' : ''}${formatCurrency(summary.totalCurrent - summary.totalOriginal)}`
-                : 'No adjustments'}
+                ? `Avg adjusted ${summary.totalCurrent > summary.totalOriginal ? '+' : ''}${formatCurrency(summary.totalCurrent - summary.totalOriginal)}`
+                : 'No adjustments on average'}
             </p>
           </div>
 
           <div className="bg-orange-50 dark:bg-orange-900/20 rounded-lg p-4">
             <p className="text-sm font-medium text-gray-600 dark:text-gray-400 mb-1">
-              Actual Spending
+              Total Spending
             </p>
             <p className="text-2xl font-bold text-orange-900 dark:text-orange-400">
               {formatCurrency(summary.totalSpent)}
             </p>
             <p className="text-xs text-gray-500 dark:text-gray-400 mt-1">
               {summary.totalCurrent > 0
-                ? `${((summary.totalSpent / summary.totalCurrent) * 100).toFixed(1)}% utilized`
+                ? `${((summary.totalSpent / summary.totalCurrent) * 100).toFixed(1)}% of avg budget`
                 : 'No budget set'}
             </p>
           </div>

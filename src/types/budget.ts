@@ -241,6 +241,7 @@ export interface GlobalBudgetSettings {
   currency: string;
   warningNotifications: boolean;
   emailAlerts: boolean;
+  showRoundedAmounts: boolean; // Display rounded amounts (no decimals) by default
   familyMembers: Array<{
     id: string;
     name: string;

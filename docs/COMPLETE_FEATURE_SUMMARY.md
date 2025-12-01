@@ -51,9 +51,16 @@ App
 ### 2. Budget System
 - **Personal Budgets:** Template budgets with category limits and settings
 - **Monthly Budgets:** Month-specific budgets that can deviate from personal budget
+  - **Original Categories:** Baseline snapshot at month creation (immutable)
+  - **Current Categories:** Permanent budget state for that month (can be edited)
+  - **Edit vs Adjust:** Edit changes current month permanently; Adjust schedules next month's original
 - **Budget History:** View all budget versions, set active, delete old versions (in Settings)
 - **Category Management:** Add, edit, rename, merge, delete categories with limits
-- **Global Settings:** Currency, family members, notification preferences
+- **Global Settings:** Currency, family members, notification preferences, display formatting
+  - **Currency:** USD, EUR, GBP, ILS, JPY support
+  - **Rounded Amounts:** Toggle to show amounts without decimals (default: enabled)
+  - **Budget Warnings:** In-app notifications when approaching limits
+  - **Email Alerts:** Email notifications for budget events
 - **Household Support:** Multi-user households with invite codes
 
 ### 3. Dashboard & Analytics

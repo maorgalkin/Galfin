@@ -214,13 +214,13 @@ export const CategoryEditModal: React.FC<CategoryEditModalProps> = ({
           input: {
             warningThreshold: Math.min(100, Math.max(0, parseInt(warningThreshold) || 80)),
             color,
-            // NOTE: We do NOT update monthlyLimit here - that's a mid-month temporary change
+            // NOTE: We do NOT update monthlyLimit here - that's handled separately via monthly budgets
           },
           categoryName: categoryNameForUpdate,
         });
       }
       
-      // Update limit in current monthly budget only (temporary - this month only)
+      // Update limit in current monthly budget (permanent for this month)
       // This does NOT change the personal budget template or categories table
       // Use the NEW name if we renamed the category
       const categoryNameForBudget = isRenamed ? newName.trim() : category.name;
@@ -229,7 +229,7 @@ export const CategoryEditModal: React.FC<CategoryEditModalProps> = ({
           monthlyBudgetId: currentMonthBudget.id,
           categoryName: categoryNameForBudget,
           newLimit: parseFloat(monthlyLimit) || 0,
-          notes: 'Mid-month adjustment',
+          notes: 'Budget limit updated',
         });
       }
       
