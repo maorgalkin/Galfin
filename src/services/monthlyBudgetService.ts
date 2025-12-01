@@ -188,6 +188,28 @@ export class MonthlyBudgetService {
   }
 
   /**
+   * Delete a monthly budget for a specific month
+   * Used when applying scheduled adjustments to force recreation with new limits
+   */
+  static async deleteMonthlyBudget(year: number, month: number): Promise<void> {
+    try {
+      const householdId = await getHouseholdId();
+
+      const { error } = await supabase
+        .from('monthly_budgets')
+        .delete()
+        .eq('household_id', householdId)
+        .eq('year', year)
+        .eq('month', month);
+
+      if (error) throw error;
+    } catch (error) {
+      console.error('Error deleting monthly budget:', error);
+      // Don't throw - this is a cleanup operation, main flow should continue
+    }
+  }
+
+  /**
    * Get all monthly budgets ordered by date descending
    */
   static async getAllMonthlyBudgets(limit: number = 12): Promise<MonthlyBudget[]> {

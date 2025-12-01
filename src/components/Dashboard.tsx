@@ -2,7 +2,7 @@ import React, { useState, useEffect, useCallback, useMemo } from 'react';
 import { useSearchParams } from 'react-router-dom';
 import { useFinance } from '../context/FinanceContext';
 import { useAuth } from '../contexts/AuthContext';
-import { useActiveBudget, useCurrentMonthBudget } from '../hooks/useBudgets';
+import { useActiveBudget, useCurrentMonthBudget, useAutoApplyScheduledAdjustments } from '../hooks/useBudgets';
 import { budgetService } from '../services/budgetService';
 import { userAlertViewService } from '../services/userAlertViewService';
 import { motion, AnimatePresence } from 'framer-motion';
@@ -34,6 +34,10 @@ const Dashboard: React.FC = () => {
   const { data: personalBudget } = useActiveBudget();
   const { data: monthlyBudget } = useCurrentMonthBudget();
   const { user } = useAuth();
+  
+  // Auto-apply any pending scheduled adjustments for the current month
+  useAutoApplyScheduledAdjustments(!!user);
+  
   const [searchParams, setSearchParams] = useSearchParams();
   const [activeMonthTab, setActiveMonthTab] = useState(0);
   const [direction, setDirection] = useState(0); // Track animation direction: -1 (left), 1 (right)

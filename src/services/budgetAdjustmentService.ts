@@ -318,6 +318,10 @@ export class BudgetAdjustmentService {
         }
       );
 
+      // Delete the monthly budget for this month so it gets recreated with new values
+      // This ensures the monthly budget picks up the adjusted limits from personal budget
+      await MonthlyBudgetService.deleteMonthlyBudget(year, month);
+
       return {
         appliedCount: adjustments.length,
         personalBudget: newPersonalBudget
@@ -363,11 +367,13 @@ export class BudgetAdjustmentService {
         throw new Error('User not authenticated');
       }
 
+      const householdId = await getHouseholdId();
+
       // Try to get existing history
       const { data: existing } = await supabase
         .from('category_adjustment_history')
         .select('*')
-        .eq('user_id', user.id)
+        .eq('household_id', householdId)
         .eq('category_name', categoryName)
         .single();
 
@@ -387,9 +393,10 @@ export class BudgetAdjustmentService {
 
         if (error) throw error;
       } else {
-        // Create new history record
-        const newHistory: Omit<CategoryAdjustmentHistory, 'id' | 'created_at' | 'updated_at'> = {
+        // Create new history record - must include household_id for RLS
+        const newHistory = {
           user_id: user.id,
+          household_id: householdId,
           category_name: categoryName,
           adjustment_count: 1,
           last_adjusted_at: new Date().toISOString(),
@@ -406,7 +413,8 @@ export class BudgetAdjustmentService {
       }
     } catch (error) {
       console.error('Error updating category history:', error);
-      throw error;
+      // Don't throw - history tracking is non-critical, let the main flow continue
+      console.warn('Category history tracking failed, but adjustment will still be applied');
     }
   }
 

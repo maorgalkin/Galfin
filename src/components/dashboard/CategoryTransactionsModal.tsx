@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useRef, useEffect } from 'react';
 import { motion } from 'framer-motion';
 import { X, User, ChevronDown, ExternalLink } from 'lucide-react';
 import type { Transaction } from '../../types';
@@ -33,6 +33,18 @@ export const CategoryTransactionsModal: React.FC<CategoryTransactionsModalProps>
   onViewInTransactions,
 }) => {
   const [isDropdownOpen, setIsDropdownOpen] = useState(false);
+  const dropdownRef = useRef<HTMLDivElement>(null);
+  
+  // Close dropdown when clicking outside
+  useEffect(() => {
+    const handleClickOutside = (event: MouseEvent) => {
+      if (dropdownRef.current && !dropdownRef.current.contains(event.target as Node)) {
+        setIsDropdownOpen(false);
+      }
+    };
+    document.addEventListener('mousedown', handleClickOutside);
+    return () => document.removeEventListener('mousedown', handleClickOutside);
+  }, []);
   
   if (!isOpen) return null;
 
@@ -54,7 +66,7 @@ export const CategoryTransactionsModal: React.FC<CategoryTransactionsModalProps>
               <div className="flex items-center gap-2">
                 <span className="text-2xl font-bold">Category</span>
                 {/* Category Dropdown */}
-                <div className="relative">
+                <div className="relative" ref={dropdownRef}>
                   <button
                     onClick={() => setIsDropdownOpen(!isDropdownOpen)}
                     className="flex items-center gap-1 px-3 py-1 bg-white/20 hover:bg-white/30 rounded-lg transition-colors text-xl font-bold"

@@ -137,8 +137,6 @@ export const TransactionFilters: React.FC<TransactionFiltersProps> = ({
       <div 
         ref={el => { dropdownRefs.current['type'] = el; }}
         className="relative"
-        onMouseEnter={() => setOpenDropdown('type')}
-        onMouseLeave={() => setOpenDropdown(null)}
       >
         <button
           onClick={() => toggleDropdown('type')}
@@ -187,8 +185,6 @@ export const TransactionFilters: React.FC<TransactionFiltersProps> = ({
       <div 
         ref={el => { dropdownRefs.current['member'] = el; }}
         className="relative"
-        onMouseEnter={() => setOpenDropdown('member')}
-        onMouseLeave={() => setOpenDropdown(null)}
       >
         <button
           onClick={() => toggleDropdown('member')}
@@ -231,8 +227,6 @@ export const TransactionFilters: React.FC<TransactionFiltersProps> = ({
       <div 
         ref={el => { dropdownRefs.current['category'] = el; }}
         className="relative"
-        onMouseEnter={() => setOpenDropdown('category')}
-        onMouseLeave={() => setOpenDropdown(null)}
       >
         <button
           onClick={() => toggleDropdown('category')}
@@ -275,8 +269,6 @@ export const TransactionFilters: React.FC<TransactionFiltersProps> = ({
       <div 
         ref={el => { dropdownRefs.current['month'] = el; }}
         className="relative"
-        onMouseEnter={() => setOpenDropdown('month')}
-        onMouseLeave={() => setOpenDropdown(null)}
       >
         <button
           onClick={() => toggleDropdown('month')}
@@ -315,8 +307,6 @@ export const TransactionFilters: React.FC<TransactionFiltersProps> = ({
       <div 
         ref={el => { dropdownRefs.current['more'] = el; }}
         className="relative"
-        onMouseEnter={() => setOpenDropdown('more')}
-        onMouseLeave={() => setOpenDropdown(null)}
       >
         <button
           onClick={() => toggleDropdown('more')}

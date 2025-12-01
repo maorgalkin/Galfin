@@ -1,4 +1,5 @@
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
+import { useEffect, useRef } from 'react';
 import { PersonalBudgetService } from '../services/personalBudgetService';
 import { MonthlyBudgetService } from '../services/monthlyBudgetService';
 import { BudgetAdjustmentService } from '../services/budgetAdjustmentService';
@@ -410,4 +411,66 @@ export function useMostAdjustedCategories(limit: number = 5) {
     queryFn: () => BudgetAdjustmentService.getMostAdjustedCategories(limit),
     staleTime: 5 * 60 * 1000,
   });
+}
+
+/**
+ * Hook to automatically check and apply pending adjustments on app load
+ * This runs once when the component mounts and checks if there are
+ * pending adjustments for the current month that need to be applied.
+ */
+export function useAutoApplyScheduledAdjustments(isAuthenticated: boolean = true) {
+  const queryClient = useQueryClient();
+  const hasApplied = useRef(false);
+  
+  useEffect(() => {
+    // Only run once per app session, and only when authenticated
+    if (hasApplied.current || !isAuthenticated) {
+      return;
+    }
+
+    const checkAndApply = async () => {
+      try {
+        const now = new Date();
+        const year = now.getFullYear();
+        const month = now.getMonth() + 1; // 1-indexed
+
+        console.log(`[Budget Adjustments] Checking for pending adjustments for ${year}-${month}...`);
+        
+        // Check if there are pending adjustments for this month
+        const pendingAdjustments = await BudgetAdjustmentService.getPendingAdjustments(year, month);
+        
+        if (pendingAdjustments.length > 0) {
+          console.log(`[Budget Adjustments] Found ${pendingAdjustments.length} pending adjustment(s):`, 
+            pendingAdjustments.map(a => `${a.category_name}: ${a.current_limit} → ${a.new_limit}`));
+          
+          // Apply them
+          const result = await BudgetAdjustmentService.applyScheduledAdjustments(year, month);
+          hasApplied.current = true;
+          
+          console.log(`[Budget Adjustments] ✓ Applied ${result.appliedCount} adjustment(s)`);
+          
+          // Invalidate all budget-related queries to refresh the UI
+          await queryClient.invalidateQueries({ queryKey: ['budgetAdjustments'] });
+          await queryClient.invalidateQueries({ queryKey: ['monthlyBudget'] });
+          await queryClient.invalidateQueries({ queryKey: ['personalBudget'] });
+          
+          // Force refetch of active budget
+          await queryClient.refetchQueries({ queryKey: ['personalBudget', 'active'] });
+          
+          console.log('[Budget Adjustments] UI refreshed');
+        } else {
+          console.log('[Budget Adjustments] No pending adjustments for this month.');
+          hasApplied.current = true; // Don't check again
+        }
+      } catch (error) {
+        console.error('[Budget Adjustments] Error:', error);
+      }
+    };
+
+    // Small delay to ensure queries are ready
+    const timer = setTimeout(checkAndApply, 1500);
+    return () => clearTimeout(timer);
+  }, [isAuthenticated, queryClient]);
+
+  return null;
 }
