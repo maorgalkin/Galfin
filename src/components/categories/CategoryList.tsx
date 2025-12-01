@@ -22,6 +22,7 @@ import { useNextMonthAdjustments, useCancelAdjustment, useActiveBudget, useCurre
 import type { Category } from '../../types/category';
 import { AddCategoryModal } from './AddCategoryModal';
 import { CategoryEditModal } from './CategoryEditModal';
+import { formatCurrencyFromSettings } from '../../utils/formatCurrency';
 
 interface CategoryListProps {
   onCategorySelect?: (category: Category) => void;
@@ -118,11 +119,8 @@ export const CategoryList: React.FC<CategoryListProps> = ({
 
   // Format currency
   const formatCurrency = (amount: number, currency?: string) => {
-    const curr = currency || activeBudget?.global_settings?.currency || 'ILS';
-    return new Intl.NumberFormat('en-US', {
-      style: 'currency',
-      currency: curr,
-    }).format(amount);
+    const globalSettings = activeBudget?.global_settings;
+    return formatCurrencyFromSettings(amount, currency ? { ...globalSettings, currency } : globalSettings);
   };
 
   const handleCancelAdjustment = async (adjustmentId: string) => {

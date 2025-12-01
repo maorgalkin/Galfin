@@ -4,6 +4,7 @@ import { useActiveBudget, useCurrentMonthBudget } from '../hooks/useBudgets';
 import { budgetService } from '../services/budgetService';
 import { AlertTriangle, CheckCircle, Target, HelpCircle, X } from 'lucide-react';
 import type { BudgetConfiguration } from '../types';
+import { formatCurrencyFromSettings } from '../utils/formatCurrency';
 
 interface BudgetOverviewProps {
   selectedMonth?: Date;
@@ -72,12 +73,7 @@ const BudgetOverview: React.FC<BudgetOverviewProps> = ({ selectedMonth, isCompac
   const balance = monthIncome - monthExpense;
 
   const formatCurrency = (amount: number) => {
-    const currency = personalBudget?.global_settings?.currency || 'USD';
-    // Always use en-US locale for consistent left-side symbol placement
-    return new Intl.NumberFormat('en-US', {
-      style: 'currency',
-      currency: currency,
-    }).format(amount);
+    return formatCurrencyFromSettings(amount, personalBudget?.global_settings);
   };
 
   const getStatusColor = (status: 'under' | 'over' | 'onTarget') => {

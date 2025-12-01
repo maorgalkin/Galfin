@@ -17,6 +17,7 @@ import {
 } from 'lucide-react';
 import type { BudgetConfiguration } from '../types';
 import { getHeaderGradient, getAccentColor, getTextColor, getPrimaryButtonBg, getPrimaryButtonHoverBg, type ThemeColor } from '../utils/themeColors';
+import { formatCurrencyFromSettings } from '../utils/formatCurrency';
 
 interface BudgetPerformanceCardProps {
   selectedMonth?: Date;
@@ -176,11 +177,7 @@ export const BudgetPerformanceCard: React.FC<BudgetPerformanceCardProps> = ({
   const balance = monthIncome - monthExpense;
 
   const formatCurrency = (amount: number) => {
-    const currency = personalBudget?.global_settings?.currency || 'USD';
-    return new Intl.NumberFormat('en-US', {
-      style: 'currency',
-      currency: currency,
-    }).format(amount);
+    return formatCurrencyFromSettings(amount, personalBudget?.global_settings);
   };
 
   const getStatusIcon = (status: 'under' | 'over' | 'onTarget') => {

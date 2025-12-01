@@ -32,6 +32,7 @@ import {
 } from '../../hooks/useBudgets';
 import { useFinance } from '../../context/FinanceContext';
 import type { Category } from '../../types/category';
+import { formatCurrencyFromSettings } from '../../utils/formatCurrency';
 
 type TabType = 'edit' | 'merge' | 'adjustment';
 
@@ -118,11 +119,8 @@ export const CategoryEditModal: React.FC<CategoryEditModalProps> = ({
 
   // Format currency
   const formatCurrency = (amount: number): string => {
-    const currency = activeBudget?.global_settings?.currency || 'ILS';
-    return new Intl.NumberFormat('en-US', {
-      style: 'currency',
-      currency: currency,
-    }).format(amount);
+    return formatCurrencyFromSettings(amount, activeBudget?.global_settings);
+  };
   };
 
   // Reset form when category changes or modal opens

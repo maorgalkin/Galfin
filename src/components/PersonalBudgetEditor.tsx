@@ -24,6 +24,7 @@ import {
 } from 'lucide-react';
 import type { PersonalBudget, CategoryConfig } from '../types/budget';
 import { getNextAvailableColor, CATEGORY_COLOR_PALETTE } from '../utils/categoryColors';
+import { formatCurrencyFromSettings } from '../utils/formatCurrency';
 
 interface PersonalBudgetEditorProps {
   className?: string;
@@ -84,10 +85,7 @@ export const PersonalBudgetEditor: React.FC<PersonalBudgetEditorProps> = ({
   }, [autoEdit, loadingActive, activeBudget]); // Include loading state
 
   const formatCurrency = (amount: number): string => {
-    return new Intl.NumberFormat('en-US', {
-      style: 'currency',
-      currency: currency || 'USD',
-    }).format(amount);
+    return formatCurrencyFromSettings(amount, { currency: currency || 'USD', showRoundedAmounts: showRoundedAmounts });
   };
 
   const handleStartCreate = () => {

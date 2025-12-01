@@ -5,6 +5,7 @@ import {
   getInactiveBg,
   getIconColor,
 } from '../utils/themeColors';
+import { formatCurrencyFromSettings } from '../utils/formatCurrency';
 
 interface PersonalBudgetDisplayProps {
   className?: string;
@@ -21,10 +22,7 @@ export const PersonalBudgetDisplay: React.FC<PersonalBudgetDisplayProps> = ({
   const themeColor = 'green';
 
   const formatCurrency = (amount: number): string => {
-    return new Intl.NumberFormat('en-US', {
-      style: 'currency',
-      currency: activeBudget?.global_settings?.currency || 'USD',
-    }).format(amount);
+    return formatCurrencyFromSettings(amount, activeBudget?.global_settings);
   };
 
   // Get the current month's limit for a category (from monthly budget, with fallback to personal budget)

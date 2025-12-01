@@ -5,6 +5,7 @@ import { useActiveBudget, useMonthlyBudgetsForDateRange } from '../../hooks/useB
 import { filterTransactionsByDateRange, getDateRange } from '../../utils/dateRangeFilters';
 import type { DateRangeType } from '../../utils/dateRangeFilters';
 import { AlertTriangle, TrendingUp, TrendingDown, Minus, Loader2 } from 'lucide-react';
+import { formatCurrencyFromSettings, formatCurrencyRounded as formatCurrencyRoundedUtil } from '../../utils/formatCurrency';
 
 interface BudgetVsActualProps {
   /** The selected date range type */
@@ -152,33 +153,13 @@ export const BudgetVsActual: React.FC<BudgetVsActualProps> = ({ selectedRange, s
   }, [categoryData]);
 
   const formatCurrency = (amount: number) => {
-    const currency = personalBudget?.global_settings?.currency || 'USD';
-    return new Intl.NumberFormat('en-US', {
-      style: 'currency',
-      currency: currency,
-    }).format(amount);
+    return formatCurrencyFromSettings(amount, personalBudget?.global_settings);
   };
 
   const formatCurrencyRounded = (amount: number) => {
     const currency = personalBudget?.global_settings?.currency || 'USD';
-    
-    // Use K notation for values >= 1000
-    if (amount >= 1000) {
-      const kValue = amount / 1000;
-      return new Intl.NumberFormat('en-US', {
-        style: 'currency',
-        currency: currency,
-        minimumFractionDigits: 0,
-        maximumFractionDigits: 1,
-      }).format(kValue) + 'K';
-    }
-    
-    return new Intl.NumberFormat('en-US', {
-      style: 'currency',
-      currency: currency,
-      minimumFractionDigits: 0,
-      maximumFractionDigits: 0,
-    }).format(Math.round(amount));
+    const showRounded = personalBudget?.global_settings?.showRoundedAmounts ?? true;
+    return formatCurrencyRoundedUtil(amount, currency, showRounded);
   };
 
   const getUtilizationColor = (spent: number, budget: number) => {
