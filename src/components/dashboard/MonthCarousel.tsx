@@ -28,15 +28,27 @@ export const MonthCarousel: React.FC<MonthCarouselProps> = ({
   const containerRef = useRef<HTMLDivElement>(null);
   const x = useMotionValue(0);
   const [dragging, setDragging] = useState(false);
+  const [containerWidth, setContainerWidth] = useState(0);
+
+  // Measure container width
+  useEffect(() => {
+    if (containerRef.current) {
+      setContainerWidth(containerRef.current.offsetWidth);
+    }
+  }, []);
 
   // Calculate the center position for the active card
   const getPositionForIndex = (index: number) => {
     // Center the active card in the viewport
-    return -(index * (CARD_WIDTH + CARD_GAP));
+    // Add 1 for the "Future" card offset
+    const offset = (index + 1) * (CARD_WIDTH + CARD_GAP);
+    const centerOffset = containerWidth / 2 - CARD_WIDTH / 2;
+    return centerOffset - offset;
   };
 
   // Animate to the active index whenever it changes
   useEffect(() => {
+    if (containerWidth === 0) return;
     const targetX = getPositionForIndex(activeIndex);
     animate(x, targetX, {
       type: 'spring',
@@ -44,23 +56,30 @@ export const MonthCarousel: React.FC<MonthCarouselProps> = ({
       damping: 30,
       mass: 0.8,
     });
-  }, [activeIndex, x]);
+  }, [activeIndex, x, containerWidth]);
 
   const handleDragEnd = (_event: MouseEvent | TouchEvent | PointerEvent, info: PanInfo) => {
     setDragging(false);
     
     const velocity = info.velocity.x;
-    const offset = info.offset.x;
+    const currentX = x.get();
     
-    // Determine which card to snap to based on velocity and offset
+    // Calculate which card we're closest to
+    // Account for the "Future" card offset
+    const centerOffset = containerWidth / 2 - CARD_WIDTH / 2;
+    const relativeX = currentX - centerOffset;
+    const estimatedIndex = Math.round(-relativeX / (CARD_WIDTH + CARD_GAP)) - 1;
+    
     let newIndex = activeIndex;
     
     if (Math.abs(velocity) > 500) {
-      // High velocity - move based on direction
-      newIndex = velocity > 0 ? activeIndex - 1 : activeIndex + 1;
-    } else if (Math.abs(offset) > CARD_WIDTH / 3) {
-      // Dragged more than 1/3 of card width
-      newIndex = offset > 0 ? activeIndex - 1 : activeIndex + 1;
+      // High velocity - calculate momentum-based target
+      const momentumDistance = velocity * 0.2; // Adjust multiplier for desired momentum feel
+      const momentumIndex = Math.round((currentX + momentumDistance - centerOffset) / -(CARD_WIDTH + CARD_GAP)) - 1;
+      newIndex = momentumIndex;
+    } else {
+      // Low velocity - snap to nearest card
+      newIndex = estimatedIndex;
     }
     
     // Clamp to valid range
@@ -96,16 +115,17 @@ export const MonthCarousel: React.FC<MonthCarouselProps> = ({
       {/* Carousel Container */}
       <div
         ref={containerRef}
-        className="flex justify-center items-center h-40"
+        className="flex justify-center items-center h-40 overflow-hidden"
       >
         <motion.div
           drag="x"
           dragConstraints={{ 
-            left: getPositionForIndex(months.length - 1) - 100,
-            right: getPositionForIndex(0) + 100
+            left: -((months.length + 1) * (CARD_WIDTH + CARD_GAP)) - containerWidth / 2,
+            right: containerWidth / 2 + (CARD_WIDTH + CARD_GAP)
           }}
-          dragElastic={0.1}
-          dragTransition={{ bounceStiffness: 300, bounceDamping: 30 }}
+          dragElastic={0.15}
+          dragTransition={{ bounceStiffness: 200, bounceDamping: 20 }}
+          dragMomentum={true}
           onDragStart={() => setDragging(true)}
           onDragEnd={handleDragEnd}
           style={{ x }}
