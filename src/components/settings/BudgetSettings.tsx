@@ -34,7 +34,7 @@ export const BudgetSettings: React.FC<BudgetSettingsProps> = ({ className = '' }
   const [currency, setCurrency] = useState('ILS');
   const [warningNotifications, setWarningNotifications] = useState(true);
   const [emailAlerts, setEmailAlerts] = useState(false);
-  const [showRoundedAmounts, setShowRoundedAmounts] = useState(true);
+  const [showExactAmounts, setShowExactAmounts] = useState(false);
   const [hasChanges, setHasChanges] = useState(false);
   const [saveSuccess, setSaveSuccess] = useState(false);
   
@@ -55,7 +55,8 @@ export const BudgetSettings: React.FC<BudgetSettingsProps> = ({ className = '' }
         setCurrency(activeBudget.global_settings.currency || 'ILS');
         setWarningNotifications(activeBudget.global_settings.warningNotifications ?? true);
         setEmailAlerts(activeBudget.global_settings.emailAlerts ?? false);
-        setShowRoundedAmounts(activeBudget.global_settings.showRoundedAmounts ?? true);
+        // Invert: showRoundedAmounts in DB (true=rounded) becomes showExactAmounts in UI (false=rounded)
+        setShowExactAmounts(!(activeBudget.global_settings.showRoundedAmounts ?? true));
       }
       setHasChanges(false);
     }
@@ -85,7 +86,8 @@ export const BudgetSettings: React.FC<BudgetSettingsProps> = ({ className = '' }
         currency,
         warningNotifications,
         emailAlerts,
-        showRoundedAmounts,
+        // Invert: UI showExactAmounts (false=rounded) becomes DB showRoundedAmounts (true=rounded)
+        showRoundedAmounts: !showExactAmounts,
       };
 
       await updateBudget.mutateAsync({
@@ -334,7 +336,7 @@ export const BudgetSettings: React.FC<BudgetSettingsProps> = ({ className = '' }
           </div>
         </div>
 
-        {/* Rounded Amounts Row */}
+        {/* Exact Amounts Row */}
         <div className="p-4">
           <div className="flex items-center justify-between">
             <div className="flex items-center gap-3 flex-1">
@@ -342,20 +344,17 @@ export const BudgetSettings: React.FC<BudgetSettingsProps> = ({ className = '' }
                 <DollarSign className="h-5 w-5 text-green-600 dark:text-green-400" />
               </div>
               <div className="flex-1">
-                <h4 className="font-medium text-gray-900 dark:text-gray-100">Rounded Amounts</h4>
+                <h4 className="font-medium text-gray-900 dark:text-gray-100">Exact Amounts</h4>
                 <p className="text-sm text-gray-500 dark:text-gray-400">
-                  {showRoundedAmounts 
-                    ? `Show without decimals (e.g., ${getCurrencySymbol(currency)}1,250)` 
-                    : `Show with decimals (e.g., ${getCurrencySymbol(currency)}1,250.50)`
-                  }
+                  Show amounts with decimal precision
                 </p>
               </div>
             </div>
             <label className="relative inline-flex items-center cursor-pointer">
               <input
                 type="checkbox"
-                checked={showRoundedAmounts}
-                onChange={(e) => handleSettingChange(setShowRoundedAmounts, e.target.checked)}
+                checked={showExactAmounts}
+                onChange={(e) => handleSettingChange(setShowExactAmounts, e.target.checked)}
                 className="sr-only peer"
               />
               <div className="w-11 h-6 bg-gray-200 peer-focus:outline-none peer-focus:ring-4 peer-focus:ring-green-300 dark:peer-focus:ring-green-800 rounded-full peer dark:bg-gray-600 peer-checked:after:translate-x-full rtl:peer-checked:after:-translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:start-[2px] after:bg-white after:border-gray-300 after:border after:rounded-full after:h-5 after:w-5 after:transition-all dark:border-gray-600 peer-checked:bg-green-600"></div>
