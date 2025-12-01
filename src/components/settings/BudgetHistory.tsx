@@ -17,6 +17,7 @@ import {
   useDeletePersonalBudget,
 } from '../../hooks/useBudgets';
 import type { PersonalBudget } from '../../types/budget';
+import { formatCurrencyFromSettings } from '../../utils/formatCurrency';
 
 interface BudgetHistoryProps {
   className?: string;
@@ -32,10 +33,9 @@ export const BudgetHistory: React.FC<BudgetHistoryProps> = ({
   const deleteBudget = useDeletePersonalBudget();
 
   const formatCurrency = (amount: number): string => {
-    return new Intl.NumberFormat('en-US', {
-      style: 'currency',
-      currency: currency,
-    }).format(amount);
+    // Get showRoundedAmounts from the first budget's settings if available
+    const showRoundedAmounts = history[0]?.global_settings?.showRoundedAmounts ?? true;
+    return formatCurrencyFromSettings(amount, { currency, showRoundedAmounts });
   };
 
   const handleSetActive = async (budgetId: string) => {

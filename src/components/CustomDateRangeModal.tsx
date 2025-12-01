@@ -2,6 +2,8 @@ import React, { useState, useMemo } from 'react';
 import { X, Calendar, Search } from 'lucide-react';
 import { useFinance } from '../context/FinanceContext';
 import { getCategoryColor } from '../utils/categoryColors';
+import { useActiveBudget } from '../hooks/useBudgets';
+import { formatCurrencyFromSettings } from '../utils/formatCurrency';
 
 interface CustomDateRangeModalProps {
   isOpen: boolean;
@@ -10,6 +12,7 @@ interface CustomDateRangeModalProps {
 
 const CustomDateRangeModal: React.FC<CustomDateRangeModalProps> = ({ isOpen, onClose }) => {
   const { transactions, familyMembers } = useFinance();
+  const { data: activeBudget } = useActiveBudget();
   const now = new Date();
 
   // Generate last 24 months for selection
@@ -30,10 +33,7 @@ const CustomDateRangeModal: React.FC<CustomDateRangeModalProps> = ({ isOpen, onC
   const [searchTerm, setSearchTerm] = useState('');
 
   const formatCurrency = (amount: number) => {
-    return new Intl.NumberFormat('he-IL', {
-      style: 'currency',
-      currency: 'ILS',
-    }).format(amount);
+    return formatCurrencyFromSettings(amount, activeBudget?.global_settings);
   };
 
   const filteredTransactions = useMemo(() => {
