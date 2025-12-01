@@ -121,7 +121,6 @@ export const CategoryEditModal: React.FC<CategoryEditModalProps> = ({
   const formatCurrency = (amount: number): string => {
     return formatCurrencyFromSettings(amount, activeBudget?.global_settings);
   };
-  };
 
   // Reset form when category changes or modal opens
   useEffect(() => {
