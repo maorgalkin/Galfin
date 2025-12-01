@@ -1,5 +1,5 @@
 import React, { useState, useRef, useEffect } from 'react';
-import { motion, useMotionValue, useTransform, animate, PanInfo } from 'framer-motion';
+import { motion, useMotionValue, useTransform, animate } from 'framer-motion';
 
 interface MonthData {
   label: string;
@@ -59,7 +59,7 @@ export const MonthCarousel: React.FC<MonthCarouselProps> = ({
     });
   }, [activeIndex, x, containerWidth]);
 
-  const handleDragEnd = (_event: MouseEvent | TouchEvent | PointerEvent, info: PanInfo) => {
+  const handleDragEnd = (_event: MouseEvent | TouchEvent | PointerEvent, info: { velocity: { x: number; y: number } }) => {
     setDragging(false);
     
     const velocity = info.velocity.x;
