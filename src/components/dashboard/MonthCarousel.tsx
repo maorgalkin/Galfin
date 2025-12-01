@@ -13,7 +13,6 @@ interface MonthCarouselProps {
   months: MonthData[];
   activeIndex: number;
   onIndexChange: (index: number) => void;
-  onOlderClick: () => void;
 }
 
 const CARD_WIDTH = 160; // Width of each card in pixels
@@ -23,7 +22,6 @@ export const MonthCarousel: React.FC<MonthCarouselProps> = ({
   months,
   activeIndex,
   onIndexChange,
-  onOlderClick,
 }) => {
   const containerRef = useRef<HTMLDivElement>(null);
   const x = useMotionValue(0);
@@ -77,7 +75,7 @@ export const MonthCarousel: React.FC<MonthCarouselProps> = ({
     
     if (Math.abs(velocity) > 500) {
       // High velocity - calculate momentum-based target
-      const momentumDistance = velocity * 0.2; // Adjust multiplier for desired momentum feel
+      const momentumDistance = velocity * 0.2;
       const momentumIndex = Math.round((currentX + momentumDistance - centerOffset) / -(CARD_WIDTH + CARD_GAP)) - 1;
       newIndex = momentumIndex;
     } else {
@@ -125,7 +123,7 @@ export const MonthCarousel: React.FC<MonthCarouselProps> = ({
         <motion.div
           drag={isDisabled ? false : "x"}
           dragConstraints={{ 
-            left: -((months.length + 1) * (CARD_WIDTH + CARD_GAP)) - containerWidth / 2,
+            left: -(months.length * (CARD_WIDTH + CARD_GAP)) - containerWidth / 2,
             right: containerWidth / 2 + (CARD_WIDTH + CARD_GAP)
           }}
           dragElastic={0.15}
@@ -187,22 +185,6 @@ export const MonthCarousel: React.FC<MonthCarouselProps> = ({
               </motion.button>
             );
           })}
-
-          {/* Older button - only show when not disabled */}
-          {!isDisabled && (
-            <motion.button
-              onClick={onOlderClick}
-              style={{ width: CARD_WIDTH }}
-              className="flex-shrink-0 h-32 rounded-xl border-2 border-dashed border-blue-400 dark:border-blue-500 bg-blue-50 dark:bg-blue-900/30 hover:bg-blue-100 dark:hover:bg-blue-800/50 hover:border-blue-500 dark:hover:border-blue-400 flex items-center justify-center transition-all opacity-70 hover:opacity-100"
-            >
-              <div className="flex flex-col items-center gap-1">
-                <span className="text-base font-bold text-blue-700 dark:text-blue-300">Older</span>
-                <svg className="w-5 h-5 text-blue-600 dark:text-blue-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z" />
-                </svg>
-              </div>
-            </motion.button>
-          )}
         </motion.div>
       </div>
 

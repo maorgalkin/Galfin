@@ -510,7 +510,6 @@ const Dashboard: React.FC = () => {
                 setTransactionMemberFilter('all');
                 setTransactionMonthFilter(`carousel-${idx}`);
               }}
-              onOlderClick={() => setIsCustomDateRangeModalOpen(true)}
             />
 
             {/* Transaction Filters */}
