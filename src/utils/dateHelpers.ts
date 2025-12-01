@@ -66,3 +66,47 @@ export const getLastNMonths = (count: number = 4) => {
 export const isDateInRange = (date: Date, start: Date, end: Date): boolean => {
   return date >= start && date <= end;
 };
+
+/**
+ * Get all unique months that have transactions
+ * @param transactions Array of transactions
+ * @returns Array of month objects sorted from newest to oldest
+ */
+export const getMonthsWithData = (transactions: { date: string | Date }[]) => {
+  if (!transactions || transactions.length === 0) {
+    // Return current month if no transactions
+    const now = new Date();
+    return [{
+      label: getMonthLabel(now),
+      monthName: getMonthName(now),
+      year: getYear(now),
+      start: getMonthStart(now),
+      end: getMonthEnd(now),
+    }];
+  }
+
+  // Extract unique year-month combinations
+  const monthSet = new Set<string>();
+  transactions.forEach(t => {
+    const date = new Date(t.date);
+    const key = `${date.getFullYear()}-${date.getMonth()}`;
+    monthSet.add(key);
+  });
+
+  // Convert to sorted array of month objects (newest first)
+  const months = Array.from(monthSet)
+    .map(key => {
+      const [year, month] = key.split('-').map(Number);
+      const d = new Date(year, month, 1);
+      return {
+        label: getMonthLabel(d),
+        monthName: getMonthName(d),
+        year: getYear(d),
+        start: getMonthStart(d),
+        end: getMonthEnd(d),
+      };
+    })
+    .sort((a, b) => b.start.getTime() - a.start.getTime());
+
+  return months;
+};

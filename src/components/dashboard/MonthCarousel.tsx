@@ -29,6 +29,9 @@ export const MonthCarousel: React.FC<MonthCarouselProps> = ({
   const x = useMotionValue(0);
   const [dragging, setDragging] = useState(false);
   const [containerWidth, setContainerWidth] = useState(0);
+  
+  // Check if carousel should be disabled (only 1 month with data)
+  const isDisabled = months.length <= 1;
 
   // Measure container width
   useEffect(() => {
@@ -100,17 +103,19 @@ export const MonthCarousel: React.FC<MonthCarouselProps> = ({
 
   return (
     <div className="relative w-full overflow-hidden py-8">
-      {/* Left Arrow */}
-      <button
-        onClick={() => onIndexChange(Math.max(0, activeIndex - 1))}
-        disabled={activeIndex <= 0}
-        className="absolute left-2 top-1/2 -translate-y-1/2 z-20 p-3 rounded-full bg-blue-100 dark:bg-blue-800 border border-blue-300 dark:border-blue-600 hover:bg-blue-200 dark:hover:bg-blue-700 disabled:opacity-30 disabled:cursor-not-allowed transition-all shadow-lg"
-        aria-label="Previous month"
-      >
-        <svg className="w-6 h-6 text-blue-700 dark:text-blue-200" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 19l-7-7 7-7" />
-        </svg>
-      </button>
+      {/* Left Arrow - hidden when disabled */}
+      {!isDisabled && (
+        <button
+          onClick={() => onIndexChange(Math.max(0, activeIndex - 1))}
+          disabled={activeIndex <= 0}
+          className="absolute left-2 top-1/2 -translate-y-1/2 z-20 p-3 rounded-full bg-blue-100 dark:bg-blue-800 border border-blue-300 dark:border-blue-600 hover:bg-blue-200 dark:hover:bg-blue-700 disabled:opacity-30 disabled:cursor-not-allowed transition-all shadow-lg"
+          aria-label="Previous month"
+        >
+          <svg className="w-6 h-6 text-blue-700 dark:text-blue-200" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 19l-7-7 7-7" />
+          </svg>
+        </button>
+      )}
 
       {/* Carousel Container */}
       <div
@@ -118,26 +123,28 @@ export const MonthCarousel: React.FC<MonthCarouselProps> = ({
         className="flex justify-center items-center h-40 overflow-hidden"
       >
         <motion.div
-          drag="x"
+          drag={isDisabled ? false : "x"}
           dragConstraints={{ 
             left: -((months.length + 1) * (CARD_WIDTH + CARD_GAP)) - containerWidth / 2,
             right: containerWidth / 2 + (CARD_WIDTH + CARD_GAP)
           }}
           dragElastic={0.15}
           dragTransition={{ bounceStiffness: 200, bounceDamping: 20 }}
-          dragMomentum={true}
-          onDragStart={() => setDragging(true)}
-          onDragEnd={handleDragEnd}
+          dragMomentum={!isDisabled}
+          onDragStart={() => !isDisabled && setDragging(true)}
+          onDragEnd={!isDisabled ? handleDragEnd : undefined}
           style={{ x }}
-          className="flex gap-4 cursor-grab active:cursor-grabbing"
+          className={isDisabled ? "flex gap-4" : "flex gap-4 cursor-grab active:cursor-grabbing"}
         >
-          {/* Future placeholder */}
-          <div
-            className="flex-shrink-0 w-40 h-32 rounded-xl border-2 border-dashed border-gray-300 dark:border-gray-600 bg-gray-50 dark:bg-gray-800/30 flex items-center justify-center opacity-40"
-            style={{ width: CARD_WIDTH }}
-          >
-            <span className="text-sm font-medium text-gray-400">Future</span>
-          </div>
+          {/* Future placeholder - only show when not disabled */}
+          {!isDisabled && (
+            <div
+              className="flex-shrink-0 w-40 h-32 rounded-xl border-2 border-dashed border-gray-300 dark:border-gray-600 bg-gray-50 dark:bg-gray-800/30 flex items-center justify-center opacity-40"
+              style={{ width: CARD_WIDTH }}
+            >
+              <span className="text-sm font-medium text-gray-400">Future</span>
+            </div>
+          )}
 
           {/* Month cards */}
           {months.map((month, idx) => {
@@ -152,23 +159,24 @@ export const MonthCarousel: React.FC<MonthCarouselProps> = ({
             return (
               <motion.button
                 key={month.label}
-                onClick={() => !dragging && onIndexChange(idx)}
+                onClick={() => !dragging && !isDisabled && onIndexChange(idx)}
+                disabled={isDisabled}
                 style={{
                   width: CARD_WIDTH,
-                  scale: dragging ? 1 : scale,
-                  opacity: dragging ? 1 : opacity,
+                  scale: isDisabled ? 1 : (dragging ? 1 : scale),
+                  opacity: isDisabled ? 1 : (dragging ? 1 : opacity),
                   zIndex: isActive ? 10 : Math.max(0, 5 - absOffset),
                 }}
                 animate={{
-                  scale: dragging ? 1 : scale,
-                  opacity: dragging ? 1 : opacity,
+                  scale: isDisabled ? 1 : (dragging ? 1 : scale),
+                  opacity: isDisabled ? 1 : (dragging ? 1 : opacity),
                 }}
                 transition={{ type: 'spring', stiffness: 300, damping: 30 }}
                 className={`flex-shrink-0 h-32 rounded-xl border-2 font-medium flex flex-col items-center justify-center transition-colors ${
                   isActive
                     ? 'bg-blue-600 dark:bg-blue-700 text-white border-blue-600 dark:border-blue-500 shadow-xl'
                     : 'bg-white dark:bg-blue-900/20 text-blue-600 dark:text-blue-300 border-blue-200 dark:border-blue-700 hover:border-blue-400 dark:hover:border-blue-500'
-                }`}
+                } ${isDisabled ? 'cursor-default' : 'cursor-pointer'}`}
               >
                 <div className={`text-xl ${isActive ? 'font-bold' : 'font-semibold'}`}>
                   {month.monthName}
@@ -180,49 +188,55 @@ export const MonthCarousel: React.FC<MonthCarouselProps> = ({
             );
           })}
 
-          {/* Older button */}
-          <motion.button
-            onClick={onOlderClick}
-            style={{ width: CARD_WIDTH }}
-            className="flex-shrink-0 h-32 rounded-xl border-2 border-dashed border-blue-400 dark:border-blue-500 bg-blue-50 dark:bg-blue-900/30 hover:bg-blue-100 dark:hover:bg-blue-800/50 hover:border-blue-500 dark:hover:border-blue-400 flex items-center justify-center transition-all opacity-70 hover:opacity-100"
-          >
-            <div className="flex flex-col items-center gap-1">
-              <span className="text-base font-bold text-blue-700 dark:text-blue-300">Older</span>
-              <svg className="w-5 h-5 text-blue-600 dark:text-blue-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z" />
-              </svg>
-            </div>
-          </motion.button>
+          {/* Older button - only show when not disabled */}
+          {!isDisabled && (
+            <motion.button
+              onClick={onOlderClick}
+              style={{ width: CARD_WIDTH }}
+              className="flex-shrink-0 h-32 rounded-xl border-2 border-dashed border-blue-400 dark:border-blue-500 bg-blue-50 dark:bg-blue-900/30 hover:bg-blue-100 dark:hover:bg-blue-800/50 hover:border-blue-500 dark:hover:border-blue-400 flex items-center justify-center transition-all opacity-70 hover:opacity-100"
+            >
+              <div className="flex flex-col items-center gap-1">
+                <span className="text-base font-bold text-blue-700 dark:text-blue-300">Older</span>
+                <svg className="w-5 h-5 text-blue-600 dark:text-blue-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z" />
+                </svg>
+              </div>
+            </motion.button>
+          )}
         </motion.div>
       </div>
 
-      {/* Right Arrow */}
-      <button
-        onClick={() => onIndexChange(Math.min(months.length - 1, activeIndex + 1))}
-        disabled={activeIndex >= months.length - 1}
-        className="absolute right-2 top-1/2 -translate-y-1/2 z-20 p-3 rounded-full bg-blue-100 dark:bg-blue-800 border border-blue-300 dark:border-blue-600 hover:bg-blue-200 dark:hover:bg-blue-700 disabled:opacity-30 disabled:cursor-not-allowed transition-all shadow-lg"
-        aria-label="Next month"
-      >
-        <svg className="w-6 h-6 text-blue-700 dark:text-blue-200" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 5l7 7-7 7" />
-        </svg>
-      </button>
+      {/* Right Arrow - hidden when disabled */}
+      {!isDisabled && (
+        <button
+          onClick={() => onIndexChange(Math.min(months.length - 1, activeIndex + 1))}
+          disabled={activeIndex >= months.length - 1}
+          className="absolute right-2 top-1/2 -translate-y-1/2 z-20 p-3 rounded-full bg-blue-100 dark:bg-blue-800 border border-blue-300 dark:border-blue-600 hover:bg-blue-200 dark:hover:bg-blue-700 disabled:opacity-30 disabled:cursor-not-allowed transition-all shadow-lg"
+          aria-label="Next month"
+        >
+          <svg className="w-6 h-6 text-blue-700 dark:text-blue-200" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 5l7 7-7 7" />
+          </svg>
+        </button>
+      )}
 
-      {/* Month indicator dots */}
-      <div className="flex justify-center gap-1.5 mt-4">
-        {months.map((_, idx) => (
-          <button
-            key={idx}
-            onClick={() => onIndexChange(idx)}
-            className={`h-1.5 rounded-full transition-all ${
-              idx === activeIndex
-                ? 'w-8 bg-blue-600 dark:bg-blue-400'
-                : 'w-1.5 bg-gray-300 dark:bg-gray-600 hover:bg-gray-400 dark:hover:bg-gray-500'
-            }`}
-            aria-label={`Go to ${months[idx].monthName} ${months[idx].year}`}
-          />
-        ))}
-      </div>
+      {/* Month indicator dots - hidden when disabled */}
+      {!isDisabled && months.length > 1 && (
+        <div className="flex justify-center gap-1.5 mt-4">
+          {months.map((_, idx) => (
+            <button
+              key={idx}
+              onClick={() => onIndexChange(idx)}
+              className={`h-1.5 rounded-full transition-all ${
+                idx === activeIndex
+                  ? 'w-8 bg-blue-600 dark:bg-blue-400'
+                  : 'w-1.5 bg-gray-300 dark:bg-gray-600 hover:bg-gray-400 dark:hover:bg-gray-500'
+              }`}
+              aria-label={`Go to ${months[idx].monthName} ${months[idx].year}`}
+            />
+          ))}
+        </div>
+      )}
     </div>
   );
 };

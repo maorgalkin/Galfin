@@ -1,5 +1,5 @@
 import { useMemo } from 'react';
-import { getLastNMonths, isDateInRange } from '../utils/dateHelpers';
+import { getMonthsWithData, isDateInRange } from '../utils/dateHelpers';
 import type { Transaction, FamilyMember, BudgetConfiguration } from '../types';
 
 interface MonthData {
@@ -42,8 +42,8 @@ export function useDashboardData({
   activeMonthIndex,
 }: UseDashboardDataProps): UseDashboardDataReturn {
   
-  // Generate last 4 months (current month + 3 previous)
-  const months = useMemo(() => getLastNMonths(4), []);
+  // Get months that have transaction data (sorted newest to oldest)
+  const months = useMemo(() => getMonthsWithData(transactions), [transactions]);
 
   // Filter transactions by date range (memoized to avoid stale closures)
   const getTransactionsForMonth = useMemo(
