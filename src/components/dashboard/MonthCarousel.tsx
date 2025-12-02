@@ -17,7 +17,7 @@ interface MonthCarouselProps {
 
 const CARD_WIDTH = 160;
 const CARD_GAP = 16;
-const VISIBLE_CARDS = 7; // Show cards on both sides of active
+const SIDE_CARDS = 1; // Show 1 card on each side by default (3 total)
 
 export const MonthCarousel: React.FC<MonthCarouselProps> = ({
   months,
@@ -27,24 +27,33 @@ export const MonthCarousel: React.FC<MonthCarouselProps> = ({
   const containerRef = useRef<HTMLDivElement>(null);
   const x = useMotionValue(0);
   const [dragging, setDragging] = useState(false);
+  const [containerWidth, setContainerWidth] = useState(0);
   
   const isDisabled = months.length <= 1;
 
-  // Create circular array: render active card in center with cards wrapping around
+  // Measure container width to determine how many side cards to show
+  useEffect(() => {
+    if (containerRef.current) {
+      const width = containerRef.current.offsetWidth;
+      setContainerWidth(width);
+    }
+  }, []);
+
+  // Create circular array: active card + neighbors
   const getVisibleMonths = () => {
     if (months.length === 0) return [];
     if (isDisabled) return [{ ...months[0], displayIndex: 0, actualIndex: 0 }];
     
-    const visible = [];
-    const halfVisible = Math.floor(VISIBLE_CARDS / 2);
+    // Show 2 cards on each side for larger screens (>= 768px), 1 for smaller
+    const sideCards = containerWidth >= 768 ? 2 : 1;
     
-    for (let i = -halfVisible; i <= halfVisible; i++) {
-      // Wrap around using modulo for circular behavior
-      let actualIndex = (activeIndex + i + months.length) % months.length;
+    const visible = [];
+    for (let i = -sideCards; i <= sideCards; i++) {
+      const actualIndex = (activeIndex + i + months.length) % months.length;
       visible.push({
         ...months[actualIndex],
-        displayIndex: i, // Position relative to center
-        actualIndex: actualIndex, // Real index in months array
+        displayIndex: i,
+        actualIndex: actualIndex,
       });
     }
     
@@ -69,15 +78,15 @@ export const MonthCarousel: React.FC<MonthCarouselProps> = ({
     const velocity = info.velocity.x;
     const dragDistance = x.get();
     
-    // Calculate momentum: how far the flick should travel
-    const momentumMultiplier = 0.4;
+    // Calculate momentum
+    const momentumMultiplier = 0.3;
     const totalDistance = dragDistance + (velocity * momentumMultiplier);
     
-    // Calculate total cards to move through
+    // Calculate cards moved
     const totalCardsMoved = Math.round(-totalDistance / (CARD_WIDTH + CARD_GAP));
     
     if (totalCardsMoved === 0) {
-      // Just snap back to center
+      // Snap back to center
       animate(x, 0, {
         type: 'spring',
         stiffness: 300,
@@ -86,24 +95,16 @@ export const MonthCarousel: React.FC<MonthCarouselProps> = ({
       return;
     }
     
-    // Calculate final index with wrapping - update context ONCE at the end
-    let finalIndex = (activeIndex + totalCardsMoved + months.length) % months.length;
+    // Calculate final destination
+    const finalIndex = (activeIndex + totalCardsMoved + months.length * 100) % months.length;
     
-    // Animate x position to simulate scrolling through cards visually
-    const targetDistance = totalCardsMoved * (CARD_WIDTH + CARD_GAP);
-    
-    // Use inertia animation
-    animate(x, targetDistance, {
-      type: 'inertia',
-      velocity: velocity,
-      power: 0.8,
-      timeConstant: 350,
-      restDelta: 0.5,
-      modifyTarget: () => targetDistance,
+    // Simple spring animation back to center, then update
+    animate(x, 0, {
+      type: 'spring',
+      stiffness: 300,
+      damping: 30,
     }).then(() => {
-      // After visual animation completes, update the actual index and reset x
       onIndexChange(finalIndex);
-      x.set(0);
     });
   };
 
