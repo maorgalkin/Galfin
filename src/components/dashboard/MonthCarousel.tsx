@@ -69,30 +69,41 @@ export const MonthCarousel: React.FC<MonthCarouselProps> = ({
     const velocity = info.velocity.x;
     const dragDistance = x.get();
     
-    // Calculate how many cards we've moved
-    let cardsMoved = Math.round(-dragDistance / (CARD_WIDTH + CARD_GAP));
+    // Calculate momentum: how far the flick should travel
+    const momentumMultiplier = 0.4;
+    const totalDistance = dragDistance + (velocity * momentumMultiplier);
     
-    // Apply momentum for fast swipes
-    if (Math.abs(velocity) > 500) {
-      const momentumCards = Math.round((velocity / 1000) * 2);
-      cardsMoved += momentumCards;
-    }
+    // Calculate total cards to move through
+    const totalCardsMoved = Math.round(-totalDistance / (CARD_WIDTH + CARD_GAP));
     
-    if (cardsMoved !== 0) {
-      // Calculate new index with wrapping
-      let newIndex = (activeIndex + cardsMoved) % months.length;
-      // Handle negative wrapping
-      if (newIndex < 0) newIndex += months.length;
-      
-      onIndexChange(newIndex);
-    } else {
-      // Snap back to center
+    if (totalCardsMoved === 0) {
+      // Just snap back to center
       animate(x, 0, {
         type: 'spring',
         stiffness: 300,
         damping: 30,
       });
+      return;
     }
+    
+    // For momentum scrolling through multiple cards
+    const absCardsMoved = Math.abs(totalCardsMoved);
+    const direction = totalCardsMoved > 0 ? 1 : -1;
+    
+    // Animate through each card with decreasing speed (inertia)
+    let currentCard = 0;
+    const cardInterval = setInterval(() => {
+      currentCard++;
+      
+      // Calculate new index with wrapping
+      let newIndex = (activeIndex + (currentCard * direction) + months.length) % months.length;
+      onIndexChange(newIndex);
+      
+      // Stop when we've moved through all cards
+      if (currentCard >= absCardsMoved) {
+        clearInterval(cardInterval);
+      }
+    }, Math.max(50, 300 / absCardsMoved)); // Faster interval for more cards
   };
 
   const handlePrevious = () => {
