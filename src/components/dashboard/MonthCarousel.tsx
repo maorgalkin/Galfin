@@ -28,6 +28,8 @@ export const MonthCarousel: React.FC<MonthCarouselProps> = ({
   const x = useMotionValue(0);
   const [dragging, setDragging] = useState(false);
   const [containerWidth, setContainerWidth] = useState(0);
+  const [isAnimating, setIsAnimating] = useState(false);
+  const animationRef = useRef<NodeJS.Timeout | null>(null);
   
   const isDisabled = months.length <= 1;
 
@@ -72,6 +74,33 @@ export const MonthCarousel: React.FC<MonthCarouselProps> = ({
     });
   }, [activeIndex, x]);
 
+  // Animate through cards one by one
+  const spinThroughCards = (cardsMoved: number) => {
+    if (isAnimating || cardsMoved === 0) return;
+    
+    setIsAnimating(true);
+    const direction = cardsMoved > 0 ? 1 : -1;
+    const steps = Math.abs(cardsMoved);
+    let currentStep = 0;
+    
+    // Clear any existing animation
+    if (animationRef.current) {
+      clearInterval(animationRef.current);
+    }
+    
+    animationRef.current = setInterval(() => {
+      currentStep++;
+      const newIndex = (activeIndex + (currentStep * direction) + months.length * 100) % months.length;
+      onIndexChange(newIndex);
+      
+      if (currentStep >= steps) {
+        clearInterval(animationRef.current!);
+        animationRef.current = null;
+        setIsAnimating(false);
+      }
+    }, 200); // 200ms between each card change
+  };
+
   const handleDragEnd = (_event: MouseEvent | TouchEvent | PointerEvent, info: { velocity: { x: number; y: number } }) => {
     setDragging(false);
     
@@ -85,38 +114,37 @@ export const MonthCarousel: React.FC<MonthCarouselProps> = ({
     // Calculate cards moved
     const totalCardsMoved = Math.round(-totalDistance / (CARD_WIDTH + CARD_GAP));
     
-    if (totalCardsMoved === 0) {
-      // Snap back to center
-      animate(x, 0, {
-        type: 'spring',
-        stiffness: 300,
-        damping: 30,
-      });
-      return;
-    }
-    
-    // Calculate final destination
-    const finalIndex = (activeIndex + totalCardsMoved + months.length * 100) % months.length;
-    
-    // Simple spring animation back to center, then update
+    // Snap back to center visually
     animate(x, 0, {
       type: 'spring',
       stiffness: 300,
       damping: 30,
-    }).then(() => {
-      onIndexChange(finalIndex);
     });
+    
+    // Then spin through cards
+    if (totalCardsMoved !== 0) {
+      spinThroughCards(totalCardsMoved);
+    }
   };
 
   const handlePrevious = () => {
-    const newIndex = (activeIndex - 1 + months.length) % months.length;
-    onIndexChange(newIndex);
+    if (isAnimating) return;
+    spinThroughCards(-1);
   };
 
   const handleNext = () => {
-    const newIndex = (activeIndex + 1) % months.length;
-    onIndexChange(newIndex);
+    if (isAnimating) return;
+    spinThroughCards(1);
   };
+
+  // Cleanup on unmount
+  useEffect(() => {
+    return () => {
+      if (animationRef.current) {
+        clearInterval(animationRef.current);
+      }
+    };
+  }, []);
 
   return (
     <div className="relative w-full overflow-hidden py-8">
