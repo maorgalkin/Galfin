@@ -86,24 +86,25 @@ export const MonthCarousel: React.FC<MonthCarouselProps> = ({
       return;
     }
     
-    // For momentum scrolling through multiple cards
-    const absCardsMoved = Math.abs(totalCardsMoved);
-    const direction = totalCardsMoved > 0 ? 1 : -1;
+    // Calculate final index with wrapping - update context ONCE at the end
+    let finalIndex = (activeIndex + totalCardsMoved + months.length) % months.length;
     
-    // Animate through each card with decreasing speed (inertia)
-    let currentCard = 0;
-    const cardInterval = setInterval(() => {
-      currentCard++;
-      
-      // Calculate new index with wrapping
-      let newIndex = (activeIndex + (currentCard * direction) + months.length) % months.length;
-      onIndexChange(newIndex);
-      
-      // Stop when we've moved through all cards
-      if (currentCard >= absCardsMoved) {
-        clearInterval(cardInterval);
-      }
-    }, Math.max(50, 300 / absCardsMoved)); // Faster interval for more cards
+    // Animate x position to simulate scrolling through cards visually
+    const targetDistance = totalCardsMoved * (CARD_WIDTH + CARD_GAP);
+    
+    // Use inertia animation
+    animate(x, targetDistance, {
+      type: 'inertia',
+      velocity: velocity,
+      power: 0.8,
+      timeConstant: 350,
+      restDelta: 0.5,
+      modifyTarget: () => targetDistance,
+    }).then(() => {
+      // After visual animation completes, update the actual index and reset x
+      onIndexChange(finalIndex);
+      x.set(0);
+    });
   };
 
   const handlePrevious = () => {
