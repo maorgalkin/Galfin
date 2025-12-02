@@ -1,5 +1,5 @@
 import React, { useState, useRef, useEffect } from 'react';
-import { motion, useMotionValue, useTransform, animate } from 'framer-motion';
+import { motion, useMotionValue, animate } from 'framer-motion';
 
 interface MonthData {
   label: string;
@@ -15,8 +15,9 @@ interface MonthCarouselProps {
   onIndexChange: (index: number) => void;
 }
 
-const CARD_WIDTH = 160; // Width of each card in pixels
-const CARD_GAP = 16; // Gap between cards
+const CARD_WIDTH = 160;
+const CARD_GAP = 16;
+const VISIBLE_CARDS = 7; // Show cards on both sides of active
 
 export const MonthCarousel: React.FC<MonthCarouselProps> = ({
   months,
@@ -26,72 +27,67 @@ export const MonthCarousel: React.FC<MonthCarouselProps> = ({
   const containerRef = useRef<HTMLDivElement>(null);
   const x = useMotionValue(0);
   const [dragging, setDragging] = useState(false);
-  const [containerWidth, setContainerWidth] = useState(0);
   
-  // Check if carousel should be disabled (only 1 month with data)
   const isDisabled = months.length <= 1;
 
-  // Measure container width
-  useEffect(() => {
-    if (containerRef.current) {
-      setContainerWidth(containerRef.current.offsetWidth);
+  // Create circular array: render active card in center with cards wrapping around
+  const getVisibleMonths = () => {
+    if (months.length === 0) return [];
+    if (isDisabled) return [{ ...months[0], displayIndex: 0, actualIndex: 0 }];
+    
+    const visible = [];
+    const halfVisible = Math.floor(VISIBLE_CARDS / 2);
+    
+    for (let i = -halfVisible; i <= halfVisible; i++) {
+      // Wrap around using modulo for circular behavior
+      let actualIndex = (activeIndex + i + months.length) % months.length;
+      visible.push({
+        ...months[actualIndex],
+        displayIndex: i, // Position relative to center
+        actualIndex: actualIndex, // Real index in months array
+      });
     }
-  }, []);
-
-  // Calculate the center position for the active card
-  const getPositionForIndex = (index: number) => {
-    // Center the active card in the viewport
-    // Add 1 for the "Future" card offset
-    const offset = (index + 1) * (CARD_WIDTH + CARD_GAP);
-    const centerOffset = containerWidth / 2 - CARD_WIDTH / 2;
-    return centerOffset - offset;
+    
+    return visible;
   };
 
-  // Animate to the active index whenever it changes
+  const visibleMonths = getVisibleMonths();
+
+  // Always center the active card (displayIndex: 0)
   useEffect(() => {
-    if (containerWidth === 0) return;
-    const targetX = getPositionForIndex(activeIndex);
-    animate(x, targetX, {
+    animate(x, 0, {
       type: 'spring',
       stiffness: 300,
       damping: 30,
       mass: 0.8,
     });
-  }, [activeIndex, x, containerWidth]);
+  }, [activeIndex, x]);
 
   const handleDragEnd = (_event: MouseEvent | TouchEvent | PointerEvent, info: { velocity: { x: number; y: number } }) => {
     setDragging(false);
     
     const velocity = info.velocity.x;
-    const currentX = x.get();
+    const dragDistance = x.get();
     
-    // Calculate which card we're closest to
-    // Account for the "Future" card offset
-    const centerOffset = containerWidth / 2 - CARD_WIDTH / 2;
-    const relativeX = currentX - centerOffset;
-    const estimatedIndex = Math.round(-relativeX / (CARD_WIDTH + CARD_GAP)) - 1;
+    // Calculate how many cards we've moved
+    let cardsMoved = Math.round(-dragDistance / (CARD_WIDTH + CARD_GAP));
     
-    let newIndex = activeIndex;
-    
+    // Apply momentum for fast swipes
     if (Math.abs(velocity) > 500) {
-      // High velocity - calculate momentum-based target
-      const momentumDistance = velocity * 0.2;
-      const momentumIndex = Math.round((currentX + momentumDistance - centerOffset) / -(CARD_WIDTH + CARD_GAP)) - 1;
-      newIndex = momentumIndex;
-    } else {
-      // Low velocity - snap to nearest card
-      newIndex = estimatedIndex;
+      const momentumCards = Math.round((velocity / 1000) * 2);
+      cardsMoved += momentumCards;
     }
     
-    // Clamp to valid range
-    newIndex = Math.max(0, Math.min(months.length - 1, newIndex));
-    
-    if (newIndex !== activeIndex) {
+    if (cardsMoved !== 0) {
+      // Calculate new index with wrapping
+      let newIndex = (activeIndex + cardsMoved) % months.length;
+      // Handle negative wrapping
+      if (newIndex < 0) newIndex += months.length;
+      
       onIndexChange(newIndex);
     } else {
-      // Snap back to current position
-      const targetX = getPositionForIndex(activeIndex);
-      animate(x, targetX, {
+      // Snap back to center
+      animate(x, 0, {
         type: 'spring',
         stiffness: 300,
         damping: 30,
@@ -99,14 +95,23 @@ export const MonthCarousel: React.FC<MonthCarouselProps> = ({
     }
   };
 
+  const handlePrevious = () => {
+    const newIndex = (activeIndex - 1 + months.length) % months.length;
+    onIndexChange(newIndex);
+  };
+
+  const handleNext = () => {
+    const newIndex = (activeIndex + 1) % months.length;
+    onIndexChange(newIndex);
+  };
+
   return (
     <div className="relative w-full overflow-hidden py-8">
-      {/* Left Arrow - hidden when disabled */}
+      {/* Left Arrow */}
       {!isDisabled && (
         <button
-          onClick={() => onIndexChange(Math.max(0, activeIndex - 1))}
-          disabled={activeIndex <= 0}
-          className="absolute left-2 top-1/2 -translate-y-1/2 z-20 p-3 rounded-full bg-blue-100 dark:bg-blue-800 border border-blue-300 dark:border-blue-600 hover:bg-blue-200 dark:hover:bg-blue-700 disabled:opacity-30 disabled:cursor-not-allowed transition-all shadow-lg"
+          onClick={handlePrevious}
+          className="absolute left-2 top-1/2 -translate-y-1/2 z-20 p-3 rounded-full bg-blue-100 dark:bg-blue-800 border border-blue-300 dark:border-blue-600 hover:bg-blue-200 dark:hover:bg-blue-700 transition-all shadow-lg"
           aria-label="Previous month"
         >
           <svg className="w-6 h-6 text-blue-700 dark:text-blue-200" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -122,52 +127,36 @@ export const MonthCarousel: React.FC<MonthCarouselProps> = ({
       >
         <motion.div
           drag={isDisabled ? false : "x"}
-          dragConstraints={{ 
-            left: -(months.length * (CARD_WIDTH + CARD_GAP)) - containerWidth / 2,
-            right: containerWidth / 2 + (CARD_WIDTH + CARD_GAP)
-          }}
-          dragElastic={0.15}
-          dragTransition={{ bounceStiffness: 200, bounceDamping: 20 }}
+          dragConstraints={{ left: -1000, right: 1000 }}
+          dragElastic={0.1}
           dragMomentum={!isDisabled}
           onDragStart={() => !isDisabled && setDragging(true)}
           onDragEnd={!isDisabled ? handleDragEnd : undefined}
           style={{ x }}
           className={isDisabled ? "flex gap-4" : "flex gap-4 cursor-grab active:cursor-grabbing"}
         >
-          {/* Future placeholder - only show when not disabled */}
-          {!isDisabled && (
-            <div
-              className="flex-shrink-0 w-40 h-32 rounded-xl border-2 border-dashed border-gray-300 dark:border-gray-600 bg-gray-50 dark:bg-gray-800/30 flex items-center justify-center opacity-40"
-              style={{ width: CARD_WIDTH }}
-            >
-              <span className="text-sm font-medium text-gray-400">Future</span>
-            </div>
-          )}
-
-          {/* Month cards */}
-          {months.map((month, idx) => {
-            const offset = idx - activeIndex;
-            const absOffset = Math.abs(offset);
+          {visibleMonths.map((month) => {
+            const absOffset = Math.abs(month.displayIndex);
+            const isActive = month.displayIndex === 0;
             
-            // Calculate scale and opacity based on distance from center
-            const scale = Math.max(0.7, 1 - absOffset * 0.15);
-            const opacity = Math.max(0.4, 1 - absOffset * 0.3);
-            const isActive = idx === activeIndex;
+            // Scale and opacity based on distance from center
+            const scale = isDisabled ? 1 : Math.max(0.7, 1 - absOffset * 0.12);
+            const opacity = isDisabled ? 1 : Math.max(0.3, 1 - absOffset * 0.25);
 
             return (
               <motion.button
-                key={month.label}
-                onClick={() => !dragging && !isDisabled && onIndexChange(idx)}
+                key={`${month.actualIndex}-${month.displayIndex}`}
+                onClick={() => !dragging && !isDisabled && onIndexChange(month.actualIndex)}
                 disabled={isDisabled}
                 style={{
                   width: CARD_WIDTH,
-                  scale: isDisabled ? 1 : (dragging ? 1 : scale),
-                  opacity: isDisabled ? 1 : (dragging ? 1 : opacity),
+                  scale: dragging ? 1 : scale,
+                  opacity: dragging ? 1 : opacity,
                   zIndex: isActive ? 10 : Math.max(0, 5 - absOffset),
                 }}
                 animate={{
-                  scale: isDisabled ? 1 : (dragging ? 1 : scale),
-                  opacity: isDisabled ? 1 : (dragging ? 1 : opacity),
+                  scale: dragging ? 1 : scale,
+                  opacity: dragging ? 1 : opacity,
                 }}
                 transition={{ type: 'spring', stiffness: 300, damping: 30 }}
                 className={`flex-shrink-0 h-32 rounded-xl border-2 font-medium flex flex-col items-center justify-center transition-colors ${
@@ -188,12 +177,11 @@ export const MonthCarousel: React.FC<MonthCarouselProps> = ({
         </motion.div>
       </div>
 
-      {/* Right Arrow - hidden when disabled */}
+      {/* Right Arrow */}
       {!isDisabled && (
         <button
-          onClick={() => onIndexChange(Math.min(months.length - 1, activeIndex + 1))}
-          disabled={activeIndex >= months.length - 1}
-          className="absolute right-2 top-1/2 -translate-y-1/2 z-20 p-3 rounded-full bg-blue-100 dark:bg-blue-800 border border-blue-300 dark:border-blue-600 hover:bg-blue-200 dark:hover:bg-blue-700 disabled:opacity-30 disabled:cursor-not-allowed transition-all shadow-lg"
+          onClick={handleNext}
+          className="absolute right-2 top-1/2 -translate-y-1/2 z-20 p-3 rounded-full bg-blue-100 dark:bg-blue-800 border border-blue-300 dark:border-blue-600 hover:bg-blue-200 dark:hover:bg-blue-700 transition-all shadow-lg"
           aria-label="Next month"
         >
           <svg className="w-6 h-6 text-blue-700 dark:text-blue-200" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -202,7 +190,7 @@ export const MonthCarousel: React.FC<MonthCarouselProps> = ({
         </button>
       )}
 
-      {/* Month indicator dots - hidden when disabled */}
+      {/* Month indicator dots */}
       {!isDisabled && months.length > 1 && (
         <div className="flex justify-center gap-1.5 mt-4">
           {months.map((_, idx) => (
