@@ -151,13 +151,12 @@ export const updateTransaction = async (id: string, transaction: Omit<Transactio
 };
 
 export const deleteTransaction = async (id: string): Promise<void> => {
-  const userId = await getCurrentUserId();
-
   const { error } = await supabase
     .from('transactions')
     .delete()
-    .eq('id', id)
-    .eq('user_id', userId); // RLS will enforce this, but good practice
+    .eq('id', id);
+    // Note: RLS policy allows household members to delete any household transaction
+    // Don't filter by user_id - that would prevent deleting other household members' transactions
 
   if (error) {
     console.error('Error deleting transaction:', error);
