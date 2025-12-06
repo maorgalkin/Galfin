@@ -23,8 +23,6 @@ const EditTransactionModal: React.FC<EditTransactionModalProps> = ({ transaction
   });
 
   const [showDeleteConfirm, setShowDeleteConfirm] = useState(false);
-  const [isSubmitting, setIsSubmitting] = useState(false);
-  const [isDeleting, setIsDeleting] = useState(false);
 
   // Get currency symbol - use personal budget if available
   const getCurrencySymbol = (currency: string) => {
@@ -77,10 +75,6 @@ const EditTransactionModal: React.FC<EditTransactionModalProps> = ({ transaction
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    
-    if (isSubmitting) return;
-    
-    setIsSubmitting(true);
     try {
       await updateTransaction(transaction.id, {
         ...formData,
@@ -90,23 +84,19 @@ const EditTransactionModal: React.FC<EditTransactionModalProps> = ({ transaction
     } catch (error) {
       console.error('Error updating transaction:', error);
       alert('Failed to update transaction. Please try again.');
-    } finally {
-      setIsSubmitting(false);
     }
   };
 
   const handleDelete = async () => {
-    if (isDeleting) return;
-    
-    setIsDeleting(true);
+    if (!window.confirm('Are you sure you want to delete this transaction?')) {
+      return;
+    }
     try {
       await deleteTransaction(transaction.id);
       onClose();
     } catch (error) {
       console.error('Error deleting transaction:', error);
       alert('Failed to delete transaction. Please try again.');
-    } finally {
-      setIsDeleting(false);
     }
   };
 
@@ -271,24 +261,21 @@ const EditTransactionModal: React.FC<EditTransactionModalProps> = ({ transaction
               <>
                 <button
                   type="submit"
-                  disabled={isSubmitting || isDeleting}
-                  className="flex-1 bg-blue-500 text-white px-4 py-2 rounded-md hover:bg-blue-600 transition-colors font-medium disabled:opacity-50 disabled:cursor-not-allowed"
+                  className="flex-1 bg-blue-500 text-white px-4 py-2 rounded-md hover:bg-blue-600 transition-colors font-medium"
                 >
-                  {isSubmitting ? 'Saving...' : 'Save Changes'}
+                  Save Changes
                 </button>
                 <button
                   type="button"
                   onClick={() => setShowDeleteConfirm(true)}
-                  disabled={isSubmitting || isDeleting}
-                  className="flex-1 bg-red-500 text-white px-4 py-2 rounded-md hover:bg-red-600 transition-colors font-medium disabled:opacity-50 disabled:cursor-not-allowed"
+                  className="flex-1 bg-red-500 text-white px-4 py-2 rounded-md hover:bg-red-600 transition-colors font-medium"
                 >
                   Delete
                 </button>
                 <button
                   type="button"
                   onClick={onClose}
-                  disabled={isSubmitting || isDeleting}
-                  className="flex-1 bg-gray-200 text-gray-700 px-4 py-2 rounded-md hover:bg-gray-300 transition-colors font-medium disabled:opacity-50 disabled:cursor-not-allowed"
+                  className="flex-1 bg-gray-200 text-gray-700 px-4 py-2 rounded-md hover:bg-gray-300 transition-colors font-medium"
                 >
                   Cancel
                 </button>
@@ -301,16 +288,14 @@ const EditTransactionModal: React.FC<EditTransactionModalProps> = ({ transaction
                 <button
                   type="button"
                   onClick={handleDelete}
-                  disabled={isDeleting}
-                  className="flex-1 bg-red-600 text-white px-4 py-2 rounded-md hover:bg-red-700 transition-colors font-medium disabled:opacity-50 disabled:cursor-not-allowed"
+                  className="flex-1 bg-red-600 text-white px-4 py-2 rounded-md hover:bg-red-700 transition-colors font-medium"
                 >
-                  {isDeleting ? 'Deleting...' : 'Yes, Delete'}
+                  Yes, Delete
                 </button>
                 <button
                   type="button"
                   onClick={() => setShowDeleteConfirm(false)}
-                  disabled={isDeleting}
-                  className="flex-1 bg-gray-200 text-gray-700 px-4 py-2 rounded-md hover:bg-gray-300 transition-colors font-medium disabled:opacity-50 disabled:cursor-not-allowed"
+                  className="flex-1 bg-gray-200 text-gray-700 px-4 py-2 rounded-md hover:bg-gray-300 transition-colors font-medium"
                 >
                   Cancel
                 </button>

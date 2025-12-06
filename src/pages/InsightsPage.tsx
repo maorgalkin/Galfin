@@ -3,9 +3,10 @@ import { useFinance } from '../context/FinanceContext';
 import { useActiveBudget } from '../hooks/useBudgets';
 import { BudgetVsActual } from '../components/analytics/BudgetVsActual';
 import { CategoryAccuracyChart } from '../components/analytics/CategoryAccuracyChart';
+import { HouseholdMemberExpenses } from '../components/analytics/HouseholdMemberExpenses';
 import { DateRangeFilter } from '../components/analytics/DateRangeFilter';
 import type { DateRangeType } from '../utils/dateRangeFilters';
-import { TrendingUp, Target, LineChart } from 'lucide-react';
+import { TrendingUp, Target, LineChart, Users } from 'lucide-react';
 import { getHeadingColor, getSubheadingColor } from '../utils/themeColors';
 
 /**
@@ -141,6 +142,31 @@ export const InsightsPage: React.FC = () => {
               onScrollToDateRange={() => {
                 dateRangeRef.current?.scrollIntoView({ behavior: 'smooth', block: 'start' });
               }}
+            />
+          </div>
+        </div>
+
+        {/* Household Member Expenses */}
+        <div className="bg-white dark:bg-gray-800 rounded-xl shadow-lg border border-gray-200 dark:border-gray-700">
+          <div className="p-4 sm:p-6 border-b border-gray-200 dark:border-gray-700 bg-gradient-to-r from-orange-50 to-amber-50 dark:from-orange-900/20 dark:to-amber-900/20 rounded-t-xl">
+            <div className="flex items-center gap-3">
+              <div className="p-2 bg-orange-100 dark:bg-orange-900/50 rounded-lg">
+                <Users className="h-5 w-5 text-orange-600 dark:text-orange-400" />
+              </div>
+              <div>
+                <h2 className="text-lg font-semibold text-gray-900 dark:text-gray-100">
+                  Household Member Expenses
+                </h2>
+                <p className="text-sm text-gray-500 dark:text-gray-400">
+                  See who's spending what in your household
+                </p>
+              </div>
+            </div>
+          </div>
+          <div className="p-4 sm:p-6">
+            <HouseholdMemberExpenses
+              selectedRange={dateRange}
+              currency={activeBudget?.global_settings?.currency || '₪'}
             />
           </div>
         </div>

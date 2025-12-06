@@ -110,10 +110,10 @@ export const FinanceProvider: React.FC<{ children: React.ReactNode }> = ({ child
   const updateTransaction = async (id: string, transaction: Omit<Transaction, 'id'>) => {
     try {
       if (user) {
-        await SupabaseService.updateTransaction(id, transaction);
-        // Refresh from database to ensure consistency
-        const txns = await SupabaseService.getTransactions();
-        setTransactions(txns);
+        const updatedTransaction = await SupabaseService.updateTransaction(id, transaction);
+        setTransactions(prev => 
+          prev.map(t => t.id === id ? updatedTransaction : t)
+        );
       } else {
         // Fallback to localStorage
         setTransactions(prev => {
@@ -132,9 +132,7 @@ export const FinanceProvider: React.FC<{ children: React.ReactNode }> = ({ child
     try {
       if (user) {
         await SupabaseService.deleteTransaction(id);
-        // Refresh from database to ensure consistency
-        const txns = await SupabaseService.getTransactions();
-        setTransactions(txns);
+        setTransactions(prev => prev.filter(t => t.id !== id));
       } else {
         // Fallback to localStorage
         setTransactions(prev => {
