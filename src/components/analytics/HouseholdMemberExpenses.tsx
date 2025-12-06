@@ -2,7 +2,7 @@ import React, { useMemo } from 'react';
 import { useFinance } from '../../context/FinanceContext';
 import type { Transaction } from '../../types';
 import type { DateRangeType } from '../../utils/dateRangeFilters';
-import { getDateRangeFilter } from '../../utils/dateRangeFilters';
+import { getDateRange } from '../../utils/dateRangeFilters';
 import { Users } from 'lucide-react';
 
 interface HouseholdMemberExpensesProps {
@@ -29,10 +29,12 @@ export const HouseholdMemberExpenses: React.FC<HouseholdMemberExpensesProps> = (
 
   const memberExpenseData = useMemo(() => {
     // Filter transactions by date range
-    const dateFilter = getDateRangeFilter(selectedRange);
-    const filteredTransactions = transactions.filter(t => 
-      t.type === 'expense' && dateFilter(new Date(t.date))
-    );
+    const { startDate, endDate } = getDateRange(selectedRange);
+    const filteredTransactions = transactions.filter(t => {
+      if (t.type !== 'expense') return false;
+      const transactionDate = new Date(t.date);
+      return transactionDate >= startDate && transactionDate <= endDate;
+    });
 
     // Calculate total expenses for percentage
     const totalExpenses = filteredTransactions.reduce((sum, t) => sum + t.amount, 0);
