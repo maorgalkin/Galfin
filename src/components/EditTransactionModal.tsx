@@ -3,6 +3,7 @@ import { useFinance } from '../context/FinanceContext';
 import { useActiveBudget } from '../hooks/useBudgets';
 import { X } from 'lucide-react';
 import type { Transaction } from '../types';
+import * as SupabaseService from '../services/supabaseDataService';
 
 interface EditTransactionModalProps {
   transaction: Transaction;
@@ -10,7 +11,7 @@ interface EditTransactionModalProps {
 }
 
 const EditTransactionModal: React.FC<EditTransactionModalProps> = ({ transaction, onClose }) => {
-  const { updateTransaction, deleteTransaction, familyMembers } = useFinance();
+  const { updateTransaction, deleteTransaction, familyMembers, setTransactions } = useFinance();
   const { data: personalBudget } = useActiveBudget();
   
   const [formData, setFormData] = useState({
@@ -23,6 +24,10 @@ const EditTransactionModal: React.FC<EditTransactionModalProps> = ({ transaction
   });
 
   const [showDeleteConfirm, setShowDeleteConfirm] = useState(false);
+  const [installmentDeleteOption, setInstallmentDeleteOption] = useState<'single' | 'future' | 'all'>('single');
+  
+  // Check if this is part of an installment group
+  const isInstallment = !!transaction.installment_group_id;
 
   // Get currency symbol - use personal budget if available
   const getCurrencySymbol = (currency: string) => {
@@ -88,11 +93,27 @@ const EditTransactionModal: React.FC<EditTransactionModalProps> = ({ transaction
   };
 
   const handleDelete = async () => {
-    if (!window.confirm('Are you sure you want to delete this transaction?')) {
-      return;
-    }
     try {
-      await deleteTransaction(transaction.id);
+      if (isInstallment && transaction.installment_group_id) {
+        // Handle installment deletion based on user choice
+        if (installmentDeleteOption === 'all') {
+          await SupabaseService.deleteInstallmentGroup(transaction.installment_group_id);
+        } else if (installmentDeleteOption === 'future' && transaction.installment_number) {
+          await SupabaseService.deleteFutureInstallments(
+            transaction.installment_group_id,
+            transaction.installment_number
+          );
+        } else {
+          // Delete just this single installment
+          await deleteTransaction(transaction.id);
+        }
+        // Refresh transactions list
+        const allTransactions = await SupabaseService.getTransactions();
+        setTransactions(allTransactions);
+      } else {
+        // Regular transaction deletion
+        await deleteTransaction(transaction.id);
+      }
       onClose();
     } catch (error) {
       console.error('Error deleting transaction:', error);
@@ -281,25 +302,99 @@ const EditTransactionModal: React.FC<EditTransactionModalProps> = ({ transaction
                 </button>
               </>
             ) : (
-              <>
-                <div className="w-full text-center text-sm text-red-600 font-medium mb-2">
-                  Are you sure you want to delete this transaction?
-                </div>
-                <button
-                  type="button"
-                  onClick={handleDelete}
-                  className="flex-1 bg-red-600 text-white px-4 py-2 rounded-md hover:bg-red-700 transition-colors font-medium"
-                >
-                  Yes, Delete
-                </button>
-                <button
-                  type="button"
-                  onClick={() => setShowDeleteConfirm(false)}
-                  className="flex-1 bg-gray-200 text-gray-700 px-4 py-2 rounded-md hover:bg-gray-300 transition-colors font-medium"
-                >
-                  Cancel
-                </button>
-              </>
+              <div className="w-full space-y-3">
+                {isInstallment ? (
+                  <>
+                    <div className="text-sm text-gray-700 font-medium mb-3">
+                      This transaction is part of an installment series ({transaction.installment_number}/{transaction.installment_total})
+                    </div>
+                    
+                    {/* Installment deletion options */}
+                    <div className="space-y-2">
+                      <label className="flex items-start space-x-2 cursor-pointer">
+                        <input
+                          type="radio"
+                          name="deleteOption"
+                          value="single"
+                          checked={installmentDeleteOption === 'single'}
+                          onChange={(e) => setInstallmentDeleteOption(e.target.value as 'single')}
+                          className="mt-1"
+                        />
+                        <span className="text-sm text-gray-700">
+                          Delete only this installment ({transaction.installment_number}/{transaction.installment_total})
+                        </span>
+                      </label>
+                      
+                      <label className="flex items-start space-x-2 cursor-pointer">
+                        <input
+                          type="radio"
+                          name="deleteOption"
+                          value="future"
+                          checked={installmentDeleteOption === 'future'}
+                          onChange={(e) => setInstallmentDeleteOption(e.target.value as 'future')}
+                          className="mt-1"
+                        />
+                        <span className="text-sm text-gray-700">
+                          Delete this and all future installments ({transaction.installment_number}-{transaction.installment_total})
+                        </span>
+                      </label>
+                      
+                      <label className="flex items-start space-x-2 cursor-pointer">
+                        <input
+                          type="radio"
+                          name="deleteOption"
+                          value="all"
+                          checked={installmentDeleteOption === 'all'}
+                          onChange={(e) => setInstallmentDeleteOption(e.target.value as 'all')}
+                          className="mt-1"
+                        />
+                        <span className="text-sm text-gray-700">
+                          Delete entire installment series (all {transaction.installment_total} installments)
+                        </span>
+                      </label>
+                    </div>
+                    
+                    <div className="flex gap-2 pt-2">
+                      <button
+                        type="button"
+                        onClick={handleDelete}
+                        className="flex-1 bg-red-600 text-white px-4 py-2 rounded-md hover:bg-red-700 transition-colors font-medium"
+                      >
+                        Confirm Delete
+                      </button>
+                      <button
+                        type="button"
+                        onClick={() => setShowDeleteConfirm(false)}
+                        className="flex-1 bg-gray-200 text-gray-700 px-4 py-2 rounded-md hover:bg-gray-300 transition-colors font-medium"
+                      >
+                        Cancel
+                      </button>
+                    </div>
+                  </>
+                ) : (
+                  <>
+                    <div className="w-full text-center text-sm text-red-600 font-medium mb-2">
+                      Are you sure you want to delete this transaction?
+                    </div>
+                    <div className="flex gap-2">
+                      <button
+                        type="button"
+                        onClick={handleDelete}
+                        className="flex-1 bg-red-600 text-white px-4 py-2 rounded-md hover:bg-red-700 transition-colors font-medium"
+                      >
+                        Yes, Delete
+                      </button>
+                      <button
+                        type="button"
+                        onClick={() => setShowDeleteConfirm(false)}
+                        className="flex-1 bg-gray-200 text-gray-700 px-4 py-2 rounded-md hover:bg-gray-300 transition-colors font-medium"
+                      >
+                        Cancel
+                      </button>
+                    </div>
+                  </>
+                )}
+              </div>
             )}
           </div>
         </form>

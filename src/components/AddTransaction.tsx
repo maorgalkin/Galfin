@@ -2,8 +2,9 @@ import React, { useEffect, useState, useMemo } from 'react';
 import { createPortal } from 'react-dom';
 import { useFinance } from '../context/FinanceContext';
 import { useActiveBudget } from '../hooks/useBudgets';
-import { X, Upload, HelpCircle } from 'lucide-react';
+import { X, HelpCircle, Calendar } from 'lucide-react';
 import CategorySelector from './CategorySelector';
+import * as SupabaseService from '../services/supabaseDataService';
 
 interface AddTransactionProps {
   isOpen: boolean;
@@ -14,8 +15,9 @@ const AddTransaction: React.FC<AddTransactionProps> = ({ isOpen, onClose }) => {
   const { addTransaction, familyMembers, setTransactions } = useFinance();
   const { data: personalBudget } = useActiveBudget();
   const [showCategorySelector, setShowCategorySelector] = useState(false);
-  const [showTooltip, setShowTooltip] = useState(false);
   const [isSubmitting, setIsSubmitting] = useState(false);
+  const [isInstallment, setIsInstallment] = useState(false);
+  const [numberOfInstallments, setNumberOfInstallments] = useState('');
   const [formData, setFormData] = useState({
     description: '',
     amount: '',
@@ -96,6 +98,10 @@ const AddTransaction: React.FC<AddTransactionProps> = ({ isOpen, onClose }) => {
       missingFields.push('Date');
     }
     
+    if (isInstallment && (!numberOfInstallments || parseInt(numberOfInstallments) < 2)) {
+      missingFields.push('Number of Installments (minimum 2)');
+    }
+    
     if (missingFields.length > 0) {
       alert(`Please fill in the following required fields: ${missingFields.join(', ')}`);
       return;
@@ -103,14 +109,32 @@ const AddTransaction: React.FC<AddTransactionProps> = ({ isOpen, onClose }) => {
 
     setIsSubmitting(true);
     try {
-      await addTransaction({
+      const totalAmount = parseFloat(formData.amount);
+      const installmentCount = isInstallment ? parseInt(numberOfInstallments) : 1;
+      const amountPerInstallment = totalAmount / installmentCount;
+
+      const transactionData = {
         type: formData.type,
         description: formData.description || `${formData.category} transaction`,
-        amount: parseFloat(formData.amount),
+        amount: amountPerInstallment,
         category: formData.category,
         familyMember: formData.familyMember || undefined,
         date: formData.date,
-      });
+      };
+
+      if (isInstallment) {
+        // Create installment transactions (amount already divided)
+        await SupabaseService.addInstallmentTransactions(
+          transactionData,
+          installmentCount
+        );
+        // Refresh transactions to show all new installments
+        const allTransactions = await SupabaseService.getTransactions();
+        setTransactions(allTransactions);
+      } else {
+        // Regular single transaction
+        await addTransaction(transactionData);
+      }
 
       // Reset form
       setFormData({
@@ -121,6 +145,8 @@ const AddTransaction: React.FC<AddTransactionProps> = ({ isOpen, onClose }) => {
         familyMember: '',
         date: new Date().toISOString().split('T')[0],
       });
+      setIsInstallment(false);
+      setNumberOfInstallments('');
 
       onClose();
     } catch (error) {
@@ -143,30 +169,6 @@ const AddTransaction: React.FC<AddTransactionProps> = ({ isOpen, onClose }) => {
       ...prev,
       ...updates
     }));
-  };
-
-  const handleImportFile = (event: React.ChangeEvent<HTMLInputElement>) => {
-    const file = event.target.files?.[0];
-    if (file) {
-      const reader = new FileReader();
-      reader.onload = (e) => {
-        try {
-          const transactions = JSON.parse(e.target?.result as string);
-          if (!Array.isArray(transactions) || transactions.length === 0) {
-            alert('Imported file is empty or not an array.');
-            return;
-          }
-          setTransactions(transactions);
-          alert(`Successfully imported ${transactions.length} transaction(s)!`);
-          onClose();
-        } catch (error) {
-          alert('Invalid JSON file. Please check the file format matches the example.');
-        }
-      };
-      reader.readAsText(file);
-    }
-    // Reset file input
-    event.target.value = '';
   };
 
   const handleChange = (e: React.ChangeEvent<HTMLInputElement | HTMLSelectElement>) => {
@@ -349,6 +351,51 @@ const AddTransaction: React.FC<AddTransactionProps> = ({ isOpen, onClose }) => {
             />
           </div>
 
+          {/* Installments Section - Reserve space to keep modal height consistent */}
+          <div className="border-t border-gray-200 pt-4" style={{ minHeight: '52px' }}>
+            {formData.type === 'expense' && (
+              <div className="flex items-center space-x-3">
+                <div className="flex items-center space-x-2 flex-shrink-0">
+                  <input
+                    id="installments-checkbox"
+                    type="checkbox"
+                    checked={isInstallment}
+                    onChange={(e) => {
+                      setIsInstallment(e.target.checked);
+                      if (!e.target.checked) setNumberOfInstallments('');
+                    }}
+                    className="h-4 w-4 text-blue-600 rounded focus:ring-blue-500"
+                  />
+                  <label htmlFor="installments-checkbox" className="flex items-center text-sm font-medium text-gray-700 whitespace-nowrap">
+                    <Calendar className="h-4 w-4 mr-1" />
+                    Create as installments
+                  </label>
+                </div>
+                
+                {isInstallment && (
+                  <input
+                    id="installments-count"
+                    type="number"
+                    min="2"
+                    max="36"
+                    value={numberOfInstallments}
+                    onChange={(e) => setNumberOfInstallments(e.target.value)}
+                    placeholder="# months"
+                    className="flex-1 px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
+                    required={isInstallment}
+                  />
+                )}
+                
+                <div className="relative group flex-shrink-0">
+                  <HelpCircle className="h-4 w-4 text-gray-400 cursor-help" />
+                  <div className="absolute left-0 bottom-full mb-2 hidden group-hover:block w-64 p-2 bg-gray-900 text-white text-xs rounded shadow-lg z-10">
+                    Amount will be divided equally across installments. Transactions created on 1st of each month (2-36 months).
+                  </div>
+                </div>
+              </div>
+            )}
+          </div>
+
           <div className="flex space-x-3 pt-4">
             <button
               type="button"
@@ -367,75 +414,6 @@ const AddTransaction: React.FC<AddTransactionProps> = ({ isOpen, onClose }) => {
             </button>
           </div>
         </form>
-
-            {/* Import Section */}
-            <div className="mt-6 pt-6 border-t border-gray-200">
-              <div className="p-4 bg-blue-50 border border-blue-200 rounded-lg">
-                <p className="text-xs text-gray-600 mb-3">
-                  Importing multiple transactions from a JSON file?
-                </p>
-                <div className="flex items-start justify-between mb-2">
-                  <div className="flex items-center space-x-2">
-                    <Upload className="h-5 w-5 text-blue-600" />
-                    <span className="text-sm font-medium text-gray-700">Import Transactions</span>
-                  </div>
-                  <div className="relative">
-                    <button
-                      type="button"
-                      onMouseEnter={() => setShowTooltip(true)}
-                      onMouseLeave={() => setShowTooltip(false)}
-                      onClick={() => setShowTooltip(!showTooltip)}
-                      className="text-blue-600 hover:text-blue-700 transition-colors"
-                    >
-                      <HelpCircle className="h-5 w-5" />
-                    </button>
-                    {showTooltip && (
-                      <div className="absolute right-0 bottom-8 w-80 bg-gray-900 text-white text-xs rounded-lg p-3 shadow-xl z-50">
-                        <div className="font-semibold mb-2">JSON Format Example:</div>
-                        <pre className="bg-gray-800 p-2 rounded overflow-x-auto text-[10px] leading-relaxed">
-{`[
-  {
-    "type": "expense",
-    "description": "Groceries",
-    "amount": 45.50,
-    "category": "Groceries",
-    "date": "2024-10-15"
-  },
-  {
-    "type": "income",
-    "description": "Salary",
-    "amount": 3500.00,
-    "category": "Salary",
-    "date": "2024-10-01"
-  }
-]`}
-                        </pre>
-                        <div className="mt-2 text-[10px] text-gray-300">
-                          • <span className="font-semibold">type</span>: "income" or "expense"<br/>
-                          • <span className="font-semibold">amount</span>: number<br/>
-                          • <span className="font-semibold">date</span>: "YYYY-MM-DD" format<br/>
-                          • <span className="font-semibold">category</span>: must match existing categories<br/>
-                          • <span className="font-semibold">familyMember</span>: optional UUID
-                        </div>
-                      </div>
-                    )}
-                  </div>
-                </div>
-                <input
-                  type="file"
-                  accept="application/json,.json"
-                  onChange={handleImportFile}
-                  className="hidden"
-                  id="import-transactions-file"
-                />
-                <label
-                  htmlFor="import-transactions-file"
-                  className="block w-full px-4 py-2 bg-blue-600 text-white text-center text-sm font-medium rounded-md hover:bg-blue-700 transition-colors cursor-pointer"
-                >
-                  Choose JSON File
-                </label>
-              </div>
-            </div>
           </div>
         </div>
       </div>

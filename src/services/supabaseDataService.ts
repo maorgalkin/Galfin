@@ -69,6 +69,9 @@ export const getTransactions = async (): Promise<Transaction[]> => {
     category: row.category,
     type: row.type as 'income' | 'expense',
     familyMember: row.family_member_id || undefined,
+    installment_group_id: row.installment_group_id || undefined,
+    installment_number: row.installment_number || undefined,
+    installment_total: row.installment_total || undefined,
   }));
 };
 
@@ -162,6 +165,126 @@ export const deleteTransaction = async (id: string): Promise<void> => {
     console.error('Error deleting transaction:', error);
     throw error;
   }
+};
+
+// ==================== INSTALLMENTS ====================
+
+export const addInstallmentTransactions = async (
+  transaction: Omit<Transaction, 'id'>,
+  numberOfInstallments: number
+): Promise<Transaction[]> => {
+  const userId = await getCurrentUserId();
+  const householdId = await getHouseholdId();
+  const categoryId = await getCategoryId(transaction.category, userId);
+  
+  // Generate a unique group ID for this installment series
+  const installmentGroupId = crypto.randomUUID();
+  
+  // Create all installment transactions
+  const installments = [];
+  const baseDate = new Date(transaction.date + 'T00:00:00'); // Ensure local timezone
+  
+  for (let i = 0; i < numberOfInstallments; i++) {
+    // Calculate date: add i months to the base date (1st of each month)
+    const year = baseDate.getFullYear();
+    const month = baseDate.getMonth() + i;
+    const installmentDate = new Date(year, month, 1);
+    // Format as YYYY-MM-DD in local timezone (avoid toISOString timezone issues)
+    const dateString = `${installmentDate.getFullYear()}-${String(installmentDate.getMonth() + 1).padStart(2, '0')}-01`;
+    
+    installments.push({
+      user_id: userId,
+      household_id: householdId,
+      date: dateString,
+      description: `${transaction.description} [${i + 1}/${numberOfInstallments}]`,
+      amount: transaction.amount,
+      category: transaction.category,
+      category_id: categoryId,
+      type: transaction.type,
+      family_member_id: transaction.familyMember || null,
+      installment_group_id: installmentGroupId,
+      installment_number: i + 1,
+      installment_total: numberOfInstallments,
+    });
+  }
+  
+  const { data, error } = await supabase
+    .from('transactions')
+    .insert(installments)
+    .select();
+  
+  if (error) {
+    throw new Error(`Failed to add installment transactions: ${error.message}`);
+  }
+  
+  return data.map(row => ({
+    id: row.id,
+    date: row.date,
+    description: row.description,
+    amount: parseFloat(row.amount),
+    category: row.category,
+    type: row.type as 'income' | 'expense',
+    familyMember: row.family_member_id || undefined,
+    installment_group_id: row.installment_group_id,
+    installment_number: row.installment_number,
+    installment_total: row.installment_total,
+  }));
+};
+
+export const deleteInstallmentGroup = async (installmentGroupId: string): Promise<void> => {
+  const { error } = await supabase
+    .from('transactions')
+    .delete()
+    .eq('installment_group_id', installmentGroupId);
+  
+  if (error) {
+    console.error('Error deleting installment group:', error);
+    throw error;
+  }
+};
+
+export const deleteFutureInstallments = async (
+  installmentGroupId: string,
+  fromInstallmentNumber: number
+): Promise<void> => {
+  const { error } = await supabase
+    .from('transactions')
+    .delete()
+    .eq('installment_group_id', installmentGroupId)
+    .gte('installment_number', fromInstallmentNumber);
+  
+  if (error) {
+    console.error('Error deleting future installments:', error);
+    throw error;
+  }
+};
+
+export const getInstallmentGroupTransactions = async (
+  installmentGroupId: string
+): Promise<Transaction[]> => {
+  const { data, error } = await supabase
+    .from('transactions')
+    .select('*')
+    .eq('installment_group_id', installmentGroupId)
+    .order('installment_number', { ascending: true });
+  
+  if (error) {
+    console.error('Error fetching installment group:', error);
+    throw error;
+  }
+  
+  return data.map(row => ({
+    id: row.id,
+    date: row.date,
+    description: row.description,
+    amount: parseFloat(row.amount),
+    category: row.category,
+    type: row.type as 'income' | 'expense',
+    familyMember: row.family_member_id || undefined,
+    installment_group_id: row.installment_group_id,
+    installment_number: row.installment_number,
+    installment_total: row.installment_total,
+  }));
 };
 
 // ==================== FAMILY MEMBERS ====================

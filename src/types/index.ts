@@ -7,6 +7,9 @@ export interface Transaction {
   category_id?: string;  // UUID reference to categories table (Phase 2+)
   type: 'income' | 'expense';
   familyMember?: string;
+  installment_group_id?: string;  // UUID linking all transactions in an installment series
+  installment_number?: number;    // Current installment number (1-based)
+  installment_total?: number;     // Total number of installments
 }
 
 export interface Budget {
