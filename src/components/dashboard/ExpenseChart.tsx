@@ -479,11 +479,11 @@ export const ExpenseChart: React.FC<ExpenseChartProps> = ({
         )}
       </div>
 
-      {/* Magnifier Circle for Small Slices */}
+      {/* Magnified View Circle for Small Slices */}
       <AnimatePresence>
         {magnifierData && isMagnifierActive && (
           <>
-            {/* Magnifier Circle */}
+            {/* Magnifier Circle with Blown-up Chart */}
             <motion.div
               initial={{ opacity: 0, scale: 0 }}
               animate={{ opacity: 1, scale: 1 }}
@@ -496,12 +496,40 @@ export const ExpenseChart: React.FC<ExpenseChartProps> = ({
                 transform: 'translate(-50%, -50%)'
               }}
             >
-              {/* Magnifier circle with border */}
-              <div className="relative w-32 h-32 rounded-full border-4 border-blue-500 bg-white/90 dark:bg-gray-800/90 backdrop-blur-sm shadow-2xl flex items-center justify-center">
-                {/* Magnifying glass icon */}
-                <svg className="w-12 h-12 text-blue-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z" />
-                </svg>
+              {/* Circular magnified view */}
+              <div className="relative w-48 h-48 rounded-full border-4 border-blue-500 bg-white dark:bg-gray-800 shadow-2xl overflow-hidden">
+                {/* Magnified pie chart showing only small categories */}
+                <ResponsiveContainer width="100%" height="100%">
+                  <PieChart>
+                    <Pie
+                      data={categoryData.filter(cat => isSmallSlice(cat.amount))}
+                      cx="50%"
+                      cy="50%"
+                      labelLine={false}
+                      label={false}
+                      outerRadius={85}
+                      innerRadius={0}
+                      fill="#8884d8"
+                      dataKey="amount"
+                    >
+                      {categoryData
+                        .filter(cat => isSmallSlice(cat.amount))
+                        .map((entry, index) => {
+                          const colors = getCategoryColor(entry.category, 'expense', personalBudget);
+                          const isHovered = entry.category === magnifierData.hoveredCategory;
+                          return (
+                            <Cell 
+                              key={`cell-magnified-${index}`} 
+                              fill={colors.hexColor}
+                              opacity={isHovered ? 1 : 0.6}
+                              stroke={isHovered ? '#1e40af' : 'none'}
+                              strokeWidth={isHovered ? 3 : 0}
+                            />
+                          );
+                        })}
+                    </Pie>
+                  </PieChart>
+                </ResponsiveContainer>
               </div>
             </motion.div>
 
@@ -514,7 +542,7 @@ export const ExpenseChart: React.FC<ExpenseChartProps> = ({
                 className="fixed pointer-events-none z-50 bg-gray-900 dark:bg-gray-700 text-white px-3 py-2 rounded-lg shadow-xl text-sm font-medium"
                 style={{
                   left: magnifierData.position.x,
-                  top: magnifierData.position.y + 80,
+                  top: magnifierData.position.y + 110,
                   transform: 'translateX(-50%)'
                 }}
               >
