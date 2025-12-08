@@ -196,6 +196,9 @@ export const ExpenseChart: React.FC<ExpenseChartProps> = ({
       return;
     }
 
+    // Prevent scrolling when magnifier is active
+    event.preventDefault();
+
     // Update magnifier position when active
     let x: number, y: number;
     if ('touches' in event) {
@@ -265,7 +268,11 @@ export const ExpenseChart: React.FC<ExpenseChartProps> = ({
             }}
             transition={{ duration: 0.3, ease: 'easeInOut' }}
             className="flex-shrink-0"
-            style={{ userSelect: 'none', WebkitUserSelect: 'none' }}
+            style={{ 
+              userSelect: 'none', 
+              WebkitUserSelect: 'none',
+              touchAction: isMagnifierActive ? 'none' : 'auto'
+            }}
             onMouseDown={handlePressStart}
             onMouseMove={handleMove}
             onMouseUp={handlePressEnd}
@@ -397,7 +404,11 @@ export const ExpenseChart: React.FC<ExpenseChartProps> = ({
       {/* Mobile Layout - Pie chart with transaction list */}
       <div 
         className="md:hidden"
-        style={{ userSelect: 'none', WebkitUserSelect: 'none' }}
+        style={{ 
+          userSelect: 'none', 
+          WebkitUserSelect: 'none',
+          touchAction: isMagnifierActive ? 'none' : 'auto'
+        }}
         onMouseDown={handlePressStart}
         onMouseMove={handleMove}
         onMouseUp={handlePressEnd}
@@ -555,47 +566,61 @@ export const ExpenseChart: React.FC<ExpenseChartProps> = ({
                 }}
               >
                 {/* Magnified chart - 2.5x zoom */}
-                <div
-                  ref={magnifierChartRef}
-                  className="absolute"
-                  style={{
-                    width: magnifierData.chartBounds.width * 2.5,
-                    height: magnifierData.chartBounds.height * 2.5,
-                    left: -(magnifierData.position.x - magnifierData.chartBounds.left) * 2.5 + 80,
-                    top: -(magnifierData.position.y - magnifierData.chartBounds.top) * 2.5 + 80
-                  }}
-                >
-                  <ResponsiveContainer width="100%" height="100%">
-                    <PieChart>
-                      <Pie
-                        data={categoryData}
-                        cx="50%"
-                        cy="50%"
-                        labelLine={false}
-                        label={false}
-                        outerRadius={90 * 2.5}
-                        innerRadius={0}
-                        fill="#8884d8"
-                        dataKey="amount"
-                      >
-                        {categoryData.map((entry, index) => {
-                          const colors = getCategoryColor(entry.category, 'expense', personalBudget);
-                          const isHovered = entry.category === magnifierData.hoveredCategory;
-                          const isSmall = isSmallSlice(entry.amount);
-                          return (
-                            <Cell 
-                              key={`cell-magnified-${index}`} 
-                              fill={colors.hexColor}
-                              opacity={isHovered ? 1 : (isSmall ? 0.85 : 0.4)}
-                              stroke={isHovered ? '#1e40af' : 'none'}
-                              strokeWidth={isHovered ? 4 : 0}
-                            />
-                          );
-                        })}
-                      </Pie>
-                    </PieChart>
-                  </ResponsiveContainer>
-                </div>
+                {(() => {
+                  const zoom = 2.5;
+                  const chartWidth = magnifierData.chartBounds.width;
+                  const chartHeight = magnifierData.chartBounds.height;
+                  
+                  // Calculate relative position within chart (0 to 1)
+                  const relX = (magnifierData.position.x - magnifierData.chartBounds.left) / chartWidth;
+                  const relY = (magnifierData.position.y - magnifierData.chartBounds.top) / chartHeight;
+                  
+                  // Calculate offset to center the magnified area
+                  const offsetX = -(relX * chartWidth * zoom) + 80;
+                  const offsetY = -(relY * chartHeight * zoom) + 80;
+                  
+                  return (
+                    <div
+                      ref={magnifierChartRef}
+                      className="absolute"
+                      style={{
+                        width: `${chartWidth * zoom}px`,
+                        height: `${chartHeight * zoom}px`,
+                        left: `${offsetX}px`,
+                        top: `${offsetY}px`
+                      }}
+                    >
+                      <PieChart width={chartWidth * zoom} height={chartHeight * zoom}>
+                        <Pie
+                          data={categoryData}
+                          cx="50%"
+                          cy="50%"
+                          labelLine={false}
+                          label={false}
+                          outerRadius={90 * zoom}
+                          innerRadius={0}
+                          fill="#8884d8"
+                          dataKey="amount"
+                        >
+                          {categoryData.map((entry, index) => {
+                            const colors = getCategoryColor(entry.category, 'expense', personalBudget);
+                            const isHovered = entry.category === magnifierData.hoveredCategory;
+                            const isSmall = isSmallSlice(entry.amount);
+                            return (
+                              <Cell 
+                                key={`cell-magnified-${index}`} 
+                                fill={colors.hexColor}
+                                opacity={isHovered ? 1 : (isSmall ? 0.85 : 0.4)}
+                                stroke={isHovered ? '#1e40af' : 'none'}
+                                strokeWidth={isHovered ? 4 : 0}
+                              />
+                            );
+                          })}
+                        </Pie>
+                      </PieChart>
+                    </div>
+                  );
+                })()}
               </div>
 
               {/* Crosshair indicator at center */}
