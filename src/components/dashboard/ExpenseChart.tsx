@@ -107,11 +107,17 @@ export const ExpenseChart: React.FC<ExpenseChartProps> = ({
 
   // Handle long press start
   const handlePressStart = (event: React.MouseEvent | React.TouchEvent) => {
+    console.log('🔍 Press start', { type: event.type });
     event.preventDefault(); // Prevent text selection
+    event.stopPropagation();
     
-    // Check if any small slices exist
-    const hasSmallSlices = categoryData.some(cat => isSmallSlice(cat.amount));
-    if (!hasSmallSlices) return;
+    // Check if any small slices exist (commented out for testing)
+    // const hasSmallSlices = categoryData.some(cat => isSmallSlice(cat.amount));
+    // if (!hasSmallSlices) {
+    //   console.log('❌ No small slices found');
+    //   return;
+    // }
+    console.log('✅ Starting magnifier timer');
 
     // Get position for magnifier
     let x: number, y: number;
@@ -119,14 +125,18 @@ export const ExpenseChart: React.FC<ExpenseChartProps> = ({
       x = event.touches[0].clientX;
       y = event.touches[0].clientY;
       touchStartRef.current = { x, y };
+      console.log('📱 Touch position:', { x, y });
     } else {
       x = event.clientX;
       y = event.clientY;
+      console.log('🖱️ Mouse position:', { x, y });
     }
 
     // Start timer for long press (500ms)
     longPressTimerRef.current = setTimeout(() => {
+      console.log('⏰ Timer fired! Activating magnifier');
       const bounds = chartRef.current?.getBoundingClientRect() || null;
+      console.log('📐 Chart bounds:', bounds);
       setIsMagnifierActive(true);
       setMagnifierData({
         position: { x, y },
@@ -138,7 +148,9 @@ export const ExpenseChart: React.FC<ExpenseChartProps> = ({
 
   // Handle press end - select category if magnifier was active
   const handlePressEnd = () => {
+    console.log('🔍 Press end', { isMagnifierActive });
     if (longPressTimerRef.current) {
+      console.log('⏰ Clearing timer');
       clearTimeout(longPressTimerRef.current);
       longPressTimerRef.current = null;
     }
@@ -189,6 +201,7 @@ export const ExpenseChart: React.FC<ExpenseChartProps> = ({
         
         // Cancel if moved more than 10px during initial press
         if (deltaX > 10 || deltaY > 10) {
+          console.log('❌ Movement detected, canceling timer:', { deltaX, deltaY });
           clearTimeout(longPressTimerRef.current);
           longPressTimerRef.current = null;
         }
@@ -196,8 +209,10 @@ export const ExpenseChart: React.FC<ExpenseChartProps> = ({
       return;
     }
 
+    console.log('🔍 Moving magnifier');
     // Prevent scrolling when magnifier is active
     event.preventDefault();
+    event.stopPropagation();
 
     // Update magnifier position when active
     let x: number, y: number;
@@ -540,7 +555,10 @@ export const ExpenseChart: React.FC<ExpenseChartProps> = ({
 
       {/* Magnifier Lens with Zoomed Chart */}
       <AnimatePresence>
-        {magnifierData && isMagnifierActive && magnifierData.chartBounds && (
+        {magnifierData && isMagnifierActive && magnifierData.chartBounds && (() => {
+          console.log('🎨 Rendering magnifier', { magnifierData, isMagnifierActive });
+          return true;
+        })() && (
           <>
             {/* Magnifier Circle - shows zoomed portion of chart */}
             <motion.div
@@ -561,15 +579,21 @@ export const ExpenseChart: React.FC<ExpenseChartProps> = ({
               <div 
                 className="relative w-full h-full rounded-full border-4 border-blue-500 shadow-2xl overflow-hidden"
                 style={{
-                  background: 'white',
+                  background: 'rgba(255, 255, 255, 0.95)',
                   clipPath: 'circle(50%)'
                 }}
               >
+                {/* Debug text */}
+                <div className="absolute top-2 left-2 text-xs font-mono text-red-600 z-50">
+                  DEBUG: Active
+                </div>
                 {/* Magnified chart - 2.5x zoom */}
                 {(() => {
+                  console.log('📊 Rendering magnified chart');
                   const zoom = 2.5;
                   const chartWidth = magnifierData.chartBounds.width;
                   const chartHeight = magnifierData.chartBounds.height;
+                  console.log('📏 Chart dimensions:', { chartWidth, chartHeight, zoom });
                   
                   // Calculate relative position within chart (0 to 1)
                   const relX = (magnifierData.position.x - magnifierData.chartBounds.left) / chartWidth;
