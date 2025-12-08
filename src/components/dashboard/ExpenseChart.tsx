@@ -44,12 +44,14 @@ export const ExpenseChart: React.FC<ExpenseChartProps> = ({
   // Magnifier state
   const [magnifierData, setMagnifierData] = useState<{
     position: { x: number; y: number };
+    chartBounds: DOMRect | null;
     hoveredCategory: string | null;
   } | null>(null);
   const [isMagnifierActive, setIsMagnifierActive] = useState(false);
   const longPressTimerRef = useRef<NodeJS.Timeout | null>(null);
   const touchStartRef = useRef<{ x: number; y: number } | null>(null);
   const chartRef = useRef<HTMLDivElement>(null);
+  const magnifierChartRef = useRef<HTMLDivElement>(null);
 
   // Update selected category when prop changes
   React.useEffect(() => {
@@ -79,6 +81,24 @@ export const ExpenseChart: React.FC<ExpenseChartProps> = ({
     };
   }, []);
 
+  // Lock/unlock body scroll when magnifier is active
+  useEffect(() => {
+    if (isMagnifierActive) {
+      // Lock scroll
+      document.body.style.overflow = 'hidden';
+      document.body.style.touchAction = 'none';
+    } else {
+      // Unlock scroll
+      document.body.style.overflow = '';
+      document.body.style.touchAction = '';
+    }
+    
+    return () => {
+      document.body.style.overflow = '';
+      document.body.style.touchAction = '';
+    };
+  }, [isMagnifierActive]);
+
   // Calculate if a category slice is too small (less than 5%)
   const isSmallSlice = (amount: number) => {
     const totalAmount = categoryData.reduce((sum, cat) => sum + cat.amount, 0);
@@ -106,20 +126,46 @@ export const ExpenseChart: React.FC<ExpenseChartProps> = ({
 
     // Start timer for long press (500ms)
     longPressTimerRef.current = setTimeout(() => {
+      const bounds = chartRef.current?.getBoundingClientRect() || null;
       setIsMagnifierActive(true);
       setMagnifierData({
         position: { x, y },
+        chartBounds: bounds,
         hoveredCategory: null
       });
     }, 500);
   };
 
-  // Handle press end
+  // Handle press end - select category if magnifier was active
   const handlePressEnd = () => {
     if (longPressTimerRef.current) {
       clearTimeout(longPressTimerRef.current);
       longPressTimerRef.current = null;
     }
+    
+    // If magnifier was active and we have a hovered category, select it
+    if (isMagnifierActive && magnifierData?.hoveredCategory) {
+      const category = magnifierData.hoveredCategory;
+      const categoryItem = categoryData.find(c => c.category === category);
+      
+      if (categoryItem) {
+        const totalAmount = categoryData.reduce((sum, cat) => sum + cat.amount, 0);
+        const percentage = ((categoryItem.amount / totalAmount) * 100).toFixed(1);
+        
+        // On mobile, set focused category to show transactions
+        if (window.innerWidth < 768) {
+          setFocusedCategory({
+            category: categoryItem.category,
+            amount: categoryItem.amount,
+            percentage
+          });
+        } else {
+          // On desktop, set selected category for side panel
+          setSelectedDesktopCategory(category);
+        }
+      }
+    }
+    
     setIsMagnifierActive(false);
     setMagnifierData(null);
   };
@@ -162,9 +208,11 @@ export const ExpenseChart: React.FC<ExpenseChartProps> = ({
 
     // Detect which category is under the magnifier
     const hoveredCategory = detectCategoryAtPosition(x, y);
+    const bounds = chartRef.current?.getBoundingClientRect() || magnifierData?.chartBounds || null;
     
     setMagnifierData({
       position: { x, y },
+      chartBounds: bounds,
       hoveredCategory
     });
   };
@@ -479,58 +527,79 @@ export const ExpenseChart: React.FC<ExpenseChartProps> = ({
         )}
       </div>
 
-      {/* Magnified View Circle for Small Slices */}
+      {/* Magnifier Lens with Zoomed Chart */}
       <AnimatePresence>
-        {magnifierData && isMagnifierActive && (
+        {magnifierData && isMagnifierActive && magnifierData.chartBounds && (
           <>
-            {/* Magnifier Circle with Blown-up Chart */}
+            {/* Magnifier Circle - shows zoomed portion of chart */}
             <motion.div
               initial={{ opacity: 0, scale: 0 }}
               animate={{ opacity: 1, scale: 1 }}
               exit={{ opacity: 0, scale: 0 }}
-              transition={{ duration: 0.2 }}
+              transition={{ duration: 0.15 }}
               className="fixed pointer-events-none z-50"
               style={{
                 left: magnifierData.position.x,
                 top: magnifierData.position.y,
-                transform: 'translate(-50%, -50%)'
+                transform: 'translate(-50%, -50%)',
+                width: '160px',
+                height: '160px'
               }}
             >
-              {/* Circular magnified view */}
-              <div className="relative w-48 h-48 rounded-full border-4 border-blue-500 bg-white dark:bg-gray-800 shadow-2xl overflow-hidden">
-                {/* Magnified pie chart showing only small categories */}
-                <ResponsiveContainer width="100%" height="100%">
-                  <PieChart>
-                    <Pie
-                      data={categoryData.filter(cat => isSmallSlice(cat.amount))}
-                      cx="50%"
-                      cy="50%"
-                      labelLine={false}
-                      label={false}
-                      outerRadius={85}
-                      innerRadius={0}
-                      fill="#8884d8"
-                      dataKey="amount"
-                    >
-                      {categoryData
-                        .filter(cat => isSmallSlice(cat.amount))
-                        .map((entry, index) => {
+              {/* Circular lens with border */}
+              <div 
+                className="relative w-full h-full rounded-full border-4 border-blue-500 shadow-2xl overflow-hidden"
+                style={{
+                  background: 'white',
+                  clipPath: 'circle(50%)'
+                }}
+              >
+                {/* Magnified chart - 2.5x zoom */}
+                <div
+                  ref={magnifierChartRef}
+                  className="absolute"
+                  style={{
+                    width: magnifierData.chartBounds.width * 2.5,
+                    height: magnifierData.chartBounds.height * 2.5,
+                    left: -(magnifierData.position.x - magnifierData.chartBounds.left) * 2.5 + 80,
+                    top: -(magnifierData.position.y - magnifierData.chartBounds.top) * 2.5 + 80
+                  }}
+                >
+                  <ResponsiveContainer width="100%" height="100%">
+                    <PieChart>
+                      <Pie
+                        data={categoryData}
+                        cx="50%"
+                        cy="50%"
+                        labelLine={false}
+                        label={false}
+                        outerRadius={90 * 2.5}
+                        innerRadius={0}
+                        fill="#8884d8"
+                        dataKey="amount"
+                      >
+                        {categoryData.map((entry, index) => {
                           const colors = getCategoryColor(entry.category, 'expense', personalBudget);
                           const isHovered = entry.category === magnifierData.hoveredCategory;
+                          const isSmall = isSmallSlice(entry.amount);
                           return (
                             <Cell 
                               key={`cell-magnified-${index}`} 
                               fill={colors.hexColor}
-                              opacity={isHovered ? 1 : 0.6}
+                              opacity={isHovered ? 1 : (isSmall ? 0.85 : 0.4)}
                               stroke={isHovered ? '#1e40af' : 'none'}
-                              strokeWidth={isHovered ? 3 : 0}
+                              strokeWidth={isHovered ? 4 : 0}
                             />
                           );
                         })}
-                    </Pie>
-                  </PieChart>
-                </ResponsiveContainer>
+                      </Pie>
+                    </PieChart>
+                  </ResponsiveContainer>
+                </div>
               </div>
+
+              {/* Crosshair indicator at center */}
+              <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-2 h-2 rounded-full bg-blue-500 border-2 border-white shadow-lg" />
             </motion.div>
 
             {/* Category info tooltip below magnifier */}
@@ -539,10 +608,10 @@ export const ExpenseChart: React.FC<ExpenseChartProps> = ({
                 initial={{ opacity: 0, y: -10 }}
                 animate={{ opacity: 1, y: 0 }}
                 exit={{ opacity: 0, y: -10 }}
-                className="fixed pointer-events-none z-50 bg-gray-900 dark:bg-gray-700 text-white px-3 py-2 rounded-lg shadow-xl text-sm font-medium"
+                className="fixed pointer-events-none z-50 bg-gray-900 dark:bg-gray-700 text-white px-3 py-2 rounded-lg shadow-xl text-sm font-medium max-w-[200px]"
                 style={{
                   left: magnifierData.position.x,
-                  top: magnifierData.position.y + 110,
+                  top: magnifierData.position.y + 95,
                   transform: 'translateX(-50%)'
                 }}
               >
@@ -553,7 +622,7 @@ export const ExpenseChart: React.FC<ExpenseChartProps> = ({
                   const percentage = ((category.amount / totalAmount) * 100).toFixed(1);
                   return (
                     <>
-                      <div className="font-semibold">{category.category}</div>
+                      <div className="font-semibold truncate">{category.category}</div>
                       <div className="text-xs opacity-90">
                         {formatCurrency(category.amount)} • {percentage}%
                       </div>
