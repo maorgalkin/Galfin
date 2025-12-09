@@ -87,15 +87,27 @@ export const ExpenseChart: React.FC<ExpenseChartProps> = ({
     console.log('🔒 Scroll lock effect triggered', { isMagnifierActive });
     if (isMagnifierActive) {
       console.log('🔒 LOCKING SCROLL');
-      // Lock scroll
+      
+      // Save current scroll position and body styles
+      const scrollY = window.scrollY;
       const prevOverflow = document.body.style.overflow;
+      const prevPosition = document.body.style.position;
+      const prevTop = document.body.style.top;
+      const prevWidth = document.body.style.width;
       const prevTouchAction = document.body.style.touchAction;
+      
+      // Apply aggressive scroll lock (Safari-compatible)
+      document.body.style.position = 'fixed';
+      document.body.style.top = `-${scrollY}px`;
+      document.body.style.width = '100%';
       document.body.style.overflow = 'hidden';
       document.body.style.touchAction = 'none';
+      
       console.log('🔒 Body styles applied:', { 
+        position: document.body.style.position,
+        top: document.body.style.top,
         overflow: document.body.style.overflow, 
-        touchAction: document.body.style.touchAction,
-        prev: { prevOverflow, prevTouchAction }
+        touchAction: document.body.style.touchAction
       });
       
       // Add global touch move listener to prevent all scrolling
@@ -103,22 +115,37 @@ export const ExpenseChart: React.FC<ExpenseChartProps> = ({
         console.log('🚫 Preventing scroll event');
         e.preventDefault();
         e.stopPropagation();
+        return false;
       };
-      document.addEventListener('touchmove', preventScroll, { passive: false });
-      console.log('🔒 Global touchmove listener added');
+      
+      // Add listeners to document and window for maximum coverage
+      document.addEventListener('touchmove', preventScroll, { passive: false, capture: true });
+      document.addEventListener('touchstart', preventScroll, { passive: false, capture: true });
+      window.addEventListener('scroll', preventScroll, { passive: false, capture: true });
+      console.log('🔒 Global scroll prevention listeners added');
       
       return () => {
         console.log('🔓 UNLOCKING SCROLL');
+        
+        // Restore body styles
+        document.body.style.position = prevPosition;
+        document.body.style.top = prevTop;
+        document.body.style.width = prevWidth;
         document.body.style.overflow = prevOverflow;
         document.body.style.touchAction = prevTouchAction;
+        
+        // Restore scroll position
+        window.scrollTo(0, scrollY);
+        
+        // Remove listeners
         document.removeEventListener('touchmove', preventScroll);
-        console.log('🔓 Scroll unlocked');
+        document.removeEventListener('touchstart', preventScroll);
+        window.removeEventListener('scroll', preventScroll);
+        
+        console.log('🔓 Scroll unlocked, restored to position:', scrollY);
       };
     } else {
       console.log('🔓 Magnifier not active, ensuring scroll is unlocked');
-      // Unlock scroll
-      document.body.style.overflow = '';
-      document.body.style.touchAction = '';
     }
   }, [isMagnifierActive]);
 
@@ -131,7 +158,11 @@ export const ExpenseChart: React.FC<ExpenseChartProps> = ({
   // Handle long press start
   const handlePressStart = (event: React.MouseEvent | React.TouchEvent) => {
     console.log('🔍 Press start', { type: event.type });
-    event.preventDefault(); // Prevent text selection
+    
+    // Prevent all default behaviors immediately
+    if (event.cancelable) {
+      event.preventDefault();
+    }
     event.stopPropagation();
     
     // Check if any small slices exist (commented out for testing)
@@ -469,7 +500,8 @@ export const ExpenseChart: React.FC<ExpenseChartProps> = ({
         style={{ 
           userSelect: 'none', 
           WebkitUserSelect: 'none',
-          touchAction: isMagnifierActive ? 'none' : 'auto'
+          WebkitTouchCallout: 'none',
+          touchAction: 'none' // Always prevent default touch actions on chart
         }}
         onMouseDown={handlePressStart}
         onMouseMove={handleMove}
