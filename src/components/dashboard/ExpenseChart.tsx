@@ -51,6 +51,7 @@ export const ExpenseChart: React.FC<ExpenseChartProps> = ({
   const longPressTimerRef = useRef<NodeJS.Timeout | null>(null);
   const touchStartRef = useRef<{ x: number; y: number } | null>(null);
   const chartRef = useRef<HTMLDivElement>(null);
+  const mobileChartRef = useRef<HTMLDivElement>(null);
   const magnifierChartRef = useRef<HTMLDivElement>(null);
 
   // Update selected category when prop changes
@@ -157,8 +158,24 @@ export const ExpenseChart: React.FC<ExpenseChartProps> = ({
     // Start timer for long press (500ms)
     longPressTimerRef.current = setTimeout(() => {
       console.log('⏰ Timer fired! Activating magnifier');
-      const bounds = chartRef.current?.getBoundingClientRect() || null;
-      console.log('📐 Chart bounds:', bounds);
+      console.log('📐 Checking refs:', {
+        chartRef: !!chartRef.current,
+        mobileChartRef: !!mobileChartRef.current
+      });
+      
+      // Get bounds from either desktop or mobile chart
+      let bounds: DOMRect | null = null;
+      if (mobileChartRef.current) {
+        bounds = mobileChartRef.current.getBoundingClientRect();
+        console.log('📱 Using mobile chart bounds:', bounds);
+      } else if (chartRef.current) {
+        bounds = chartRef.current.getBoundingClientRect();
+        console.log('🖥️ Using desktop chart bounds:', bounds);
+      } else {
+        console.error('❌ No chart ref available!');
+      }
+      
+      console.log('📐 Final chart bounds:', bounds);
       setIsMagnifierActive(true);
       setMagnifierData({
         position: { x, y },
@@ -248,11 +265,18 @@ export const ExpenseChart: React.FC<ExpenseChartProps> = ({
 
     // Detect which category is under the magnifier
     const hoveredCategory = detectCategoryAtPosition(x, y);
-    const bounds = chartRef.current?.getBoundingClientRect() || magnifierData?.chartBounds || null;
+    
+    // Get fresh bounds from whichever chart is visible
+    let bounds = magnifierData?.chartBounds;
+    if (mobileChartRef.current) {
+      bounds = mobileChartRef.current.getBoundingClientRect();
+    } else if (chartRef.current) {
+      bounds = chartRef.current.getBoundingClientRect();
+    }
     
     setMagnifierData({
       position: { x, y },
-      chartBounds: bounds,
+      chartBounds: bounds || null,
       hoveredCategory
     });
   };
@@ -440,6 +464,7 @@ export const ExpenseChart: React.FC<ExpenseChartProps> = ({
 
       {/* Mobile Layout - Pie chart with transaction list */}
       <div 
+        ref={mobileChartRef}
         className="md:hidden"
         style={{ 
           userSelect: 'none', 
@@ -591,8 +616,8 @@ export const ExpenseChart: React.FC<ExpenseChartProps> = ({
               className="fixed pointer-events-none z-50"
               style={{
                 left: `${magnifierData.position.x}px`,
-                top: `${magnifierData.position.y - 120}px`, // Finger at bottom of circle (radius 80 + 40)
-                transform: 'translate(-50%, 0)',
+                top: `${magnifierData.position.y}px`,
+                transform: 'translate(-50%, -100%)', // Position so finger is at bottom center
                 width: '160px',
                 height: '160px'
               }}
