@@ -83,23 +83,38 @@ export const ExpenseChart: React.FC<ExpenseChartProps> = ({
 
   // Lock/unlock body scroll when magnifier is active
   useEffect(() => {
+    console.log('🔒 Scroll lock effect triggered', { isMagnifierActive });
     if (isMagnifierActive) {
+      console.log('🔒 LOCKING SCROLL');
       // Lock scroll
+      const prevOverflow = document.body.style.overflow;
+      const prevTouchAction = document.body.style.touchAction;
       document.body.style.overflow = 'hidden';
       document.body.style.touchAction = 'none';
+      console.log('🔒 Body styles applied:', { 
+        overflow: document.body.style.overflow, 
+        touchAction: document.body.style.touchAction,
+        prev: { prevOverflow, prevTouchAction }
+      });
       
       // Add global touch move listener to prevent all scrolling
       const preventScroll = (e: TouchEvent) => {
+        console.log('🚫 Preventing scroll event');
         e.preventDefault();
+        e.stopPropagation();
       };
       document.addEventListener('touchmove', preventScroll, { passive: false });
+      console.log('🔒 Global touchmove listener added');
       
       return () => {
-        document.body.style.overflow = '';
-        document.body.style.touchAction = '';
+        console.log('🔓 UNLOCKING SCROLL');
+        document.body.style.overflow = prevOverflow;
+        document.body.style.touchAction = prevTouchAction;
         document.removeEventListener('touchmove', preventScroll);
+        console.log('🔓 Scroll unlocked');
       };
     } else {
+      console.log('🔓 Magnifier not active, ensuring scroll is unlocked');
       // Unlock scroll
       document.body.style.overflow = '';
       document.body.style.touchAction = '';
@@ -576,7 +591,7 @@ export const ExpenseChart: React.FC<ExpenseChartProps> = ({
               className="fixed pointer-events-none z-50"
               style={{
                 left: `${magnifierData.position.x}px`,
-                top: `${magnifierData.position.y - 100}px`, // Position above finger
+                top: `${magnifierData.position.y - 120}px`, // Finger at bottom of circle (radius 80 + 40)
                 transform: 'translate(-50%, 0)',
                 width: '160px',
                 height: '160px'
@@ -593,14 +608,29 @@ export const ExpenseChart: React.FC<ExpenseChartProps> = ({
                 {/* Magnified chart - 2.5x zoom */}
                 {(() => {
                   console.log('📊 Rendering magnified chart');
+                  console.log('📊 Chart bounds:', magnifierData.chartBounds);
+                  console.log('📊 Category data:', categoryData);
                   const zoom = 2.5;
                   const chartWidth = magnifierData.chartBounds.width;
                   const chartHeight = magnifierData.chartBounds.height;
                   console.log('📏 Chart dimensions:', { chartWidth, chartHeight, zoom });
                   
                   if (!chartWidth || !chartHeight) {
-                    console.error('❌ Invalid chart dimensions');
-                    return null;
+                    console.error('❌ Invalid chart dimensions', { chartWidth, chartHeight });
+                    return (
+                      <div className="absolute inset-0 flex items-center justify-center text-xs text-red-600">
+                        ERROR: No chart dimensions
+                      </div>
+                    );
+                  }
+                  
+                  if (chartWidth < 10 || chartHeight < 10) {
+                    console.error('❌ Chart dimensions too small', { chartWidth, chartHeight });
+                    return (
+                      <div className="absolute inset-0 flex items-center justify-center text-xs text-red-600">
+                        ERROR: Chart too small
+                      </div>
+                    );
                   }
                   
                   // Calculate relative position within chart (0 to 1)
@@ -619,7 +649,8 @@ export const ExpenseChart: React.FC<ExpenseChartProps> = ({
                   const magnifiedHeight = Math.round(chartHeight * zoom);
                   const magnifiedRadius = Math.round(90 * zoom);
                   
-                  console.log('📐 Magnified dimensions:', { magnifiedWidth, magnifiedHeight, magnifiedRadius });
+                  console.log('📏 Chart dimensions:', { magnifiedWidth, magnifiedHeight, magnifiedRadius });
+                  console.log('✅ About to render chart element');
                   
                   return (
                     <div
@@ -628,10 +659,11 @@ export const ExpenseChart: React.FC<ExpenseChartProps> = ({
                       style={{
                         width: `${magnifiedWidth}px`,
                         height: `${magnifiedHeight}px`,
-                        transform: `translate(${offsetX}px, ${offsetY}px)`
+                        transform: `translate(${offsetX}px, ${offsetY}px)`,
+                        background: 'rgba(255,0,0,0.1)' // Debug: red tint to see if div renders
                       }}
                     >
-                      <svg width={magnifiedWidth} height={magnifiedHeight}>
+                      <svg width={magnifiedWidth} height={magnifiedHeight} style={{ background: 'rgba(0,255,0,0.1)' }}>
                         <PieChart width={magnifiedWidth} height={magnifiedHeight}>
                           <Pie
                             data={categoryData}
