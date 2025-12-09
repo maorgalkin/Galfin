@@ -110,22 +110,21 @@ export const ExpenseChart: React.FC<ExpenseChartProps> = ({
         touchAction: document.body.style.touchAction
       });
       
-      // Add global touch move listener to prevent all scrolling
-      const preventScroll = (e: TouchEvent) => {
-        console.log('🚫 Preventing scroll event');
+      // Only prevent touchmove (not touchstart which blocks interactions)
+      const preventTouchMove = (e: TouchEvent) => {
+        console.log('🚫 Preventing scroll');
         e.preventDefault();
-        e.stopPropagation();
-        return false;
       };
       
-      // Add listeners to document and window for maximum coverage
-      document.addEventListener('touchmove', preventScroll, { passive: false, capture: true });
-      document.addEventListener('touchstart', preventScroll, { passive: false, capture: true });
-      window.addEventListener('scroll', preventScroll, { passive: false, capture: true });
-      console.log('🔒 Global scroll prevention listeners added');
+      // Add listener only for touchmove
+      document.addEventListener('touchmove', preventTouchMove, { passive: false });
+      console.log('🔒 Touchmove prevention listener added');
       
       return () => {
         console.log('🔓 UNLOCKING SCROLL');
+        
+        // Remove listener first
+        document.removeEventListener('touchmove', preventTouchMove);
         
         // Restore body styles
         document.body.style.position = prevPosition;
@@ -136,11 +135,6 @@ export const ExpenseChart: React.FC<ExpenseChartProps> = ({
         
         // Restore scroll position
         window.scrollTo(0, scrollY);
-        
-        // Remove listeners
-        document.removeEventListener('touchmove', preventScroll);
-        document.removeEventListener('touchstart', preventScroll);
-        window.removeEventListener('scroll', preventScroll);
         
         console.log('🔓 Scroll unlocked, restored to position:', scrollY);
       };
@@ -159,10 +153,8 @@ export const ExpenseChart: React.FC<ExpenseChartProps> = ({
   const handlePressStart = (event: React.MouseEvent | React.TouchEvent) => {
     console.log('🔍 Press start', { type: event.type });
     
-    // Prevent all default behaviors immediately
-    if (event.cancelable) {
-      event.preventDefault();
-    }
+    // Don't preventDefault on touchstart - it blocks all interactions
+    // Scrolling will be prevented by the effect when magnifier activates
     event.stopPropagation();
     
     // Check if any small slices exist (commented out for testing)
