@@ -87,16 +87,23 @@ export const ExpenseChart: React.FC<ExpenseChartProps> = ({
       // Lock scroll
       document.body.style.overflow = 'hidden';
       document.body.style.touchAction = 'none';
+      
+      // Add global touch move listener to prevent all scrolling
+      const preventScroll = (e: TouchEvent) => {
+        e.preventDefault();
+      };
+      document.addEventListener('touchmove', preventScroll, { passive: false });
+      
+      return () => {
+        document.body.style.overflow = '';
+        document.body.style.touchAction = '';
+        document.removeEventListener('touchmove', preventScroll);
+      };
     } else {
       // Unlock scroll
       document.body.style.overflow = '';
       document.body.style.touchAction = '';
     }
-    
-    return () => {
-      document.body.style.overflow = '';
-      document.body.style.touchAction = '';
-    };
   }, [isMagnifierActive]);
 
   // Calculate if a category slice is too small (less than 5%)
@@ -568,25 +575,21 @@ export const ExpenseChart: React.FC<ExpenseChartProps> = ({
               transition={{ duration: 0.15 }}
               className="fixed pointer-events-none z-50"
               style={{
-                left: magnifierData.position.x,
-                top: magnifierData.position.y,
-                transform: 'translate(-50%, -50%)',
+                left: `${magnifierData.position.x}px`,
+                top: `${magnifierData.position.y - 100}px`, // Position above finger
+                transform: 'translate(-50%, 0)',
                 width: '160px',
                 height: '160px'
               }}
             >
               {/* Circular lens with border */}
               <div 
-                className="relative w-full h-full rounded-full border-4 border-blue-500 shadow-2xl overflow-hidden"
+                className="relative w-full h-full rounded-full border-4 border-blue-500 shadow-2xl"
                 style={{
-                  background: 'rgba(255, 255, 255, 0.95)',
-                  clipPath: 'circle(50%)'
+                  background: '#ffffff',
+                  overflow: 'hidden'
                 }}
               >
-                {/* Debug text */}
-                <div className="absolute top-2 left-2 text-xs font-mono text-red-600 z-50">
-                  DEBUG: Active
-                </div>
                 {/* Magnified chart - 2.5x zoom */}
                 {(() => {
                   console.log('📊 Rendering magnified chart');
@@ -595,60 +598,76 @@ export const ExpenseChart: React.FC<ExpenseChartProps> = ({
                   const chartHeight = magnifierData.chartBounds.height;
                   console.log('📏 Chart dimensions:', { chartWidth, chartHeight, zoom });
                   
+                  if (!chartWidth || !chartHeight) {
+                    console.error('❌ Invalid chart dimensions');
+                    return null;
+                  }
+                  
                   // Calculate relative position within chart (0 to 1)
                   const relX = (magnifierData.position.x - magnifierData.chartBounds.left) / chartWidth;
                   const relY = (magnifierData.position.y - magnifierData.chartBounds.top) / chartHeight;
                   
-                  // Calculate offset to center the magnified area
-                  const offsetX = -(relX * chartWidth * zoom) + 80;
-                  const offsetY = -(relY * chartHeight * zoom) + 80;
+                  console.log('📍 Relative position:', { relX, relY });
+                  
+                  // Calculate offset to center the magnified area under the lens
+                  const offsetX = -(relX * chartWidth * zoom - 80);
+                  const offsetY = -(relY * chartHeight * zoom - 80);
+                  
+                  console.log('🎯 Offset:', { offsetX, offsetY });
+                  
+                  const magnifiedWidth = Math.round(chartWidth * zoom);
+                  const magnifiedHeight = Math.round(chartHeight * zoom);
+                  const magnifiedRadius = Math.round(90 * zoom);
+                  
+                  console.log('📐 Magnified dimensions:', { magnifiedWidth, magnifiedHeight, magnifiedRadius });
                   
                   return (
                     <div
                       ref={magnifierChartRef}
-                      className="absolute"
+                      className="absolute top-0 left-0"
                       style={{
-                        width: `${chartWidth * zoom}px`,
-                        height: `${chartHeight * zoom}px`,
-                        left: `${offsetX}px`,
-                        top: `${offsetY}px`
+                        width: `${magnifiedWidth}px`,
+                        height: `${magnifiedHeight}px`,
+                        transform: `translate(${offsetX}px, ${offsetY}px)`
                       }}
                     >
-                      <PieChart width={chartWidth * zoom} height={chartHeight * zoom}>
-                        <Pie
-                          data={categoryData}
-                          cx="50%"
-                          cy="50%"
-                          labelLine={false}
-                          label={false}
-                          outerRadius={90 * zoom}
-                          innerRadius={0}
-                          fill="#8884d8"
-                          dataKey="amount"
-                        >
-                          {categoryData.map((entry, index) => {
-                            const colors = getCategoryColor(entry.category, 'expense', personalBudget);
-                            const isHovered = entry.category === magnifierData.hoveredCategory;
-                            const isSmall = isSmallSlice(entry.amount);
-                            return (
-                              <Cell 
-                                key={`cell-magnified-${index}`} 
-                                fill={colors.hexColor}
-                                opacity={isHovered ? 1 : (isSmall ? 0.85 : 0.4)}
-                                stroke={isHovered ? '#1e40af' : 'none'}
-                                strokeWidth={isHovered ? 4 : 0}
-                              />
-                            );
-                          })}
-                        </Pie>
-                      </PieChart>
+                      <svg width={magnifiedWidth} height={magnifiedHeight}>
+                        <PieChart width={magnifiedWidth} height={magnifiedHeight}>
+                          <Pie
+                            data={categoryData}
+                            cx="50%"
+                            cy="50%"
+                            labelLine={false}
+                            label={false}
+                            outerRadius={magnifiedRadius}
+                            innerRadius={0}
+                            fill="#8884d8"
+                            dataKey="amount"
+                            isAnimationActive={false}
+                          >
+                            {categoryData.map((entry, index) => {
+                              const colors = getCategoryColor(entry.category, 'expense', personalBudget);
+                              const isHovered = entry.category === magnifierData.hoveredCategory;
+                              const isSmall = isSmallSlice(entry.amount);
+                              return (
+                                <Cell 
+                                  key={`cell-magnified-${index}`} 
+                                  fill={colors.hexColor}
+                                  opacity={isHovered ? 1 : (isSmall ? 0.85 : 0.4)}
+                                  stroke={isHovered ? '#1e40af' : 'none'}
+                                  strokeWidth={isHovered ? 4 : 0}
+                                />
+                              );
+                            })}
+                          </Pie>
+                        </PieChart>
+                      </svg>
                     </div>
                   );
                 })()}
+                {/* Crosshair indicator at center */}
+                <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-3 h-3 rounded-full bg-blue-500 border-2 border-white shadow-lg z-10" />
               </div>
-
-              {/* Crosshair indicator at center */}
-              <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-2 h-2 rounded-full bg-blue-500 border-2 border-white shadow-lg" />
             </motion.div>
 
             {/* Category info tooltip below magnifier */}
