@@ -615,9 +615,8 @@ export const ExpenseChart: React.FC<ExpenseChartProps> = ({
               transition={{ duration: 0.15 }}
               className="fixed pointer-events-none z-50"
               style={{
-                left: `${magnifierData.position.x}px`,
-                top: `${magnifierData.position.y}px`,
-                transform: 'translate(-50%, -100%)', // Position so finger is at bottom center
+                left: `${magnifierData.position.x - 80}px`, // 80 = radius, centers the circle
+                top: `${magnifierData.position.y - 120}px`, // 120px above finger (radius 80 + 40)
                 width: '160px',
                 height: '160px'
               }}
@@ -627,7 +626,8 @@ export const ExpenseChart: React.FC<ExpenseChartProps> = ({
                 className="relative w-full h-full rounded-full border-4 border-blue-500 shadow-2xl"
                 style={{
                   background: '#ffffff',
-                  overflow: 'hidden'
+                  overflow: 'hidden',
+                  clipPath: 'circle(50% at 50% 50%)'
                 }}
               >
                 {/* Magnified chart - 2.5x zoom */}
@@ -680,15 +680,15 @@ export const ExpenseChart: React.FC<ExpenseChartProps> = ({
                   return (
                     <div
                       ref={magnifierChartRef}
-                      className="absolute top-0 left-0"
+                      className="absolute"
                       style={{
                         width: `${magnifiedWidth}px`,
                         height: `${magnifiedHeight}px`,
-                        transform: `translate(${offsetX}px, ${offsetY}px)`,
-                        background: 'rgba(255,0,0,0.1)' // Debug: red tint to see if div renders
+                        left: `${offsetX}px`,
+                        top: `${offsetY}px`
                       }}
                     >
-                      <svg width={magnifiedWidth} height={magnifiedHeight} style={{ background: 'rgba(0,255,0,0.1)' }}>
+                      <svg width={magnifiedWidth} height={magnifiedHeight}>
                         <PieChart width={magnifiedWidth} height={magnifiedHeight}>
                           <Pie
                             data={categoryData}
