@@ -50,6 +50,7 @@ export const ExpenseChart: React.FC<ExpenseChartProps> = ({
   const [isMagnifierActive, setIsMagnifierActive] = useState(false);
   const longPressTimerRef = useRef<NodeJS.Timeout | null>(null);
   const touchStartRef = useRef<{ x: number; y: number } | null>(null);
+  const isLongPressAttemptRef = useRef(false); // Track if we're attempting a long-press
   const chartRef = useRef<HTMLDivElement>(null);
   const mobileChartRef = useRef<HTMLDivElement>(null);
   const magnifierChartRef = useRef<HTMLDivElement>(null);
@@ -161,9 +162,11 @@ export const ExpenseChart: React.FC<ExpenseChartProps> = ({
     const hasSmallSlices = categoryData.some(cat => isSmallSlice(cat.amount));
     if (!hasSmallSlices) {
       console.log('❌ No small slices found, magnifier not needed');
+      isLongPressAttemptRef.current = false;
       return;
     }
     console.log('✅ Small slices detected, starting magnifier timer');
+    isLongPressAttemptRef.current = true; // Mark that we're attempting a long-press
 
     // Get position for magnifier
     let x: number, y: number;
@@ -216,6 +219,11 @@ export const ExpenseChart: React.FC<ExpenseChartProps> = ({
       clearTimeout(longPressTimerRef.current);
       longPressTimerRef.current = null;
     }
+    
+    // Clear long-press attempt flag after a short delay to allow onClick to check it
+    setTimeout(() => {
+      isLongPressAttemptRef.current = false;
+    }, 50);
     
     // If magnifier was active and we have a hovered category, select it
     if (isMagnifierActive && magnifierData?.hoveredCategory) {
@@ -378,6 +386,12 @@ export const ExpenseChart: React.FC<ExpenseChartProps> = ({
                   fill="#8884d8"
                   dataKey="amount"
                   onMouseDown={(data: any, index: number) => {
+                    // Don't handle click if we're in a long-press attempt or magnifier is active
+                    if (isLongPressAttemptRef.current || isMagnifierActive) {
+                      console.log('🚫 Ignoring desktop Pie onMouseDown - long-press in progress');
+                      return;
+                    }
+                    
                     console.log('Pie onMouseDown:', data, index, categoryData[index]);
                     if (categoryData[index]) {
                       setSelectedDesktopCategory(categoryData[index].category);
@@ -516,6 +530,12 @@ export const ExpenseChart: React.FC<ExpenseChartProps> = ({
               fill="#8884d8"
               dataKey="amount"
               onClick={(data) => {
+                // Don't handle click if we're in a long-press attempt or magnifier is active
+                if (isLongPressAttemptRef.current || isMagnifierActive) {
+                  console.log('🚫 Ignoring Pie onClick - long-press in progress');
+                  return;
+                }
+                
                 const totalAmount = categoryData.reduce((sum, cat) => sum + cat.amount, 0);
                 const percentage = ((data.amount / totalAmount) * 100).toFixed(1);
                 setFocusedCategory({
