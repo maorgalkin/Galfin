@@ -157,13 +157,13 @@ export const ExpenseChart: React.FC<ExpenseChartProps> = ({
     // Scrolling will be prevented by the effect when magnifier activates
     event.stopPropagation();
     
-    // Check if any small slices exist (commented out for testing)
-    // const hasSmallSlices = categoryData.some(cat => isSmallSlice(cat.amount));
-    // if (!hasSmallSlices) {
-    //   console.log('❌ No small slices found');
-    //   return;
-    // }
-    console.log('✅ Starting magnifier timer');
+    // Only activate magnifier if there are small slices (< 5%)
+    const hasSmallSlices = categoryData.some(cat => isSmallSlice(cat.amount));
+    if (!hasSmallSlices) {
+      console.log('❌ No small slices found, magnifier not needed');
+      return;
+    }
+    console.log('✅ Small slices detected, starting magnifier timer');
 
     // Get position for magnifier
     let x: number, y: number;
