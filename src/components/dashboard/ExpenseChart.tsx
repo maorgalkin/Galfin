@@ -760,6 +760,15 @@ export const ExpenseChart: React.FC<ExpenseChartProps> = ({
           return true;
         })() && (
           <>
+            {/* Touch Point Indicator - Shows where the finger is */}
+            <div 
+              className="fixed pointer-events-none z-50 w-8 h-8 rounded-full border-2 border-white bg-black/20"
+              style={{
+                left: `${magnifierData.position.x - 16}px`,
+                top: `${magnifierData.position.y - 16}px`,
+              }}
+            />
+
             {/* Magnifier Circle - shows zoomed portion of chart */}
             <motion.div
               initial={{ opacity: 0, scale: 0 }}
@@ -783,6 +792,11 @@ export const ExpenseChart: React.FC<ExpenseChartProps> = ({
                   clipPath: 'circle(50% at 50% 50%)'
                 }}
               >
+                {/* Center Crosshair - Shows the activation point */}
+                <div className="absolute inset-0 flex items-center justify-center pointer-events-none z-20">
+                  <div className="w-2 h-2 bg-blue-500 rounded-full opacity-50" />
+                </div>
+
                 {/* Magnified chart - 2.5x zoom */}
                 {(() => {
                   console.log('📊 Rendering magnified chart');
