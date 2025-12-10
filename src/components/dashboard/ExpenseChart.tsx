@@ -158,6 +158,17 @@ export const ExpenseChart: React.FC<ExpenseChartProps> = ({
     // Scrolling will be prevented by the effect when magnifier activates
     event.stopPropagation();
     
+    // Store initial position and time for tap detection
+    let x: number, y: number;
+    if ('touches' in event) {
+      x = event.touches[0].clientX;
+      y = event.touches[0].clientY;
+    } else {
+      x = event.clientX;
+      y = event.clientY;
+    }
+    touchStartRef.current = { x, y };
+    
     // Only activate magnifier if there are small slices (< 5%)
     const hasSmallSlices = categoryData.some(cat => isSmallSlice(cat.amount));
     if (!hasSmallSlices) {
@@ -168,18 +179,9 @@ export const ExpenseChart: React.FC<ExpenseChartProps> = ({
     console.log('✅ Small slices detected, starting magnifier timer');
     isLongPressAttemptRef.current = true; // Mark that we're attempting a long-press
 
-    // Get position for magnifier
-    let x: number, y: number;
-    if ('touches' in event) {
-      x = event.touches[0].clientX;
-      y = event.touches[0].clientY;
-      touchStartRef.current = { x, y };
-      console.log('📱 Touch position:', { x, y });
-    } else {
-      x = event.clientX;
-      y = event.clientY;
-      console.log('🖱️ Mouse position:', { x, y });
-    }
+    // Position already stored in touchStartRef from earlier in this function
+    const startPos = touchStartRef.current;
+    console.log('📍 Position for magnifier:', startPos);
 
     // Start timer for long press (500ms)
     longPressTimerRef.current = setTimeout(() => {
@@ -204,26 +206,35 @@ export const ExpenseChart: React.FC<ExpenseChartProps> = ({
       console.log('📐 Final chart bounds:', bounds);
       setIsMagnifierActive(true);
       setMagnifierData({
-        position: { x, y },
+        position: { x: startPos.x, y: startPos.y },
         chartBounds: bounds,
         hoveredCategory: null
       });
     }, 500);
   };
 
-  // Handle press end - select category if magnifier was active
-  const handlePressEnd = () => {
+  // Handle press end - select category if magnifier was active or detect tap
+  const handlePressEnd = (event: React.MouseEvent | React.TouchEvent) => {
     console.log('🔍 Press end', { isMagnifierActive });
+    
+    // Get end position
+    let endX: number, endY: number;
+    if ('changedTouches' in event) {
+      endX = event.changedTouches[0].clientX;
+      endY = event.changedTouches[0].clientY;
+    } else {
+      endX = event.clientX;
+      endY = event.clientY;
+    }
+    
     if (longPressTimerRef.current) {
       console.log('⏰ Clearing timer');
       clearTimeout(longPressTimerRef.current);
       longPressTimerRef.current = null;
     }
     
-    // Clear long-press attempt flag after a short delay to allow onClick to check it
-    setTimeout(() => {
-      isLongPressAttemptRef.current = false;
-    }, 50);
+    // Clear long-press attempt flag
+    isLongPressAttemptRef.current = false;
     
     // If magnifier was active and we have a hovered category, select it
     if (isMagnifierActive && magnifierData?.hoveredCategory) {
@@ -246,10 +257,41 @@ export const ExpenseChart: React.FC<ExpenseChartProps> = ({
           setSelectedDesktopCategory(category);
         }
       }
+    } else if (touchStartRef.current && !isMagnifierActive) {
+      // Handle normal tap (not a long-press) - select category at tap position
+      const dx = Math.abs(endX - touchStartRef.current.x);
+      const dy = Math.abs(endY - touchStartRef.current.y);
+      
+      // Only treat as tap if finger didn't move much
+      if (dx < 10 && dy < 10) {
+        console.log('👆 Tap detected, checking for category');
+        const category = detectCategoryAtPosition(endX, endY);
+        
+        if (category) {
+          const categoryItem = categoryData.find(c => c.category === category);
+          if (categoryItem) {
+            const totalAmount = categoryData.reduce((sum, cat) => sum + cat.amount, 0);
+            const percentage = ((categoryItem.amount / totalAmount) * 100).toFixed(1);
+            
+            // On mobile, set focused category to show transactions
+            if (window.innerWidth < 768) {
+              setFocusedCategory({
+                category: categoryItem.category,
+                amount: categoryItem.amount,
+                percentage
+              });
+            } else {
+              // On desktop, set selected category for side panel
+              setSelectedDesktopCategory(category);
+            }
+          }
+        }
+      }
     }
     
     setIsMagnifierActive(false);
     setMagnifierData(null);
+    touchStartRef.current = null;
   };
 
   // Handle mouse/touch move
@@ -385,18 +427,6 @@ export const ExpenseChart: React.FC<ExpenseChartProps> = ({
                   innerRadius={0}
                   fill="#8884d8"
                   dataKey="amount"
-                  onMouseDown={(data: any, index: number) => {
-                    // Don't handle click if we're in a long-press attempt or magnifier is active
-                    if (isLongPressAttemptRef.current || isMagnifierActive) {
-                      console.log('🚫 Ignoring desktop Pie onMouseDown - long-press in progress');
-                      return;
-                    }
-                    
-                    console.log('Pie onMouseDown:', data, index, categoryData[index]);
-                    if (categoryData[index]) {
-                      setSelectedDesktopCategory(categoryData[index].category);
-                    }
-                  }}
                 >
                   {categoryData.map((entry, index) => {
                     const colors = getCategoryColor(entry.category, 'expense', personalBudget);
@@ -529,21 +559,6 @@ export const ExpenseChart: React.FC<ExpenseChartProps> = ({
               innerRadius={0}
               fill="#8884d8"
               dataKey="amount"
-              onClick={(data) => {
-                // Don't handle click if we're in a long-press attempt or magnifier is active
-                if (isLongPressAttemptRef.current || isMagnifierActive) {
-                  console.log('🚫 Ignoring Pie onClick - long-press in progress');
-                  return;
-                }
-                
-                const totalAmount = categoryData.reduce((sum, cat) => sum + cat.amount, 0);
-                const percentage = ((data.amount / totalAmount) * 100).toFixed(1);
-                setFocusedCategory({
-                  category: data.category,
-                  amount: data.amount,
-                  percentage
-                });
-              }}
             >
               {categoryData.map((entry, index) => {
                 const colors = getCategoryColor(entry.category, 'expense', personalBudget);
