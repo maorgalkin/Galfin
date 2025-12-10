@@ -376,7 +376,7 @@ export const ExpenseChart: React.FC<ExpenseChartProps> = ({
               width: selectedDesktopCategory ? '40%' : '100%'
             }}
             transition={{ duration: 0.3, ease: 'easeInOut' }}
-            className="flex-shrink-0"
+            className="flex-shrink-0 p-8"
             style={{ 
               userSelect: 'none', 
               WebkitUserSelect: 'none',
@@ -512,7 +512,7 @@ export const ExpenseChart: React.FC<ExpenseChartProps> = ({
       {/* Mobile Layout - Pie chart with transaction list */}
       <div 
         ref={mobileChartRef}
-        className="md:hidden"
+        className="md:hidden p-8"
         style={{ 
           userSelect: 'none', 
           WebkitUserSelect: 'none',
