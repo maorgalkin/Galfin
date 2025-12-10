@@ -21,7 +21,7 @@ interface ExpenseChartProps {
 }
 
 // DEBUG: Set to true to visualize interaction zones
-const DEBUG_ZONES = true;
+const DEBUG_ZONES = false;
 
 /**
  * Interactive pie chart for expense breakdown by category
@@ -766,7 +766,7 @@ export const ExpenseChart: React.FC<ExpenseChartProps> = ({
               className="fixed pointer-events-none z-50"
               style={{
                 left: `${magnifierData.position.x - 80}px`, // 80 = radius, centers the circle
-                top: `${magnifierData.position.y - 120}px`, // 120px above finger (radius 80 + 40)
+                top: `${magnifierData.position.y - 80}px`, // 80 = radius, centers the circle on finger
                 width: '160px',
                 height: '160px'
               }}
