@@ -393,30 +393,48 @@ export const ExpenseChart: React.FC<ExpenseChartProps> = ({
                               (mobileChartRef.current && mobileChartRef.current.contains(element));
         
         if (isInsideChart) {
-           // It's a path inside our chart. Now find its index among sibling paths.
-           // Recharts usually groups sectors.
-           const parent = element.parentElement;
-           if (parent) {
-             // Filter children to only include paths (ignore shadows or other elements if any)
-             const siblingPaths = Array.from(parent.children).filter(c => c.tagName.toLowerCase() === 'path');
-             const pathIndex = siblingPaths.indexOf(element);
-             
-             if (DEBUG_ZONES) {
-                console.log('🎯 Hit detection:', { 
-                  tagName: element.tagName, 
-                  parentClass: parent.getAttribute('class'),
-                  pathIndex,
-                  totalPaths: siblingPaths.length,
-                  category: categoryData[pathIndex]?.category
-                });
+           // It's a path inside our chart.
+           // Recharts structure:
+           // <g class="recharts-layer recharts-pie">
+           //   <g class="recharts-layer recharts-pie-sector"> <path ... /> </g>
+           //   <g class="recharts-layer recharts-pie-sector"> <path ... /> </g>
+           // </g>
+           
+           let targetIndex = -1;
+           let parent = element.parentElement;
+           
+           // Check if the parent is a sector wrapper (contains 'recharts-pie-sector')
+           if (parent && parent.classList.contains('recharts-pie-sector')) {
+             // We need to look at the grandparent to find siblings
+             const grandParent = parent.parentElement;
+             if (grandParent) {
+               // Get all sector groups
+               const sectors = Array.from(grandParent.children).filter(c => 
+                 c.classList.contains('recharts-pie-sector')
+               );
+               targetIndex = sectors.indexOf(parent);
              }
+           } else if (parent) {
+             // Fallback: maybe paths are direct children (older Recharts or different config)
+             const siblingPaths = Array.from(parent.children).filter(c => c.tagName.toLowerCase() === 'path');
+             targetIndex = siblingPaths.indexOf(element);
+           }
+             
+           if (DEBUG_ZONES) {
+              console.log('🎯 Hit detection:', { 
+                tagName: element.tagName, 
+                parentClass: parent?.getAttribute('class'),
+                grandParentClass: parent?.parentElement?.getAttribute('class'),
+                targetIndex,
+                category: categoryData[targetIndex]?.category
+              });
+           }
 
-             if (pathIndex >= 0 && pathIndex < categoryData.length) {
-               const category = categoryData[pathIndex];
-               // Return if allowAll is true OR if it's a small slice
-               if (allowAll || isSmallSlice(category.amount)) {
-                 return category.category;
-               }
+           if (targetIndex >= 0 && targetIndex < categoryData.length) {
+             const category = categoryData[targetIndex];
+             // Return if allowAll is true OR if it's a small slice
+             if (allowAll || isSmallSlice(category.amount)) {
+               return category.category;
              }
            }
         }
