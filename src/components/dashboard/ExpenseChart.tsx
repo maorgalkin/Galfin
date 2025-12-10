@@ -20,6 +20,9 @@ interface ExpenseChartProps {
   onViewAllTransactions: (category: string) => void;
 }
 
+// DEBUG: Set to true to visualize interaction zones
+const DEBUG_ZONES = true;
+
 /**
  * Interactive pie chart for expense breakdown by category
  * Desktop: Click to show transaction list in side panel
@@ -421,7 +424,7 @@ export const ExpenseChart: React.FC<ExpenseChartProps> = ({
               width: selectedDesktopCategory ? '40%' : '100%'
             }}
             transition={{ duration: 0.3, ease: 'easeInOut' }}
-            className="flex-shrink-0 p-8"
+            className="flex-shrink-0 p-8 relative"
             style={{ 
               userSelect: 'none', 
               WebkitUserSelect: 'none',
@@ -435,6 +438,18 @@ export const ExpenseChart: React.FC<ExpenseChartProps> = ({
             onTouchMove={handleMove}
             onTouchEnd={handlePressEnd}
           >
+            {DEBUG_ZONES && (
+              <>
+                {/* Magnifier Zone (Outside) - Blue */}
+                <div className="absolute inset-0 bg-blue-500/20 pointer-events-none z-0 border-2 border-blue-500">
+                  <div className="absolute top-2 left-2 text-xs text-blue-700 font-bold">Magnifier Zone</div>
+                </div>
+                {/* Pie Zone (Inside) - Red Circle (Radius 100px = Width 200px) */}
+                <div className="absolute left-1/2 top-1/2 -translate-x-1/2 -translate-y-1/2 w-[200px] h-[200px] rounded-full bg-red-500/20 pointer-events-none z-10 border-2 border-red-500">
+                  <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 text-xs text-red-700 font-bold text-center">Pie Zone<br/>(Education)</div>
+                </div>
+              </>
+            )}
             <ResponsiveContainer width="100%" height={300}>
               <PieChart>
                 <Pie
@@ -552,7 +567,7 @@ export const ExpenseChart: React.FC<ExpenseChartProps> = ({
       {/* Mobile Layout - Pie chart with transaction list */}
       <div 
         ref={mobileChartRef}
-        className="md:hidden p-8"
+        className="md:hidden p-8 relative"
         style={{ 
           userSelect: 'none', 
           WebkitUserSelect: 'none',
@@ -567,6 +582,18 @@ export const ExpenseChart: React.FC<ExpenseChartProps> = ({
         onTouchMove={handleMove}
         onTouchEnd={handlePressEnd}
       >
+        {DEBUG_ZONES && (
+          <>
+            {/* Magnifier Zone (Outside) - Blue */}
+            <div className="absolute inset-0 bg-blue-500/20 pointer-events-none z-0 border-2 border-blue-500">
+              <div className="absolute top-2 left-2 text-xs text-blue-700 font-bold">Magnifier Zone</div>
+            </div>
+            {/* Pie Zone (Inside) - Red Circle (Radius 100px = Width 200px) */}
+            <div className="absolute left-1/2 top-1/2 -translate-x-1/2 -translate-y-1/2 w-[200px] h-[200px] rounded-full bg-red-500/20 pointer-events-none z-10 border-2 border-red-500">
+              <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 text-xs text-red-700 font-bold text-center">Pie Zone<br/>(Education)</div>
+            </div>
+          </>
+        )}
         <ResponsiveContainer width="100%" height={300}>
           <PieChart>
             <Pie
