@@ -229,9 +229,19 @@ export const ExpenseChart: React.FC<ExpenseChartProps> = ({
     }, 500);
   };
 
-  // Handle press end - select category if magnifier was active
-  const handlePressEnd = () => {
+  // Handle press end - select category if magnifier was active or detect tap
+  const handlePressEnd = (event: React.MouseEvent | React.TouchEvent) => {
     console.log('🔍 Press end', { isMagnifierActive });
+    
+    // Get end position
+    let endX: number, endY: number;
+    if ('changedTouches' in event) {
+      endX = event.changedTouches[0].clientX;
+      endY = event.changedTouches[0].clientY;
+    } else {
+      endX = event.clientX;
+      endY = event.clientY;
+    }
     
     if (longPressTimerRef.current) {
       console.log('⏰ Clearing timer');
@@ -260,6 +270,37 @@ export const ExpenseChart: React.FC<ExpenseChartProps> = ({
         } else {
           // On desktop, set selected category for side panel
           setSelectedDesktopCategory(category);
+        }
+      }
+    } else if (touchStartRef.current && !isMagnifierActive) {
+      // Handle normal tap (not a long-press) - select category at tap position
+      const dx = Math.abs(endX - touchStartRef.current.x);
+      const dy = Math.abs(endY - touchStartRef.current.y);
+      
+      // Only treat as tap if finger didn't move much
+      if (dx < 10 && dy < 10) {
+        console.log('👆 Tap detected, checking for category');
+        // Use detectCategoryAtPosition but allow all slices (not just small ones)
+        const category = detectCategoryAtPosition(endX, endY, true);
+        
+        if (category) {
+          const categoryItem = categoryData.find(c => c.category === category);
+          if (categoryItem) {
+            const totalAmount = categoryData.reduce((sum, cat) => sum + cat.amount, 0);
+            const percentage = ((categoryItem.amount / totalAmount) * 100).toFixed(1);
+            
+            // On mobile, set focused category to show transactions
+            if (window.innerWidth < 768) {
+              setFocusedCategory({
+                category: categoryItem.category,
+                amount: categoryItem.amount,
+                percentage
+              });
+            } else {
+              // On desktop, set selected category for side panel
+              setSelectedDesktopCategory(category);
+            }
+          }
         }
       }
     }
@@ -329,9 +370,9 @@ export const ExpenseChart: React.FC<ExpenseChartProps> = ({
     });
   };
 
-  // Detect which small category is at the given position
-  const detectCategoryAtPosition = (x: number, y: number): string | null => {
-    if (!chartRef.current) return null;
+  // Detect which category is at the given position
+  const detectCategoryAtPosition = (x: number, y: number, allowAll: boolean = false): string | null => {
+    if (!chartRef.current && !mobileChartRef.current) return null;
     
     // Get all pie slice elements
     const elements = document.elementsFromPoint(x, y);
@@ -343,8 +384,8 @@ export const ExpenseChart: React.FC<ExpenseChartProps> = ({
         const pathIndex = Array.from(element.parentElement.children).indexOf(element);
         if (pathIndex >= 0 && pathIndex < categoryData.length) {
           const category = categoryData[pathIndex];
-          // Only return if it's a small slice
-          if (isSmallSlice(category.amount)) {
+          // Return if allowAll is true OR if it's a small slice
+          if (allowAll || isSmallSlice(category.amount)) {
             return category.category;
           }
         }
@@ -402,11 +443,6 @@ export const ExpenseChart: React.FC<ExpenseChartProps> = ({
                   innerRadius={0}
                   fill="#8884d8"
                   dataKey="amount"
-                  onMouseDown={(_data: any, index: number) => {
-                    if (categoryData[index]) {
-                      setSelectedDesktopCategory(categoryData[index].category);
-                    }
-                  }}
                 >
                   {categoryData.map((entry, index) => {
                     const colors = getCategoryColor(entry.category, 'expense', personalBudget);
@@ -539,15 +575,6 @@ export const ExpenseChart: React.FC<ExpenseChartProps> = ({
               innerRadius={0}
               fill="#8884d8"
               dataKey="amount"
-              onClick={(data) => {
-                const totalAmount = categoryData.reduce((sum, cat) => sum + cat.amount, 0);
-                const percentage = ((data.amount / totalAmount) * 100).toFixed(1);
-                setFocusedCategory({
-                  category: data.category,
-                  amount: data.amount,
-                  percentage
-                });
-              }}
             >
               {categoryData.map((entry, index) => {
                 const colors = getCategoryColor(entry.category, 'expense', personalBudget);
