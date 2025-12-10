@@ -48,6 +48,7 @@ export const ExpenseChart: React.FC<ExpenseChartProps> = ({
     hoveredCategory: string | null;
   } | null>(null);
   const [isMagnifierActive, setIsMagnifierActive] = useState(false);
+  const [showEducationModal, setShowEducationModal] = useState(false);
   const longPressTimerRef = useRef<NodeJS.Timeout | null>(null);
   const touchStartRef = useRef<{ x: number; y: number } | null>(null);
   const isLongPressAttemptRef = useRef(false); // Track if we're attempting a long-press
@@ -154,11 +155,9 @@ export const ExpenseChart: React.FC<ExpenseChartProps> = ({
   const handlePressStart = (event: React.MouseEvent | React.TouchEvent) => {
     console.log('🔍 Press start', { type: event.type });
     
-    // Don't preventDefault on touchstart - it blocks all interactions
-    // Scrolling will be prevented by the effect when magnifier activates
     event.stopPropagation();
     
-    // Store initial position and time for tap detection
+    // Store initial position
     let x: number, y: number;
     if ('touches' in event) {
       x = event.touches[0].clientX;
@@ -169,15 +168,32 @@ export const ExpenseChart: React.FC<ExpenseChartProps> = ({
     }
     touchStartRef.current = { x, y };
     
-    // Only activate magnifier if there are small slices (< 5%)
+    // Check if press is inside the pie chart area
+    const bounds = mobileChartRef.current?.getBoundingClientRect() || chartRef.current?.getBoundingClientRect();
+    if (!bounds) return;
+    
+    const relX = (x - bounds.left) / bounds.width;
+    const relY = (y - bounds.top) / bounds.height;
+    const isInsideChart = relX >= 0 && relX <= 1 && relY >= 0 && relY <= 1;
+    
+    if (isInsideChart) {
+      console.log('📍 Press inside chart - will show education modal on long-press');
+      // Start timer to show education modal
+      longPressTimerRef.current = setTimeout(() => {
+        console.log('💡 Showing education modal');
+        setShowEducationModal(true);
+      }, 500);
+      return;
+    }
+    
+    // Press is outside chart - check for small slices and start magnifier
     const hasSmallSlices = categoryData.some(cat => isSmallSlice(cat.amount));
     if (!hasSmallSlices) {
       console.log('❌ No small slices found, magnifier not needed');
-      isLongPressAttemptRef.current = false;
       return;
     }
-    console.log('✅ Small slices detected, starting magnifier timer');
-    isLongPressAttemptRef.current = true; // Mark that we're attempting a long-press
+    console.log('✅ Press outside chart with small slices, starting magnifier timer');
+    isLongPressAttemptRef.current = true;
 
     // Position already stored in touchStartRef from earlier in this function
     const startPos = touchStartRef.current;
@@ -213,19 +229,9 @@ export const ExpenseChart: React.FC<ExpenseChartProps> = ({
     }, 500);
   };
 
-  // Handle press end - select category if magnifier was active or detect tap
-  const handlePressEnd = (event: React.MouseEvent | React.TouchEvent) => {
+  // Handle press end - select category if magnifier was active
+  const handlePressEnd = () => {
     console.log('🔍 Press end', { isMagnifierActive });
-    
-    // Get end position
-    let endX: number, endY: number;
-    if ('changedTouches' in event) {
-      endX = event.changedTouches[0].clientX;
-      endY = event.changedTouches[0].clientY;
-    } else {
-      endX = event.clientX;
-      endY = event.clientY;
-    }
     
     if (longPressTimerRef.current) {
       console.log('⏰ Clearing timer');
@@ -233,7 +239,6 @@ export const ExpenseChart: React.FC<ExpenseChartProps> = ({
       longPressTimerRef.current = null;
     }
     
-    // Clear long-press attempt flag
     isLongPressAttemptRef.current = false;
     
     // If magnifier was active and we have a hovered category, select it
@@ -255,36 +260,6 @@ export const ExpenseChart: React.FC<ExpenseChartProps> = ({
         } else {
           // On desktop, set selected category for side panel
           setSelectedDesktopCategory(category);
-        }
-      }
-    } else if (touchStartRef.current && !isMagnifierActive) {
-      // Handle normal tap (not a long-press) - select category at tap position
-      const dx = Math.abs(endX - touchStartRef.current.x);
-      const dy = Math.abs(endY - touchStartRef.current.y);
-      
-      // Only treat as tap if finger didn't move much
-      if (dx < 10 && dy < 10) {
-        console.log('👆 Tap detected, checking for category');
-        const category = detectCategoryAtPosition(endX, endY);
-        
-        if (category) {
-          const categoryItem = categoryData.find(c => c.category === category);
-          if (categoryItem) {
-            const totalAmount = categoryData.reduce((sum, cat) => sum + cat.amount, 0);
-            const percentage = ((categoryItem.amount / totalAmount) * 100).toFixed(1);
-            
-            // On mobile, set focused category to show transactions
-            if (window.innerWidth < 768) {
-              setFocusedCategory({
-                category: categoryItem.category,
-                amount: categoryItem.amount,
-                percentage
-              });
-            } else {
-              // On desktop, set selected category for side panel
-              setSelectedDesktopCategory(category);
-            }
-          }
         }
       }
     }
@@ -427,6 +402,11 @@ export const ExpenseChart: React.FC<ExpenseChartProps> = ({
                   innerRadius={0}
                   fill="#8884d8"
                   dataKey="amount"
+                  onMouseDown={(_data: any, index: number) => {
+                    if (categoryData[index]) {
+                      setSelectedDesktopCategory(categoryData[index].category);
+                    }
+                  }}
                 >
                   {categoryData.map((entry, index) => {
                     const colors = getCategoryColor(entry.category, 'expense', personalBudget);
@@ -559,6 +539,15 @@ export const ExpenseChart: React.FC<ExpenseChartProps> = ({
               innerRadius={0}
               fill="#8884d8"
               dataKey="amount"
+              onClick={(data) => {
+                const totalAmount = categoryData.reduce((sum, cat) => sum + cat.amount, 0);
+                const percentage = ((data.amount / totalAmount) * 100).toFixed(1);
+                setFocusedCategory({
+                  category: data.category,
+                  amount: data.amount,
+                  percentage
+                });
+              }}
             >
               {categoryData.map((entry, index) => {
                 const colors = getCategoryColor(entry.category, 'expense', personalBudget);
@@ -825,6 +814,32 @@ export const ExpenseChart: React.FC<ExpenseChartProps> = ({
           <p className="text-xs text-gray-500 dark:text-gray-400">
             💡 Long-press on the chart to magnify small categories
           </p>
+        </div>
+      )}
+
+      {/* Education Modal */}
+      {showEducationModal && (
+        <div 
+          className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50"
+          onClick={() => setShowEducationModal(false)}
+        >
+          <div 
+            className="bg-white dark:bg-gray-800 rounded-lg p-6 m-4 max-w-sm shadow-xl"
+            onClick={(e) => e.stopPropagation()}
+          >
+            <h3 className="text-lg font-semibold mb-3 text-gray-900 dark:text-gray-100">
+              💡 Magnifier Tool
+            </h3>
+            <p className="text-gray-700 dark:text-gray-300 mb-4">
+              To inspect small categories more closely, press and hold <strong>outside of the chart area</strong> (in the empty space around the pie).
+            </p>
+            <button
+              onClick={() => setShowEducationModal(false)}
+              className="w-full bg-purple-600 hover:bg-purple-700 text-white font-medium py-2 px-4 rounded-lg transition-colors"
+            >
+              Got it!
+            </button>
+          </div>
         </div>
       )}
     </div>
