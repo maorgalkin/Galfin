@@ -360,7 +360,10 @@ export const ExpenseChart: React.FC<ExpenseChartProps> = ({
     }
 
     // Detect which category is under the magnifier
-    const hoveredCategory = detectCategoryAtPosition(x, y);
+    // The magnifier center is 40px above the finger (visual offset -120px + radius 80px)
+    // We want the activation point to be the center of the magnifier
+    const effectiveY = y - 40;
+    const hoveredCategory = detectCategoryAtPosition(x, effectiveY);
     
     // Get fresh bounds from whichever chart is visible
     let bounds = magnifierData?.chartBounds;
@@ -766,7 +769,7 @@ export const ExpenseChart: React.FC<ExpenseChartProps> = ({
               className="fixed pointer-events-none z-50"
               style={{
                 left: `${magnifierData.position.x - 80}px`, // 80 = radius, centers the circle
-                top: `${magnifierData.position.y - 80}px`, // 80 = radius, centers the circle on finger
+                top: `${magnifierData.position.y - 120}px`, // 120px above finger (radius 80 + 40)
                 width: '160px',
                 height: '160px'
               }}
@@ -809,8 +812,10 @@ export const ExpenseChart: React.FC<ExpenseChartProps> = ({
                   }
                   
                   // Calculate relative position within chart (0 to 1)
+                  // Use effective Y (y - 40) to match the magnifier center
+                  const effectiveY = magnifierData.position.y - 40;
                   const relX = (magnifierData.position.x - magnifierData.chartBounds.left) / chartWidth;
-                  const relY = (magnifierData.position.y - magnifierData.chartBounds.top) / chartHeight;
+                  const relY = (effectiveY - magnifierData.chartBounds.top) / chartHeight;
                   
                   console.log('📍 Relative position:', { relX, relY });
                   
