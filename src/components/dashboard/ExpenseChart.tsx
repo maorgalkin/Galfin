@@ -386,15 +386,39 @@ export const ExpenseChart: React.FC<ExpenseChartProps> = ({
     
     // Find the pie slice path element
     for (const element of elements) {
-      if (element.tagName === 'path' && element.parentElement?.classList.contains('recharts-pie-sector')) {
-        // Try to find associated category from data
-        const pathIndex = Array.from(element.parentElement.children).indexOf(element);
-        if (pathIndex >= 0 && pathIndex < categoryData.length) {
-          const category = categoryData[pathIndex];
-          // Return if allowAll is true OR if it's a small slice
-          if (allowAll || isSmallSlice(category.amount)) {
-            return category.category;
-          }
+      // Check if it's a path (SVG)
+      if (element.tagName.toLowerCase() === 'path') {
+        // Check if it's inside one of our charts
+        const isInsideChart = (chartRef.current && chartRef.current.contains(element)) || 
+                              (mobileChartRef.current && mobileChartRef.current.contains(element));
+        
+        if (isInsideChart) {
+           // It's a path inside our chart. Now find its index among sibling paths.
+           // Recharts usually groups sectors.
+           const parent = element.parentElement;
+           if (parent) {
+             // Filter children to only include paths (ignore shadows or other elements if any)
+             const siblingPaths = Array.from(parent.children).filter(c => c.tagName.toLowerCase() === 'path');
+             const pathIndex = siblingPaths.indexOf(element);
+             
+             if (DEBUG_ZONES) {
+                console.log('🎯 Hit detection:', { 
+                  tagName: element.tagName, 
+                  parentClass: parent.getAttribute('class'),
+                  pathIndex,
+                  totalPaths: siblingPaths.length,
+                  category: categoryData[pathIndex]?.category
+                });
+             }
+
+             if (pathIndex >= 0 && pathIndex < categoryData.length) {
+               const category = categoryData[pathIndex];
+               // Return if allowAll is true OR if it's a small slice
+               if (allowAll || isSmallSlice(category.amount)) {
+                 return category.category;
+               }
+             }
+           }
         }
       }
     }
@@ -565,23 +589,24 @@ export const ExpenseChart: React.FC<ExpenseChartProps> = ({
       </div>
 
       {/* Mobile Layout - Pie chart with transaction list */}
-      <div 
-        ref={mobileChartRef}
-        className="md:hidden p-8 relative"
-        style={{ 
-          userSelect: 'none', 
-          WebkitUserSelect: 'none',
-          WebkitTouchCallout: 'none',
-          touchAction: 'none' // Always prevent default touch actions on chart
-        }}
-        onMouseDown={handlePressStart}
-        onMouseMove={handleMove}
-        onMouseUp={handlePressEnd}
-        onMouseLeave={handlePressEnd}
-        onTouchStart={handlePressStart}
-        onTouchMove={handleMove}
-        onTouchEnd={handlePressEnd}
-      >
+      <div className="md:hidden p-8">
+        <div 
+          ref={mobileChartRef}
+          className="relative"
+          style={{ 
+            userSelect: 'none', 
+            WebkitUserSelect: 'none',
+            WebkitTouchCallout: 'none',
+            touchAction: 'none' // Always prevent default touch actions on chart
+          }}
+          onMouseDown={handlePressStart}
+          onMouseMove={handleMove}
+          onMouseUp={handlePressEnd}
+          onMouseLeave={handlePressEnd}
+          onTouchStart={handlePressStart}
+          onTouchMove={handleMove}
+          onTouchEnd={handlePressEnd}
+        >
         {DEBUG_ZONES && (
           <>
             {/* Magnifier Zone (Outside) - Blue */}
@@ -629,6 +654,7 @@ export const ExpenseChart: React.FC<ExpenseChartProps> = ({
             />
           </PieChart>
         </ResponsiveContainer>
+        </div>
       
         {/* Mobile-only: Transaction list when category selected */}
         {focusedCategory ? (
