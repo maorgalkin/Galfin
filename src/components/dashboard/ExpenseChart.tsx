@@ -228,17 +228,24 @@ export const ExpenseChart: React.FC<ExpenseChartProps> = ({
       
       console.log('📐 Final chart bounds:', bounds);
       setIsMagnifierActive(true);
+
+      // Calculate initial hovered category based on offset
+      // The magnifier center is 40px above the finger
+      const effectiveY = startPos.y - 40;
+      const initialHovered = detectCategoryAtPosition(startPos.x, effectiveY);
+      console.log('🎯 Initial magnifier target:', { effectiveY, initialHovered });
+
       setMagnifierData({
         position: { x: startPos.x, y: startPos.y },
         chartBounds: bounds,
-        hoveredCategory: null
+        hoveredCategory: initialHovered
       });
     }, 500);
   };
 
   // Handle press end - select category if magnifier was active or detect tap
   const handlePressEnd = (event: React.MouseEvent | React.TouchEvent) => {
-    console.log('🔍 Press end', { isMagnifierActive });
+    console.log('🔍 Press end', { isMagnifierActive, hovered: magnifierData?.hoveredCategory });
     
     // Get end position
     let endX: number, endY: number;
