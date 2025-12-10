@@ -168,16 +168,20 @@ export const ExpenseChart: React.FC<ExpenseChartProps> = ({
     }
     touchStartRef.current = { x, y };
     
-    // Check if press is inside the pie chart area
+    // Check if press is inside the pie chart area (radius check)
     const bounds = mobileChartRef.current?.getBoundingClientRect() || chartRef.current?.getBoundingClientRect();
     if (!bounds) return;
     
-    const relX = (x - bounds.left) / bounds.width;
-    const relY = (y - bounds.top) / bounds.height;
-    const isInsideChart = relX >= 0 && relX <= 1 && relY >= 0 && relY <= 1;
+    // Calculate distance from center of chart container
+    const centerX = bounds.left + bounds.width / 2;
+    const centerY = bounds.top + bounds.height / 2;
+    const distance = Math.sqrt(Math.pow(x - centerX, 2) + Math.pow(y - centerY, 2));
+    
+    // Pie chart radius is 90px. Add a small buffer (100px) to be safe.
+    const isInsideChart = distance < 100;
     
     if (isInsideChart) {
-      console.log('📍 Press inside chart - will show education modal on long-press');
+      console.log('📍 Press inside chart (dist:', Math.round(distance), ') - will show education modal on long-press');
       // Start timer to show education modal
       longPressTimerRef.current = setTimeout(() => {
         console.log('💡 Showing education modal');
@@ -192,7 +196,7 @@ export const ExpenseChart: React.FC<ExpenseChartProps> = ({
       console.log('❌ No small slices found, magnifier not needed');
       return;
     }
-    console.log('✅ Press outside chart with small slices, starting magnifier timer');
+    console.log('✅ Press outside chart (dist:', Math.round(distance), ') with small slices, starting magnifier timer');
     isLongPressAttemptRef.current = true;
 
     // Position already stored in touchStartRef from earlier in this function
