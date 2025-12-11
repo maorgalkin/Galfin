@@ -154,9 +154,21 @@ export const ExpenseChart: React.FC<ExpenseChartProps> = ({
     return (amount / totalAmount) * 100 < 5;
   };
 
+  const isTouchRef = useRef(false);
+
   // Handle long press start
   const handlePressStart = (event: React.MouseEvent | React.TouchEvent) => {
     console.log('🔍 Press start', { type: event.type });
+    
+    // Ignore mouse events if we've seen touch events recently
+    if (event.type.startsWith('mouse') && isTouchRef.current) {
+      console.log('🚫 Ignoring mouse event due to touch interaction');
+      return;
+    }
+    
+    if (event.type === 'touchstart') {
+      isTouchRef.current = true;
+    }
     
     // Clear any existing timer to prevent conflicts
     if (longPressTimerRef.current) {
@@ -248,7 +260,12 @@ export const ExpenseChart: React.FC<ExpenseChartProps> = ({
 
   // Handle press end - select category if magnifier was active or detect tap
   const handlePressEnd = (event: React.MouseEvent | React.TouchEvent) => {
-    console.log('🔍 Press end', { isMagnifierActive });
+    console.log('🔍 Press end', { isMagnifierActive, type: event.type });
+    
+    // Ignore mouse events if we've seen touch events recently
+    if (event.type.startsWith('mouse') && isTouchRef.current) {
+      return;
+    }
     
     // Get end position
     let endX: number, endY: number;
@@ -329,6 +346,11 @@ export const ExpenseChart: React.FC<ExpenseChartProps> = ({
 
   // Handle mouse/touch move
   const handleMove = (event: React.MouseEvent | React.TouchEvent) => {
+    // Ignore mouse events if we've seen touch events recently
+    if (event.type.startsWith('mouse') && isTouchRef.current) {
+      return;
+    }
+
     if (!isMagnifierActive) {
       // Check if we're in the initial press timer
       if (touchStartRef.current && longPressTimerRef.current) {
