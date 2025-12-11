@@ -161,23 +161,22 @@ export const ExpenseChart: React.FC<ExpenseChartProps> = ({
     return (amount / totalAmount) * 100 < 5;
   };
 
-  const isTouchRef = useRef(false);
-
   // Handle long press start
-  const handlePressStart = (event: React.MouseEvent | React.TouchEvent) => {
-    console.log('🔍 Press start', { type: event.type });
-    logDebug(`Start: ${event.type}`);
+  const handlePressStart = (event: React.PointerEvent) => {
+    console.log('🔍 Press start', { type: event.type, pointerType: event.pointerType });
+    logDebug(`Start: ${event.pointerType}`);
     
-    // Ignore mouse events if we've seen touch events recently
-    if (event.type.startsWith('mouse') && isTouchRef.current) {
-      console.log('🚫 Ignoring mouse event due to touch interaction');
-      logDebug('Ignore mouse (touch active)');
-      return;
-    }
-    
-    if (event.type === 'touchstart') {
-      isTouchRef.current = true;
-      logDebug('Touch mode ON');
+    // Only handle primary pointer (first finger/mouse button)
+    if (!event.isPrimary) return;
+
+    // Capture pointer to ensure we get move/up events even if cursor leaves element
+    // This is CRITICAL for reliable drag/hold behavior
+    try {
+      (event.target as Element).setPointerCapture(event.pointerId);
+      logDebug('Pointer Captured');
+    } catch (e) {
+      console.error('Failed to capture pointer', e);
+      logDebug('Capture Failed');
     }
     
     // Clear any existing timer to prevent conflicts
@@ -187,17 +186,9 @@ export const ExpenseChart: React.FC<ExpenseChartProps> = ({
       logDebug('Cleared existing timer');
     }
     
-    event.stopPropagation();
-    
     // Store initial position
-    let x: number, y: number;
-    if ('touches' in event) {
-      x = event.touches[0].clientX;
-      y = event.touches[0].clientY;
-    } else {
-      x = event.clientX;
-      y = event.clientY;
-    }
+    const x = event.clientX;
+    const y = event.clientY;
     touchStartRef.current = { x, y };
     logDebug(`Pos: ${Math.round(x)},${Math.round(y)}`);
     
@@ -280,25 +271,22 @@ export const ExpenseChart: React.FC<ExpenseChartProps> = ({
   };
 
   // Handle press end - select category if magnifier was active or detect tap
-  const handlePressEnd = (event: React.MouseEvent | React.TouchEvent) => {
+  const handlePressEnd = (event: React.PointerEvent) => {
     console.log('🔍 Press end', { isMagnifierActive, type: event.type });
-    logDebug(`End: ${event.type}`);
+    logDebug(`End: ${event.pointerType}`);
     
-    // Ignore mouse events if we've seen touch events recently
-    if (event.type.startsWith('mouse') && isTouchRef.current) {
-      logDebug('Ignore mouse end');
-      return;
+    // Release pointer capture
+    try {
+      if ((event.target as Element).hasPointerCapture(event.pointerId)) {
+        (event.target as Element).releasePointerCapture(event.pointerId);
+      }
+    } catch (e) {
+      // Ignore errors if pointer was already released
     }
-    
+
     // Get end position
-    let endX: number, endY: number;
-    if ('changedTouches' in event) {
-      endX = event.changedTouches[0].clientX;
-      endY = event.changedTouches[0].clientY;
-    } else {
-      endX = event.clientX;
-      endY = event.clientY;
-    }
+    const endX = event.clientX;
+    const endY = event.clientY;
     
     if (longPressTimerRef.current) {
       console.log('⏰ Clearing timer');
@@ -376,23 +364,12 @@ export const ExpenseChart: React.FC<ExpenseChartProps> = ({
   };
 
   // Handle mouse/touch move
-  const handleMove = (event: React.MouseEvent | React.TouchEvent) => {
-    // Ignore mouse events if we've seen touch events recently
-    if (event.type.startsWith('mouse') && isTouchRef.current) {
-      return;
-    }
-
+  const handleMove = (event: React.PointerEvent) => {
     if (!isMagnifierActive) {
       // Check if we're in the initial press timer
       if (touchStartRef.current && longPressTimerRef.current) {
-        let x: number, y: number;
-        if ('touches' in event) {
-          x = event.touches[0].clientX;
-          y = event.touches[0].clientY;
-        } else {
-          x = event.clientX;
-          y = event.clientY;
-        }
+        const x = event.clientX;
+        const y = event.clientY;
         
         const deltaX = Math.abs(x - touchStartRef.current.x);
         const deltaY = Math.abs(y - touchStartRef.current.y);
@@ -414,14 +391,8 @@ export const ExpenseChart: React.FC<ExpenseChartProps> = ({
     event.stopPropagation();
 
     // Update magnifier position when active
-    let x: number, y: number;
-    if ('touches' in event) {
-      x = event.touches[0].clientX;
-      y = event.touches[0].clientY;
-    } else {
-      x = event.clientX;
-      y = event.clientY;
-    }
+    const x = event.clientX;
+    const y = event.clientY;
 
     // Detect which category is under the magnifier
     // Pass true to allowAll so we detect ANY category under the lens
@@ -537,14 +508,11 @@ export const ExpenseChart: React.FC<ExpenseChartProps> = ({
               WebkitUserSelect: 'none',
               touchAction: isMagnifierActive ? 'none' : 'auto'
             }}
-            onMouseDown={handlePressStart}
-            onMouseMove={handleMove}
-            onMouseUp={handlePressEnd}
-            onMouseLeave={handlePressEnd}
-            onTouchStart={handlePressStart}
-            onTouchMove={handleMove}
-            onTouchEnd={handlePressEnd}
-            onTouchCancel={handlePressEnd}
+            onPointerDown={handlePressStart}
+            onPointerMove={handleMove}
+            onPointerUp={handlePressEnd}
+            onPointerCancel={handlePressEnd}
+            onPointerLeave={handlePressEnd}
           >
             {DEBUG_ZONES && (
               <>
@@ -692,14 +660,11 @@ export const ExpenseChart: React.FC<ExpenseChartProps> = ({
             touchAction: 'none' // Always prevent default touch actions on chart
           }}
           onContextMenu={(e) => e.preventDefault()} // Prevent system context menu on long press
-          onMouseDownCapture={handlePressStart}
-          onMouseMoveCapture={handleMove}
-          onMouseUpCapture={handlePressEnd}
-          onMouseLeave={handlePressEnd}
-          onTouchStartCapture={handlePressStart}
-          onTouchMoveCapture={handleMove}
-          onTouchEndCapture={handlePressEnd}
-          onTouchCancelCapture={handlePressEnd}
+          onPointerDown={handlePressStart}
+          onPointerMove={handleMove}
+          onPointerUp={handlePressEnd}
+          onPointerCancel={handlePressEnd}
+          onPointerLeave={handlePressEnd}
         >
         {DEBUG_ZONES && (
           <>
@@ -1009,7 +974,6 @@ export const ExpenseChart: React.FC<ExpenseChartProps> = ({
       )}
       {/* DEBUG OVERLAY */}
       <div className="fixed top-20 left-0 bg-black/80 text-white p-2 text-xs z-50 pointer-events-none max-w-[200px]">
-        <div>Touch: {isTouchRef.current ? 'YES' : 'NO'}</div>
         <div>Mag: {isMagnifierActive ? 'YES' : 'NO'}</div>
         <div>Timer: {longPressTimerRef.current ? 'YES' : 'NO'}</div>
         <div className="border-t border-gray-500 mt-1 pt-1">
