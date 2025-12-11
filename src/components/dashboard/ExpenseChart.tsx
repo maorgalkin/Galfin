@@ -172,7 +172,8 @@ export const ExpenseChart: React.FC<ExpenseChartProps> = ({
     // Capture pointer to ensure we get move/up events even if cursor leaves element
     // This is CRITICAL for reliable drag/hold behavior
     try {
-      (event.target as Element).setPointerCapture(event.pointerId);
+      // Use currentTarget (the container div) instead of target (which might be an SVG path that gets removed)
+      (event.currentTarget as Element).setPointerCapture(event.pointerId);
       logDebug('Pointer Captured');
     } catch (e) {
       console.error('Failed to capture pointer', e);
@@ -277,8 +278,9 @@ export const ExpenseChart: React.FC<ExpenseChartProps> = ({
     
     // Release pointer capture
     try {
-      if ((event.target as Element).hasPointerCapture(event.pointerId)) {
-        (event.target as Element).releasePointerCapture(event.pointerId);
+      // Use currentTarget to match the capture target
+      if ((event.currentTarget as Element).hasPointerCapture(event.pointerId)) {
+        (event.currentTarget as Element).releasePointerCapture(event.pointerId);
       }
     } catch (e) {
       // Ignore errors if pointer was already released
@@ -652,12 +654,13 @@ export const ExpenseChart: React.FC<ExpenseChartProps> = ({
       <div className="md:hidden">
         <div 
           ref={mobileChartRef}
-          className="relative border-2 border-red-500/50"
+          className="relative border-2 border-red-500/50 outline-none"
           style={{ 
             userSelect: 'none', 
             WebkitUserSelect: 'none',
             WebkitTouchCallout: 'none',
-            touchAction: 'none' // Always prevent default touch actions on chart
+            touchAction: 'none', // Always prevent default touch actions on chart
+            WebkitTapHighlightColor: 'transparent' // Remove blue highlight on tap
           }}
           onContextMenu={(e) => e.preventDefault()} // Prevent system context menu on long press
           onPointerDown={handlePressStart}
