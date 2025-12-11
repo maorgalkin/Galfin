@@ -52,6 +52,13 @@ export const ExpenseChart: React.FC<ExpenseChartProps> = ({
   } | null>(null);
   const [isMagnifierActive, setIsMagnifierActive] = useState(false);
   const [showEducationModal, setShowEducationModal] = useState(false);
+  
+  // DEBUG STATE
+  const [debugLogs, setDebugLogs] = useState<string[]>([]);
+  const logDebug = (msg: string) => {
+    setDebugLogs(prev => [`${new Date().toISOString().split('T')[1].slice(3,9)} ${msg}`, ...prev].slice(0, 8));
+  };
+
   const longPressTimerRef = useRef<NodeJS.Timeout | null>(null);
   const touchStartRef = useRef<{ x: number; y: number } | null>(null);
   const isLongPressAttemptRef = useRef(false); // Track if we're attempting a long-press
@@ -159,21 +166,25 @@ export const ExpenseChart: React.FC<ExpenseChartProps> = ({
   // Handle long press start
   const handlePressStart = (event: React.MouseEvent | React.TouchEvent) => {
     console.log('🔍 Press start', { type: event.type });
+    logDebug(`Start: ${event.type}`);
     
     // Ignore mouse events if we've seen touch events recently
     if (event.type.startsWith('mouse') && isTouchRef.current) {
       console.log('🚫 Ignoring mouse event due to touch interaction');
+      logDebug('Ignore mouse (touch active)');
       return;
     }
     
     if (event.type === 'touchstart') {
       isTouchRef.current = true;
+      logDebug('Touch mode ON');
     }
     
     // Clear any existing timer to prevent conflicts
     if (longPressTimerRef.current) {
       clearTimeout(longPressTimerRef.current);
       longPressTimerRef.current = null;
+      logDebug('Cleared existing timer');
     }
     
     event.stopPropagation();
@@ -188,10 +199,14 @@ export const ExpenseChart: React.FC<ExpenseChartProps> = ({
       y = event.clientY;
     }
     touchStartRef.current = { x, y };
+    logDebug(`Pos: ${Math.round(x)},${Math.round(y)}`);
     
     // Check if press is inside the pie chart area (radius check)
     const bounds = mobileChartRef.current?.getBoundingClientRect() || chartRef.current?.getBoundingClientRect();
-    if (!bounds) return;
+    if (!bounds) {
+        logDebug('No bounds!');
+        return;
+    }
     
     // Calculate distance from center of chart container
     const centerX = bounds.left + bounds.width / 2;
@@ -203,9 +218,11 @@ export const ExpenseChart: React.FC<ExpenseChartProps> = ({
     
     if (isInsideChart) {
       console.log('📍 Press inside chart (dist:', Math.round(distance), ') - will show education modal on long-press');
+      logDebug(`Inside chart (${Math.round(distance)})`);
       // Start timer to show education modal
       longPressTimerRef.current = setTimeout(() => {
         console.log('💡 Showing education modal');
+        logDebug('Show Edu Modal');
         setShowEducationModal(true);
       }, 400); // Reduced to 400ms for better responsiveness
       return;
@@ -215,9 +232,11 @@ export const ExpenseChart: React.FC<ExpenseChartProps> = ({
     const hasSmallSlices = categoryData.some(cat => isSmallSlice(cat.amount));
     if (!hasSmallSlices) {
       console.log('❌ No small slices found, magnifier not needed');
+      logDebug('No small slices');
       return;
     }
     console.log('✅ Press outside chart (dist:', Math.round(distance), ') with small slices, starting magnifier timer');
+    logDebug(`Outside (${Math.round(distance)}) - Start Timer`);
     isLongPressAttemptRef.current = true;
 
     // Position already stored in touchStartRef from earlier in this function
@@ -227,6 +246,7 @@ export const ExpenseChart: React.FC<ExpenseChartProps> = ({
     // Start timer for long press (400ms)
     longPressTimerRef.current = setTimeout(() => {
       console.log('⏰ Timer fired! Activating magnifier');
+      logDebug('TIMER FIRED');
       console.log('📐 Checking refs:', {
         chartRef: !!chartRef.current,
         mobileChartRef: !!mobileChartRef.current
@@ -242,6 +262,7 @@ export const ExpenseChart: React.FC<ExpenseChartProps> = ({
         console.log('🖥️ Using desktop chart bounds:', bounds);
       } else {
         console.error('❌ No chart ref available!');
+        logDebug('No chart ref!');
       }
       
       console.log('📐 Final chart bounds:', bounds);
@@ -261,9 +282,11 @@ export const ExpenseChart: React.FC<ExpenseChartProps> = ({
   // Handle press end - select category if magnifier was active or detect tap
   const handlePressEnd = (event: React.MouseEvent | React.TouchEvent) => {
     console.log('🔍 Press end', { isMagnifierActive, type: event.type });
+    logDebug(`End: ${event.type}`);
     
     // Ignore mouse events if we've seen touch events recently
     if (event.type.startsWith('mouse') && isTouchRef.current) {
+      logDebug('Ignore mouse end');
       return;
     }
     
@@ -279,6 +302,7 @@ export const ExpenseChart: React.FC<ExpenseChartProps> = ({
     
     if (longPressTimerRef.current) {
       console.log('⏰ Clearing timer');
+      logDebug('Clear Timer');
       clearTimeout(longPressTimerRef.current);
       longPressTimerRef.current = null;
     }
@@ -287,6 +311,7 @@ export const ExpenseChart: React.FC<ExpenseChartProps> = ({
     
     // If magnifier was active and we have a hovered category, select it
     if (isMagnifierActive && magnifierData?.hoveredCategory) {
+      logDebug('Select via Mag');
       const category = magnifierData.hoveredCategory;
       const categoryItem = categoryData.find(c => c.category === category);
       
@@ -314,10 +339,12 @@ export const ExpenseChart: React.FC<ExpenseChartProps> = ({
       // Only treat as tap if finger didn't move much
       if (dx < 10 && dy < 10) {
         console.log('👆 Tap detected, checking for category');
+        logDebug('Tap Detected');
         // Use detectCategoryAtPosition but allow all slices (not just small ones)
         const category = detectCategoryAtPosition(endX, endY, true);
         
         if (category) {
+          logDebug(`Tap Cat: ${category}`);
           const categoryItem = categoryData.find(c => c.category === category);
           if (categoryItem) {
             const totalAmount = categoryData.reduce((sum, cat) => sum + cat.amount, 0);
@@ -335,7 +362,11 @@ export const ExpenseChart: React.FC<ExpenseChartProps> = ({
               setSelectedDesktopCategory(category);
             }
           }
+        } else {
+            logDebug('Tap: No Cat');
         }
+      } else {
+          logDebug(`Moved too much for tap: ${Math.round(dx)},${Math.round(dy)}`);
       }
     }
     
@@ -369,6 +400,7 @@ export const ExpenseChart: React.FC<ExpenseChartProps> = ({
         // Cancel if moved more than 15px during initial press (increased from 10px for better tolerance)
         if (deltaX > 15 || deltaY > 15) {
           console.log('❌ Movement detected, canceling timer:', { deltaX, deltaY });
+          logDebug(`Moved > 15px (${Math.round(deltaX)},${Math.round(deltaY)}) - Cancel`);
           clearTimeout(longPressTimerRef.current);
           longPressTimerRef.current = null;
         }
@@ -652,7 +684,7 @@ export const ExpenseChart: React.FC<ExpenseChartProps> = ({
       <div className="md:hidden">
         <div 
           ref={mobileChartRef}
-          className="relative"
+          className="relative border-2 border-red-500/50"
           style={{ 
             userSelect: 'none', 
             WebkitUserSelect: 'none',
@@ -975,6 +1007,15 @@ export const ExpenseChart: React.FC<ExpenseChartProps> = ({
           </div>
         </div>
       )}
+      {/* DEBUG OVERLAY */}
+      <div className="fixed top-20 left-0 bg-black/80 text-white p-2 text-xs z-50 pointer-events-none max-w-[200px]">
+        <div>Touch: {isTouchRef.current ? 'YES' : 'NO'}</div>
+        <div>Mag: {isMagnifierActive ? 'YES' : 'NO'}</div>
+        <div>Timer: {longPressTimerRef.current ? 'YES' : 'NO'}</div>
+        <div className="border-t border-gray-500 mt-1 pt-1">
+          {debugLogs.map((log, i) => <div key={i}>{log}</div>)}
+        </div>
+      </div>
     </div>
   );
 };
