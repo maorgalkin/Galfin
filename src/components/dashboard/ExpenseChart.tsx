@@ -227,14 +227,11 @@ export const ExpenseChart: React.FC<ExpenseChartProps> = ({
       }
       
       console.log('📐 Final chart bounds:', bounds);
+      
+      // Detect initial category under the finger
+      const initialHovered = detectCategoryAtPosition(startPos.x, startPos.y, true);
+      
       setIsMagnifierActive(true);
-
-      // Calculate initial hovered category based on offset
-      // The magnifier center is 40px above the finger
-      const effectiveY = startPos.y - 40;
-      const initialHovered = detectCategoryAtPosition(startPos.x, effectiveY);
-      console.log('🎯 Initial magnifier target:', { effectiveY, initialHovered });
-
       setMagnifierData({
         position: { x: startPos.x, y: startPos.y },
         chartBounds: bounds,
@@ -245,7 +242,7 @@ export const ExpenseChart: React.FC<ExpenseChartProps> = ({
 
   // Handle press end - select category if magnifier was active or detect tap
   const handlePressEnd = (event: React.MouseEvent | React.TouchEvent) => {
-    console.log('🔍 Press end', { isMagnifierActive, hovered: magnifierData?.hoveredCategory });
+    console.log('🔍 Press end', { isMagnifierActive });
     
     // Get end position
     let endX: number, endY: number;
@@ -367,10 +364,8 @@ export const ExpenseChart: React.FC<ExpenseChartProps> = ({
     }
 
     // Detect which category is under the magnifier
-    // The magnifier center is 40px above the finger (visual offset -120px + radius 80px)
-    // We want the activation point to be the center of the magnifier
-    const effectiveY = y - 40;
-    const hoveredCategory = detectCategoryAtPosition(x, effectiveY);
+    // Pass true to allowAll so we detect ANY category under the lens
+    const hoveredCategory = detectCategoryAtPosition(x, y, true);
     
     // Get fresh bounds from whichever chart is visible
     let bounds = magnifierData?.chartBounds;
@@ -533,14 +528,20 @@ export const ExpenseChart: React.FC<ExpenseChartProps> = ({
                   ]}
                   labelFormatter={() => ''}
                   contentStyle={{
-                    backgroundColor: 'white',
-                    border: '1px solid #e5e7eb',
-                    borderRadius: '8px',
-                    boxShadow: '0 4px 6px -1px rgba(0, 0, 0, 0.1)'
+                    backgroundColor: '#1f2937', // gray-800
+                    border: 'none',
+                    borderRadius: '0.5rem',
+                    boxShadow: '0 20px 25px -5px rgba(0, 0, 0, 0.1), 0 10px 10px -5px rgba(0, 0, 0, 0.04)',
+                    color: '#f3f4f6',
+                    padding: '8px 12px'
+                  }}
+                  itemStyle={{
+                    color: '#f3f4f6'
                   }}
                   wrapperStyle={{
-                    animation: 'fadeIn 0.2s ease-in'
+                    outline: 'none'
                   }}
+                  cursor={{ fill: 'transparent' }}
                 />
               </PieChart>
             </ResponsiveContainer>
@@ -617,7 +618,7 @@ export const ExpenseChart: React.FC<ExpenseChartProps> = ({
       </div>
 
       {/* Mobile Layout - Pie chart with transaction list */}
-      <div className="md:hidden p-8">
+      <div className="md:hidden">
         <div 
           ref={mobileChartRef}
           className="relative"
@@ -667,19 +668,6 @@ export const ExpenseChart: React.FC<ExpenseChartProps> = ({
                 );
               })}
             </Pie>
-            <RechartsTooltip 
-              formatter={(value: any, _name: any, props: any) => [
-                formatCurrency(value as number),
-                props.payload.category
-              ]}
-              labelFormatter={() => ''}
-              contentStyle={{
-                backgroundColor: 'white',
-                border: '1px solid #e5e7eb',
-                borderRadius: '8px',
-                boxShadow: '0 4px 6px -1px rgba(0, 0, 0, 0.1)'
-              }}
-            />
           </PieChart>
         </ResponsiveContainer>
         </div>
@@ -767,15 +755,6 @@ export const ExpenseChart: React.FC<ExpenseChartProps> = ({
           return true;
         })() && (
           <>
-            {/* Touch Point Indicator - Shows where the finger is */}
-            <div 
-              className="fixed pointer-events-none z-50 w-8 h-8 rounded-full border-2 border-white bg-black/20"
-              style={{
-                left: `${magnifierData.position.x - 16}px`,
-                top: `${magnifierData.position.y - 16}px`,
-              }}
-            />
-
             {/* Magnifier Circle - shows zoomed portion of chart */}
             <motion.div
               initial={{ opacity: 0, scale: 0 }}
@@ -785,7 +764,7 @@ export const ExpenseChart: React.FC<ExpenseChartProps> = ({
               className="fixed pointer-events-none z-50"
               style={{
                 left: `${magnifierData.position.x - 80}px`, // 80 = radius, centers the circle
-                top: `${magnifierData.position.y - 120}px`, // 120px above finger (radius 80 + 40)
+                top: `${magnifierData.position.y - 80}px`, // 80 = radius, centers the circle on finger
                 width: '160px',
                 height: '160px'
               }}
@@ -799,11 +778,6 @@ export const ExpenseChart: React.FC<ExpenseChartProps> = ({
                   clipPath: 'circle(50% at 50% 50%)'
                 }}
               >
-                {/* Center Crosshair - Shows the activation point */}
-                <div className="absolute inset-0 flex items-center justify-center pointer-events-none z-20">
-                  <div className="w-2 h-2 bg-blue-500 rounded-full opacity-50" />
-                </div>
-
                 {/* Magnified chart - 2.5x zoom */}
                 {(() => {
                   console.log('📊 Rendering magnified chart');
@@ -833,10 +807,8 @@ export const ExpenseChart: React.FC<ExpenseChartProps> = ({
                   }
                   
                   // Calculate relative position within chart (0 to 1)
-                  // Use effective Y (y - 40) to match the magnifier center
-                  const effectiveY = magnifierData.position.y - 40;
                   const relX = (magnifierData.position.x - magnifierData.chartBounds.left) / chartWidth;
-                  const relY = (effectiveY - magnifierData.chartBounds.top) / chartHeight;
+                  const relY = (magnifierData.position.y - magnifierData.chartBounds.top) / chartHeight;
                   
                   console.log('📍 Relative position:', { relX, relY });
                   
