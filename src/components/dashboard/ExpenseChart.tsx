@@ -637,6 +637,7 @@ export const ExpenseChart: React.FC<ExpenseChartProps> = ({
             WebkitTouchCallout: 'none',
             touchAction: 'none' // Always prevent default touch actions on chart
           }}
+          onContextMenu={(e) => e.preventDefault()} // Prevent system context menu on long press
           onMouseDown={handlePressStart}
           onMouseMove={handleMove}
           onMouseUp={handlePressEnd}
