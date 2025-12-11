@@ -521,28 +521,30 @@ export const ExpenseChart: React.FC<ExpenseChartProps> = ({
                     );
                   })}
                 </Pie>
-                <RechartsTooltip 
-                  formatter={(value: any, _name: any, props: any) => [
-                    formatCurrency(value as number),
-                    props.payload.category
-                  ]}
-                  labelFormatter={() => ''}
-                  contentStyle={{
-                    backgroundColor: '#1f2937', // gray-800
-                    border: 'none',
-                    borderRadius: '0.5rem',
-                    boxShadow: '0 20px 25px -5px rgba(0, 0, 0, 0.1), 0 10px 10px -5px rgba(0, 0, 0, 0.04)',
-                    color: '#f3f4f6',
-                    padding: '8px 12px'
-                  }}
-                  itemStyle={{
-                    color: '#f3f4f6'
-                  }}
-                  wrapperStyle={{
-                    outline: 'none'
-                  }}
-                  cursor={{ fill: 'transparent' }}
-                />
+                {!isMagnifierActive && (
+                  <RechartsTooltip 
+                    formatter={(value: any, _name: any, props: any) => [
+                      formatCurrency(value as number),
+                      props.payload.category
+                    ]}
+                    labelFormatter={() => ''}
+                    contentStyle={{
+                      backgroundColor: '#1f2937', // gray-800
+                      border: 'none',
+                      borderRadius: '0.5rem',
+                      boxShadow: '0 20px 25px -5px rgba(0, 0, 0, 0.1), 0 10px 10px -5px rgba(0, 0, 0, 0.04)',
+                      color: '#f3f4f6',
+                      padding: '8px 12px'
+                    }}
+                    itemStyle={{
+                      color: '#f3f4f6'
+                    }}
+                    wrapperStyle={{
+                      outline: 'none'
+                    }}
+                    cursor={{ fill: 'transparent' }}
+                  />
+                )}
               </PieChart>
             </ResponsiveContainer>
           </motion.div>
