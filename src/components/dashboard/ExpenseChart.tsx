@@ -158,6 +158,12 @@ export const ExpenseChart: React.FC<ExpenseChartProps> = ({
   const handlePressStart = (event: React.MouseEvent | React.TouchEvent) => {
     console.log('🔍 Press start', { type: event.type });
     
+    // Clear any existing timer to prevent conflicts
+    if (longPressTimerRef.current) {
+      clearTimeout(longPressTimerRef.current);
+      longPressTimerRef.current = null;
+    }
+    
     event.stopPropagation();
     
     // Store initial position
@@ -189,7 +195,7 @@ export const ExpenseChart: React.FC<ExpenseChartProps> = ({
       longPressTimerRef.current = setTimeout(() => {
         console.log('💡 Showing education modal');
         setShowEducationModal(true);
-      }, 500);
+      }, 400); // Reduced to 400ms for better responsiveness
       return;
     }
     
@@ -206,7 +212,7 @@ export const ExpenseChart: React.FC<ExpenseChartProps> = ({
     const startPos = touchStartRef.current;
     console.log('📍 Position for magnifier:', startPos);
 
-    // Start timer for long press (500ms)
+    // Start timer for long press (400ms)
     longPressTimerRef.current = setTimeout(() => {
       console.log('⏰ Timer fired! Activating magnifier');
       console.log('📐 Checking refs:', {
@@ -237,7 +243,7 @@ export const ExpenseChart: React.FC<ExpenseChartProps> = ({
         chartBounds: bounds,
         hoveredCategory: initialHovered
       });
-    }, 500);
+    }, 400); // Reduced to 400ms
   };
 
   // Handle press end - select category if magnifier was active or detect tap
@@ -338,8 +344,8 @@ export const ExpenseChart: React.FC<ExpenseChartProps> = ({
         const deltaX = Math.abs(x - touchStartRef.current.x);
         const deltaY = Math.abs(y - touchStartRef.current.y);
         
-        // Cancel if moved more than 10px during initial press
-        if (deltaX > 10 || deltaY > 10) {
+        // Cancel if moved more than 15px during initial press (increased from 10px for better tolerance)
+        if (deltaX > 15 || deltaY > 15) {
           console.log('❌ Movement detected, canceling timer:', { deltaX, deltaY });
           clearTimeout(longPressTimerRef.current);
           longPressTimerRef.current = null;
@@ -484,6 +490,7 @@ export const ExpenseChart: React.FC<ExpenseChartProps> = ({
             onTouchStart={handlePressStart}
             onTouchMove={handleMove}
             onTouchEnd={handlePressEnd}
+            onTouchCancel={handlePressEnd}
           >
             {DEBUG_ZONES && (
               <>
@@ -637,6 +644,7 @@ export const ExpenseChart: React.FC<ExpenseChartProps> = ({
           onTouchStart={handlePressStart}
           onTouchMove={handleMove}
           onTouchEnd={handlePressEnd}
+          onTouchCancel={handlePressEnd}
         >
         {DEBUG_ZONES && (
           <>
