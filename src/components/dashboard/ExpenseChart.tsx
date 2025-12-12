@@ -102,7 +102,6 @@ export const ExpenseChart: React.FC<ExpenseChartProps> = ({
   const playgroundLensRadius = playgroundLensSize / 2;
   const playgroundLensZoom = 2.4;
   const chartLensSize = 160;
-  const chartLensRadius = chartLensSize / 2;
   const chartLensZoom = 2.4;
 
   const logPlayground = (message: string) => {
@@ -136,19 +135,6 @@ export const ExpenseChart: React.FC<ExpenseChartProps> = ({
     };
   };
 
-  const getLensOffset = (pointerType: string, lensRadius: number) => {
-    switch (pointerType) {
-      case 'touch':
-        return { x: 0, y: -(lensRadius + 32) };
-      case 'pen':
-        return { x: 0, y: -(lensRadius / 1.5) };
-      case 'mouse':
-        return { x: 36, y: -(lensRadius / 1.5) };
-      default:
-        return { x: 0, y: -(lensRadius / 1.5) };
-    }
-  };
-
   const clampLensCenter = (value: Point, bounds: BoundsSnapshot | null, lensSize: number) => {
     const width = bounds?.width ?? lensSize;
     const height = bounds?.height ?? lensSize;
@@ -160,15 +146,12 @@ export const ExpenseChart: React.FC<ExpenseChartProps> = ({
 
   const computeLensCenter = (
     point: Point,
-    pointerType: string,
     bounds: BoundsSnapshot | null,
-    lensRadius: number,
     lensSize: number,
   ) => {
-    const offset = getLensOffset(pointerType, lensRadius);
     return clampLensCenter({
-      x: point.x + offset.x,
-      y: point.y + offset.y,
+      x: point.x,
+      y: point.y,
     }, bounds, lensSize);
   };
 
@@ -236,9 +219,7 @@ export const ExpenseChart: React.FC<ExpenseChartProps> = ({
     const delay = pointerType === 'touch' ? 450 : 250;
     const nextCenter = computeLensCenter(
       relative,
-      pointerType,
       playgroundBoundsRef.current,
-      playgroundLensRadius,
       playgroundLensSize,
     );
     playgroundLongPressTimerRef.current = window.setTimeout(() => {
@@ -262,9 +243,7 @@ export const ExpenseChart: React.FC<ExpenseChartProps> = ({
     const pointerType = event.pointerType || playgroundPointerState.pointerType || 'mouse';
     const nextCenter = computeLensCenter(
       relative,
-      pointerType,
       playgroundBoundsRef.current,
-      playgroundLensRadius,
       playgroundLensSize,
     );
 
@@ -337,9 +316,7 @@ export const ExpenseChart: React.FC<ExpenseChartProps> = ({
             pointer: relative,
             center: computeLensCenter(
               relative,
-              pointerType,
               playgroundBoundsRef.current,
-              playgroundLensRadius,
               playgroundLensSize,
             ),
           }
@@ -385,9 +362,7 @@ export const ExpenseChart: React.FC<ExpenseChartProps> = ({
     const delay = pointerType === 'touch' ? 450 : 250;
     const nextCenter = computeLensCenter(
       relative,
-      pointerType,
       chartBoundsRef.current,
-      chartLensRadius,
       chartLensSize,
     );
 
@@ -411,9 +386,7 @@ export const ExpenseChart: React.FC<ExpenseChartProps> = ({
     const pointerType = event.pointerType || chartPointerState.pointerType || 'mouse';
     const nextCenter = computeLensCenter(
       relative,
-      pointerType,
       chartBoundsRef.current,
-      chartLensRadius,
       chartLensSize,
     );
 
@@ -495,9 +468,7 @@ export const ExpenseChart: React.FC<ExpenseChartProps> = ({
             pointer: relative,
             center: computeLensCenter(
               relative,
-              pointerType,
               chartBoundsRef.current,
-              chartLensRadius,
               chartLensSize,
             ),
           }
