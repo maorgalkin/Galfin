@@ -20,6 +20,36 @@ interface ExpenseChartProps {
   onViewAllTransactions: (category: string) => void;
 }
 
+type Point = { x: number; y: number };
+
+interface LensState {
+  isVisible: boolean;
+  origin: Point;
+  pointer: Point;
+  center: Point;
+}
+
+interface PointerState {
+  isActive: boolean;
+  pointerType: string;
+  x: number;
+  y: number;
+}
+
+const createLensState = (): LensState => ({
+  isVisible: false,
+  origin: { x: 0, y: 0 },
+  pointer: { x: 0, y: 0 },
+  center: { x: 0, y: 0 },
+});
+
+interface BoundsSnapshot {
+  left: number;
+  top: number;
+  width: number;
+  height: number;
+}
+
 /**
  * Interactive pie chart for expense breakdown by category
  * Desktop: Click to show transaction list in side panel
@@ -42,27 +72,38 @@ export const ExpenseChart: React.FC<ExpenseChartProps> = ({
   } | null>(null);
   const playgroundRef = useRef<HTMLDivElement>(null);
   const [playgroundLogs, setPlaygroundLogs] = useState<string[]>([]);
-  const [playgroundPointerState, setPlaygroundPointerState] = useState({
+  const [playgroundPointerState, setPlaygroundPointerState] = useState<PointerState>({
     isActive: false,
     pointerType: '',
     x: 0,
     y: 0,
   });
-  const [playgroundLensState, setPlaygroundLensState] = useState({
-    isVisible: false,
-    origin: { x: 0, y: 0 },
-    pointer: { x: 0, y: 0 },
-    center: { x: 0, y: 0 },
-  });
+  const [playgroundLensState, setPlaygroundLensState] = useState<LensState>(createLensState());
   const playgroundPointerIdRef = useRef<number | null>(null);
-  const playgroundStartPositionRef = useRef<{ x: number; y: number } | null>(null);
+  const playgroundStartPositionRef = useRef<Point | null>(null);
   const playgroundLongPressTimerRef = useRef<number | null>(null);
-  const playgroundBoundsRef = useRef<{ width: number; height: number }>({ width: 0, height: 0 });
+  const playgroundBoundsRef = useRef<BoundsSnapshot | null>(null);
   const [playgroundLastSelection, setPlaygroundLastSelection] = useState<{ x: number; y: number } | null>(null);
+
+  const chartContainerRef = useRef<HTMLDivElement>(null);
+  const chartPointerIdRef = useRef<number | null>(null);
+  const chartStartPositionRef = useRef<Point | null>(null);
+  const chartLongPressTimerRef = useRef<number | null>(null);
+  const chartBoundsRef = useRef<BoundsSnapshot | null>(null);
+  const [chartPointerState, setChartPointerState] = useState<PointerState>({
+    isActive: false,
+    pointerType: '',
+    x: 0,
+    y: 0,
+  });
+  const [chartLensState, setChartLensState] = useState<LensState>(createLensState());
 
   const playgroundLensSize = 160;
   const playgroundLensRadius = playgroundLensSize / 2;
   const playgroundLensZoom = 2.4;
+  const chartLensSize = 160;
+  const chartLensRadius = chartLensSize / 2;
+  const chartLensZoom = 2.4;
 
   const logPlayground = (message: string) => {
     setPlaygroundLogs(prev => {
@@ -71,46 +112,78 @@ export const ExpenseChart: React.FC<ExpenseChartProps> = ({
     });
   };
 
-  const getLensOffset = (pointerType: string) => {
-    switch (pointerType) {
-      case 'touch':
-        return { x: 0, y: -(playgroundLensRadius + 32) };
-      case 'pen':
-        return { x: 0, y: -(playgroundLensRadius / 1.5) };
-      case 'mouse':
-        return { x: 36, y: -(playgroundLensRadius / 1.5) };
-      default:
-        return { x: 0, y: -(playgroundLensRadius / 1.5) };
-    }
-  };
-
-  const clampLensCenter = (value: { x: number; y: number }) => {
-    const { width, height } = playgroundBoundsRef.current;
-    const w = width || playgroundLensSize;
-    const h = height || playgroundLensSize;
+  const snapshotBounds = (element: HTMLElement | null): BoundsSnapshot | null => {
+    if (!element) return null;
+    const rect = element.getBoundingClientRect();
     return {
-      x: Math.min(Math.max(value.x, 0), w),
-      y: Math.min(Math.max(value.y, 0), h),
+      left: rect.left,
+      top: rect.top,
+      width: rect.width,
+      height: rect.height,
     };
   };
 
-  const computeLensCenter = (point: { x: number; y: number }, pointerType: string) => {
-    const offset = getLensOffset(pointerType);
-    return clampLensCenter({
-      x: point.x + offset.x,
-      y: point.y + offset.y,
-    });
-  };
-
-  const getPlaygroundRelativePosition = (event: React.PointerEvent<HTMLDivElement>) => {
-    const rect = playgroundRef.current?.getBoundingClientRect();
-    if (!rect) {
+  const getRelativePositionFromBounds = (
+    bounds: BoundsSnapshot | null,
+    event: React.PointerEvent,
+  ): Point => {
+    if (!bounds) {
       return { x: event.clientX, y: event.clientY };
     }
     return {
-      x: event.clientX - rect.left,
-      y: event.clientY - rect.top,
+      x: event.clientX - bounds.left,
+      y: event.clientY - bounds.top,
     };
+  };
+
+  const getLensOffset = (pointerType: string, lensRadius: number) => {
+    switch (pointerType) {
+      case 'touch':
+        return { x: 0, y: -(lensRadius + 32) };
+      case 'pen':
+        return { x: 0, y: -(lensRadius / 1.5) };
+      case 'mouse':
+        return { x: 36, y: -(lensRadius / 1.5) };
+      default:
+        return { x: 0, y: -(lensRadius / 1.5) };
+    }
+  };
+
+  const clampLensCenter = (value: Point, bounds: BoundsSnapshot | null, lensSize: number) => {
+    const width = bounds?.width ?? lensSize;
+    const height = bounds?.height ?? lensSize;
+    return {
+      x: Math.min(Math.max(value.x, 0), width),
+      y: Math.min(Math.max(value.y, 0), height),
+    };
+  };
+
+  const computeLensCenter = (
+    point: Point,
+    pointerType: string,
+    bounds: BoundsSnapshot | null,
+    lensRadius: number,
+    lensSize: number,
+  ) => {
+    const offset = getLensOffset(pointerType, lensRadius);
+    return clampLensCenter({
+      x: point.x + offset.x,
+      y: point.y + offset.y,
+    }, bounds, lensSize);
+  };
+
+  const getPlaygroundRelativePosition = (event: React.PointerEvent<HTMLDivElement>) => {
+    if (!playgroundBoundsRef.current) {
+      playgroundBoundsRef.current = snapshotBounds(playgroundRef.current);
+    }
+    return getRelativePositionFromBounds(playgroundBoundsRef.current, event);
+  };
+
+  const getChartRelativePosition = (event: React.PointerEvent<HTMLDivElement>) => {
+    if (!chartBoundsRef.current) {
+      chartBoundsRef.current = snapshotBounds(chartContainerRef.current);
+    }
+    return getRelativePositionFromBounds(chartBoundsRef.current, event);
   };
 
   const clearPlaygroundLongPressTimer = () => {
@@ -121,14 +194,20 @@ export const ExpenseChart: React.FC<ExpenseChartProps> = ({
     }
   };
 
+  const clearChartLongPressTimer = () => {
+    if (chartLongPressTimerRef.current !== null) {
+      window.clearTimeout(chartLongPressTimerRef.current);
+      chartLongPressTimerRef.current = null;
+    }
+  };
+
   const handlePlaygroundPointerDown = (event: React.PointerEvent<HTMLDivElement>) => {
     if (!event.isPrimary) {
       return;
     }
 
     const relative = getPlaygroundRelativePosition(event);
-    const bounds = (event.currentTarget as HTMLElement).getBoundingClientRect();
-    playgroundBoundsRef.current = { width: bounds.width, height: bounds.height };
+    playgroundBoundsRef.current = snapshotBounds(event.currentTarget as HTMLElement);
     const pointerType = event.pointerType || playgroundPointerState.pointerType || 'mouse';
 
     logPlayground(`pointerdown (${pointerType})`);
@@ -155,7 +234,13 @@ export const ExpenseChart: React.FC<ExpenseChartProps> = ({
     }
 
     const delay = pointerType === 'touch' ? 450 : 250;
-    const nextCenter = computeLensCenter(relative, pointerType);
+    const nextCenter = computeLensCenter(
+      relative,
+      pointerType,
+      playgroundBoundsRef.current,
+      playgroundLensRadius,
+      playgroundLensSize,
+    );
     playgroundLongPressTimerRef.current = window.setTimeout(() => {
       logPlayground('long-press timer fired -> show lens');
       setPlaygroundLensState({
@@ -175,7 +260,13 @@ export const ExpenseChart: React.FC<ExpenseChartProps> = ({
 
     const relative = getPlaygroundRelativePosition(event);
     const pointerType = event.pointerType || playgroundPointerState.pointerType || 'mouse';
-    const nextCenter = computeLensCenter(relative, pointerType);
+    const nextCenter = computeLensCenter(
+      relative,
+      pointerType,
+      playgroundBoundsRef.current,
+      playgroundLensRadius,
+      playgroundLensSize,
+    );
 
     if (
       playgroundLongPressTimerRef.current !== null &&
@@ -244,7 +335,13 @@ export const ExpenseChart: React.FC<ExpenseChartProps> = ({
             ...prev,
             isVisible: false,
             pointer: relative,
-            center: computeLensCenter(relative, pointerType),
+            center: computeLensCenter(
+              relative,
+              pointerType,
+              playgroundBoundsRef.current,
+              playgroundLensRadius,
+              playgroundLensSize,
+            ),
           }
         : prev
     );
@@ -257,10 +354,188 @@ export const ExpenseChart: React.FC<ExpenseChartProps> = ({
     });
   };
 
+  const handleChartPointerDown = (event: React.PointerEvent<HTMLDivElement>) => {
+    if (!event.isPrimary) {
+      return;
+    }
+
+    chartBoundsRef.current = snapshotBounds(chartContainerRef.current);
+    const relative = getChartRelativePosition(event);
+    const pointerType = event.pointerType || chartPointerState.pointerType || 'mouse';
+
+    try {
+      (event.currentTarget as Element).setPointerCapture(event.pointerId);
+      chartPointerIdRef.current = event.pointerId;
+    } catch (error) {
+      // Ignore capture failures (Safari sometimes throws)
+    }
+
+    chartStartPositionRef.current = relative;
+    setChartPointerState({
+      isActive: true,
+      pointerType,
+      x: relative.x,
+      y: relative.y,
+    });
+
+    if (chartLongPressTimerRef.current !== null) {
+      clearChartLongPressTimer();
+    }
+
+    const delay = pointerType === 'touch' ? 450 : 250;
+    const nextCenter = computeLensCenter(
+      relative,
+      pointerType,
+      chartBoundsRef.current,
+      chartLensRadius,
+      chartLensSize,
+    );
+
+    chartLongPressTimerRef.current = window.setTimeout(() => {
+      setChartLensState({
+        isVisible: true,
+        origin: relative,
+        pointer: relative,
+        center: nextCenter,
+      });
+      chartLongPressTimerRef.current = null;
+    }, delay);
+  };
+
+  const handleChartPointerMove = (event: React.PointerEvent<HTMLDivElement>) => {
+    if (!chartPointerState.isActive) {
+      return;
+    }
+
+    const relative = getChartRelativePosition(event);
+    const pointerType = event.pointerType || chartPointerState.pointerType || 'mouse';
+    const nextCenter = computeLensCenter(
+      relative,
+      pointerType,
+      chartBoundsRef.current,
+      chartLensRadius,
+      chartLensSize,
+    );
+
+    if (
+      chartLongPressTimerRef.current !== null &&
+      chartStartPositionRef.current
+    ) {
+      const dx = relative.x - chartStartPositionRef.current.x;
+      const dy = relative.y - chartStartPositionRef.current.y;
+      const distance = Math.sqrt(dx * dx + dy * dy);
+      if (distance > 20) {
+        clearChartLongPressTimer();
+      }
+    }
+
+    setChartPointerState({
+      isActive: true,
+      pointerType,
+      x: relative.x,
+      y: relative.y,
+    });
+
+    setChartLensState(prev =>
+      prev.isVisible
+        ? {
+            ...prev,
+            pointer: relative,
+            center: nextCenter,
+          }
+        : prev
+    );
+  };
+
+  const handleChartPointerUp = (event: React.PointerEvent<HTMLDivElement>) => {
+    if (!chartPointerState.isActive) {
+      return;
+    }
+
+    const relative = getChartRelativePosition(event);
+    const pointerType = event.pointerType || chartPointerState.pointerType || 'mouse';
+
+    clearChartLongPressTimer();
+
+    try {
+      const target = event.currentTarget as Element;
+      if (target.hasPointerCapture(event.pointerId)) {
+        target.releasePointerCapture(event.pointerId);
+      }
+    } catch (error) {
+      // Ignore release failures
+    }
+
+    chartPointerIdRef.current = null;
+    chartStartPositionRef.current = null;
+
+    const selectionPoint = chartLensState.isVisible
+      ? chartLensState.center
+      : relative;
+
+    if (chartLensState.isVisible || pointerType === 'mouse' || pointerType === 'touch') {
+      const bounds = chartBoundsRef.current ?? snapshotBounds(chartContainerRef.current);
+      const globalPoint = bounds
+        ? { x: bounds.left + selectionPoint.x, y: bounds.top + selectionPoint.y }
+        : { x: selectionPoint.x, y: selectionPoint.y };
+      const detectedCategory = detectCategoryAtGlobalPoint(globalPoint);
+      if (detectedCategory) {
+        const entry = categoryData.find(cat => cat.category === detectedCategory);
+        if (entry) {
+          handleCategoryClick(entry);
+        }
+      }
+    }
+
+    setChartLensState(prev =>
+      prev.isVisible
+        ? {
+            ...prev,
+            isVisible: false,
+            pointer: relative,
+            center: computeLensCenter(
+              relative,
+              pointerType,
+              chartBoundsRef.current,
+              chartLensRadius,
+              chartLensSize,
+            ),
+          }
+        : prev
+    );
+
+    setChartPointerState({
+      isActive: false,
+      pointerType,
+      x: relative.x,
+      y: relative.y,
+    });
+  };
+
+  const detectCategoryAtGlobalPoint = (point: Point): string | null => {
+    const elements = document.elementsFromPoint(point.x, point.y);
+    for (const element of elements) {
+      if (!(element instanceof Element)) {
+        continue;
+      }
+      const withData = element.closest('[data-category]');
+      if (withData) {
+        const category = withData.getAttribute('data-category');
+        if (category) {
+          return category;
+        }
+      }
+    }
+    return null;
+  };
+
   useEffect(() => {
     return () => {
       if (playgroundLongPressTimerRef.current !== null) {
         window.clearTimeout(playgroundLongPressTimerRef.current);
+      }
+      if (chartLongPressTimerRef.current !== null) {
+        window.clearTimeout(chartLongPressTimerRef.current);
       }
     };
   }, []);
@@ -310,6 +585,77 @@ export const ExpenseChart: React.FC<ExpenseChartProps> = ({
   const magnifiedBackgroundSize = `${magnifiedBackgroundSizeValue}px ${magnifiedBackgroundSizeValue}px, ${magnifiedBackgroundSizeValue}px ${magnifiedBackgroundSizeValue}px, ${magnifiedBackgroundSizeValue}px ${magnifiedBackgroundSizeValue}px`;
   const lensBackgroundPositionCombined = `${lensBackgroundPosition}, ${lensBackgroundPosition}, ${lensBackgroundPosition}`;
 
+  const renderChartLens = () => {
+    if (!chartLensState.isVisible || !chartBoundsRef.current) {
+      return null;
+    }
+
+    const { width, height } = chartBoundsRef.current;
+    if (!width || !height) {
+      return null;
+    }
+
+    const pointer = chartLensState.pointer;
+    const center = chartLensState.center;
+    const offsetX = -(pointer.x * chartLensZoom - chartLensSize / 2);
+    const offsetY = -(pointer.y * chartLensZoom - chartLensSize / 2);
+
+    return (
+      <div
+        className="pointer-events-none absolute z-20"
+        style={{
+          width: `${chartLensSize}px`,
+          height: `${chartLensSize}px`,
+          left: `${center.x}px`,
+          top: `${center.y}px`,
+          transform: 'translate(-50%, -50%)',
+        }}
+      >
+        <div className="w-full h-full rounded-full border-2 border-purple-500/80 bg-white/80 dark:bg-gray-900/80 overflow-hidden shadow-lg relative">
+          <div
+            className="absolute"
+            style={{
+              width: `${width}px`,
+              height: `${height}px`,
+              transformOrigin: 'top left',
+              transform: `translate(${offsetX}px, ${offsetY}px) scale(${chartLensZoom})`,
+            }}
+          >
+            <PieChart width={width} height={height}>
+              <Pie
+                data={categoryData}
+                cx="50%"
+                cy="50%"
+                labelLine={false}
+                label={false}
+                outerRadius={90}
+                innerRadius={0}
+                fill="#8884d8"
+                dataKey="amount"
+                isAnimationActive={false}
+              >
+                {categoryData.map((entry, index) => {
+                  const colors = getCategoryColor(entry.category, 'expense', personalBudget);
+                  const isFocused = selectedDesktopCategory === entry.category;
+                  return (
+                    <Cell
+                      key={`lens-cell-${index}`}
+                      fill={colors.hexColor}
+                      stroke={isFocused ? '#312e81' : undefined}
+                      strokeWidth={isFocused ? 3 : undefined}
+                    />
+                  );
+                })}
+              </Pie>
+            </PieChart>
+          </div>
+          <div className="absolute inset-0 rounded-full border border-white/50" />
+          <div className="absolute left-1/2 top-1/2 w-2 h-2 -translate-x-1/2 -translate-y-1/2 rounded-full bg-purple-500 border border-white/70" />
+        </div>
+      </div>
+    );
+  };
+
   if (categoryData.length === 0) {
     return (
       <div className="bg-white dark:bg-gray-800 rounded-lg shadow-sm border border-gray-200 dark:border-gray-700 p-4 sm:p-6">
@@ -328,11 +674,21 @@ export const ExpenseChart: React.FC<ExpenseChartProps> = ({
         <div className="flex gap-6">
           {/* Chart Container - slides to left when category selected */}
           <motion.div
+            ref={chartContainerRef}
             animate={{
               width: selectedDesktopCategory ? '40%' : '100%'
             }}
             transition={{ duration: 0.3, ease: 'easeInOut' }}
             className="flex-shrink-0 p-8 relative"
+            style={{
+              userSelect: 'none',
+              WebkitUserSelect: 'none',
+              touchAction: 'none',
+            }}
+            onPointerDown={handleChartPointerDown}
+            onPointerMove={handleChartPointerMove}
+            onPointerUp={handleChartPointerUp}
+            onPointerCancel={handleChartPointerUp}
           >
             <ResponsiveContainer width="100%" height={300}>
               <PieChart>
@@ -350,11 +706,11 @@ export const ExpenseChart: React.FC<ExpenseChartProps> = ({
                   {categoryData.map((entry, index) => {
                     const colors = getCategoryColor(entry.category, 'expense', personalBudget);
                     return (
-                      <Cell 
-                        key={`cell-${index}`} 
+                      <Cell
+                        key={`cell-${index}`}
                         fill={colors.hexColor}
                         cursor="pointer"
-                        onClick={() => handleCategoryClick(entry)}
+                        data-category={entry.category}
                       />
                     );
                   })}
@@ -383,6 +739,7 @@ export const ExpenseChart: React.FC<ExpenseChartProps> = ({
                 />
               </PieChart>
             </ResponsiveContainer>
+            {renderChartLens()}
           </motion.div>
 
           {/* Transaction List - appears when category selected */}
@@ -474,10 +831,10 @@ export const ExpenseChart: React.FC<ExpenseChartProps> = ({
                 {categoryData.map((entry, index) => {
                   const colors = getCategoryColor(entry.category, 'expense', personalBudget);
                   return (
-                    <Cell 
-                      key={`cell-${index}`} 
-                      fill={colors.hexColor} 
-                      onClick={() => handleCategoryClick(entry)}
+                    <Cell
+                      key={`cell-${index}`}
+                      fill={colors.hexColor}
+                      data-category={entry.category}
                     />
                   );
                 })}
