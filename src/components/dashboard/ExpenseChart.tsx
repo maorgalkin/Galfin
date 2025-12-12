@@ -51,16 +51,54 @@ export const ExpenseChart: React.FC<ExpenseChartProps> = ({
   const [playgroundLensState, setPlaygroundLensState] = useState({
     isVisible: false,
     origin: { x: 0, y: 0 },
-    current: { x: 0, y: 0 },
+    pointer: { x: 0, y: 0 },
+    center: { x: 0, y: 0 },
   });
   const playgroundPointerIdRef = useRef<number | null>(null);
   const playgroundStartPositionRef = useRef<{ x: number; y: number } | null>(null);
   const playgroundLongPressTimerRef = useRef<number | null>(null);
+  const playgroundBoundsRef = useRef<{ width: number; height: number }>({ width: 0, height: 0 });
+  const [playgroundLastSelection, setPlaygroundLastSelection] = useState<{ x: number; y: number } | null>(null);
+
+  const playgroundLensSize = 160;
+  const playgroundLensRadius = playgroundLensSize / 2;
+  const playgroundLensZoom = 2.4;
 
   const logPlayground = (message: string) => {
     setPlaygroundLogs(prev => {
       const next = [`${new Date().toLocaleTimeString([], { minute: '2-digit', second: '2-digit' })} ${message}`, ...prev];
       return next.slice(0, 6);
+    });
+  };
+
+  const getLensOffset = (pointerType: string) => {
+    switch (pointerType) {
+      case 'touch':
+        return { x: 0, y: -(playgroundLensRadius + 32) };
+      case 'pen':
+        return { x: 0, y: -(playgroundLensRadius / 1.5) };
+      case 'mouse':
+        return { x: 36, y: -(playgroundLensRadius / 1.5) };
+      default:
+        return { x: 0, y: -(playgroundLensRadius / 1.5) };
+    }
+  };
+
+  const clampLensCenter = (value: { x: number; y: number }) => {
+    const { width, height } = playgroundBoundsRef.current;
+    const w = width || playgroundLensSize;
+    const h = height || playgroundLensSize;
+    return {
+      x: Math.min(Math.max(value.x, playgroundLensRadius), w - playgroundLensRadius),
+      y: Math.min(Math.max(value.y, playgroundLensRadius), h - playgroundLensRadius),
+    };
+  };
+
+  const computeLensCenter = (point: { x: number; y: number }, pointerType: string) => {
+    const offset = getLensOffset(pointerType);
+    return clampLensCenter({
+      x: point.x + offset.x,
+      y: point.y + offset.y,
     });
   };
 
@@ -89,8 +127,11 @@ export const ExpenseChart: React.FC<ExpenseChartProps> = ({
     }
 
     const relative = getPlaygroundRelativePosition(event);
+    const bounds = (event.currentTarget as HTMLElement).getBoundingClientRect();
+    playgroundBoundsRef.current = { width: bounds.width, height: bounds.height };
+    const pointerType = event.pointerType || playgroundPointerState.pointerType || 'mouse';
 
-    logPlayground(`pointerdown (${event.pointerType})`);
+    logPlayground(`pointerdown (${pointerType})`);
 
     try {
       (event.currentTarget as Element).setPointerCapture(event.pointerId);
@@ -104,7 +145,7 @@ export const ExpenseChart: React.FC<ExpenseChartProps> = ({
 
     setPlaygroundPointerState({
       isActive: true,
-      pointerType: event.pointerType,
+      pointerType,
       x: relative.x,
       y: relative.y,
     });
@@ -113,13 +154,15 @@ export const ExpenseChart: React.FC<ExpenseChartProps> = ({
       clearPlaygroundLongPressTimer();
     }
 
-    const delay = event.pointerType === 'touch' ? 450 : 250;
+    const delay = pointerType === 'touch' ? 450 : 250;
+    const nextCenter = computeLensCenter(relative, pointerType);
     playgroundLongPressTimerRef.current = window.setTimeout(() => {
       logPlayground('long-press timer fired -> show lens');
       setPlaygroundLensState({
         isVisible: true,
         origin: relative,
-        current: relative,
+        pointer: relative,
+        center: nextCenter,
       });
       playgroundLongPressTimerRef.current = null;
     }, delay);
@@ -131,6 +174,8 @@ export const ExpenseChart: React.FC<ExpenseChartProps> = ({
     }
 
     const relative = getPlaygroundRelativePosition(event);
+    const pointerType = event.pointerType || playgroundPointerState.pointerType || 'mouse';
+    const nextCenter = computeLensCenter(relative, pointerType);
 
     if (
       playgroundLongPressTimerRef.current !== null &&
@@ -149,13 +194,15 @@ export const ExpenseChart: React.FC<ExpenseChartProps> = ({
       ...prev,
       x: relative.x,
       y: relative.y,
+      pointerType,
     }));
 
     setPlaygroundLensState(prev =>
       prev.isVisible
         ? {
             ...prev,
-            current: relative,
+            pointer: relative,
+            center: nextCenter,
           }
         : prev
     );
@@ -168,6 +215,15 @@ export const ExpenseChart: React.FC<ExpenseChartProps> = ({
 
     logPlayground('pointerup');
     clearPlaygroundLongPressTimer();
+
+    const relative = getPlaygroundRelativePosition(event);
+    const pointerType = event.pointerType || playgroundPointerState.pointerType || 'mouse';
+    const selectionPoint = playgroundLensState.isVisible
+      ? playgroundLensState.center
+      : relative;
+
+    logPlayground(`selection fired at ${Math.round(selectionPoint.x)}x${Math.round(selectionPoint.y)}`);
+    setPlaygroundLastSelection(selectionPoint);
 
     try {
       const target = event.currentTarget as Element;
@@ -187,14 +243,18 @@ export const ExpenseChart: React.FC<ExpenseChartProps> = ({
         ? {
             ...prev,
             isVisible: false,
+            pointer: relative,
+            center: computeLensCenter(relative, pointerType),
           }
         : prev
     );
 
-    setPlaygroundPointerState(prev => ({
-      ...prev,
+    setPlaygroundPointerState({
       isActive: false,
-    }));
+      pointerType,
+      x: relative.x,
+      y: relative.y,
+    });
   };
 
   useEffect(() => {
@@ -240,6 +300,15 @@ export const ExpenseChart: React.FC<ExpenseChartProps> = ({
       setSelectedDesktopCategory(entry.category);
     }
   };
+
+  const playgroundBackgroundPattern = 'radial-gradient(circle at center, rgba(124, 58, 237, 0.08) 0, rgba(124, 58, 237, 0.08) 2px, transparent 2px), linear-gradient(rgba(124, 58, 237, 0.05) 1px, transparent 1px), linear-gradient(90deg, rgba(124, 58, 237, 0.05) 1px, transparent 1px)';
+  const playgroundBackgroundSize = '24px 24px, 24px 24px, 24px 24px';
+  const lensCenter = playgroundLensState.center;
+  const lensPointer = playgroundLensState.pointer;
+  const lensBackgroundPosition = `${playgroundLensRadius - lensPointer.x * playgroundLensZoom}px ${playgroundLensRadius - lensPointer.y * playgroundLensZoom}px`;
+  const magnifiedBackgroundSizeValue = 24 * playgroundLensZoom;
+  const magnifiedBackgroundSize = `${magnifiedBackgroundSizeValue}px ${magnifiedBackgroundSizeValue}px, ${magnifiedBackgroundSizeValue}px ${magnifiedBackgroundSizeValue}px, ${magnifiedBackgroundSizeValue}px ${magnifiedBackgroundSizeValue}px`;
+  const lensBackgroundPositionCombined = `${lensBackgroundPosition}, ${lensBackgroundPosition}, ${lensBackgroundPosition}`;
 
   if (categoryData.length === 0) {
     return (
@@ -505,7 +574,8 @@ export const ExpenseChart: React.FC<ExpenseChartProps> = ({
           <div className="text-xs text-purple-700 dark:text-purple-300 text-right">
             <div>Active: {playgroundPointerState.isActive ? 'YES' : 'NO'}</div>
             <div>Pointer: {playgroundPointerState.pointerType || '-'}</div>
-            <div>Pos: {Math.round(playgroundPointerState.x)}×{Math.round(playgroundPointerState.y)}</div>
+            <div>Pos: {Math.round(playgroundPointerState.x)}x{Math.round(playgroundPointerState.y)}</div>
+            <div>Lens: {playgroundLensState.isVisible ? `${Math.round(lensCenter.x)}x${Math.round(lensCenter.y)}` : '-'}</div>
           </div>
         </div>
 
@@ -516,20 +586,37 @@ export const ExpenseChart: React.FC<ExpenseChartProps> = ({
           onPointerUp={handlePlaygroundPointerUp}
           onPointerCancel={handlePlaygroundPointerUp}
           className="relative h-64 rounded-lg bg-white dark:bg-gray-900 shadow-inner overflow-hidden touch-none select-none"
+          style={{
+            backgroundImage: playgroundBackgroundPattern,
+            backgroundSize: playgroundBackgroundSize,
+            backgroundPosition: '0 0, 0 0, 0 0',
+          }}
         >
           {playgroundLensState.isVisible ? (
             <>
               <div
-                className="absolute w-32 h-32 rounded-full border-2 border-purple-500/80 bg-white/70 dark:bg-gray-900/70 pointer-events-none shadow-lg"
+                className="absolute rounded-full border-2 border-purple-500/80 bg-white/70 dark:bg-gray-900/70 pointer-events-none shadow-lg"
                 style={{
-                  left: `${playgroundLensState.current.x}px`,
-                  top: `${playgroundLensState.current.y}px`,
+                  width: `${playgroundLensSize}px`,
+                  height: `${playgroundLensSize}px`,
+                  left: `${lensCenter.x}px`,
+                  top: `${lensCenter.y}px`,
                   transform: 'translate(-50%, -50%)',
-                  transition: 'transform 40ms linear',
                 }}
-              />
+              >
+                <div
+                  className="absolute inset-0 rounded-full"
+                  style={{
+                    backgroundImage: playgroundBackgroundPattern,
+                    backgroundSize: magnifiedBackgroundSize,
+                    backgroundPosition: lensBackgroundPositionCombined,
+                  }}
+                />
+                <div className="absolute inset-0 rounded-full border border-white/60" />
+                <div className="absolute left-1/2 top-1/2 w-2 h-2 -translate-x-1/2 -translate-y-1/2 rounded-full bg-purple-500 border border-white/80" />
+              </div>
               <div
-                className="absolute w-1 h-1 rounded-full bg-purple-600 pointer-events-none"
+                className="absolute w-1.5 h-1.5 rounded-full bg-purple-600 pointer-events-none"
                 style={{
                   left: `${playgroundLensState.origin.x}px`,
                   top: `${playgroundLensState.origin.y}px`,
@@ -551,6 +638,11 @@ export const ExpenseChart: React.FC<ExpenseChartProps> = ({
             playgroundLogs.map((entry, index) => (
               <div key={index}>{entry}</div>
             ))
+          )}
+          {playgroundLastSelection && (
+            <div className="pt-1 border-t border-purple-300/40 dark:border-purple-700/40 mt-2">
+              Last release at {Math.round(playgroundLastSelection.x)}x{Math.round(playgroundLastSelection.y)}
+            </div>
           )}
         </div>
       </div>
