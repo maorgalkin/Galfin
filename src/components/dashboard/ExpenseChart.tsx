@@ -164,7 +164,8 @@ export const ExpenseChart: React.FC<ExpenseChartProps> = ({
 
   const getChartRelativePosition = (event: React.PointerEvent<HTMLDivElement>) => {
     if (!chartBoundsRef.current) {
-      chartBoundsRef.current = snapshotBounds(chartContainerRef.current);
+      const container = chartContainerRef.current ?? (event.currentTarget as HTMLElement | null);
+      chartBoundsRef.current = snapshotBounds(container);
     }
     return getRelativePositionFromBounds(chartBoundsRef.current, event);
   };
@@ -336,6 +337,7 @@ export const ExpenseChart: React.FC<ExpenseChartProps> = ({
       return;
     }
 
+    chartContainerRef.current = event.currentTarget as HTMLDivElement;
     chartBoundsRef.current = snapshotBounds(chartContainerRef.current);
     const relative = getChartRelativePosition(event);
     const pointerType = event.pointerType || chartPointerState.pointerType || 'mouse';
@@ -785,7 +787,18 @@ export const ExpenseChart: React.FC<ExpenseChartProps> = ({
 
       {/* Mobile Layout - Pie chart with transaction list */}
       <div className="md:hidden">
-        <div className="relative">
+        <div
+          className="relative"
+          style={{
+            userSelect: 'none',
+            WebkitUserSelect: 'none',
+            touchAction: 'none',
+          }}
+          onPointerDown={handleChartPointerDown}
+          onPointerMove={handleChartPointerMove}
+          onPointerUp={handleChartPointerUp}
+          onPointerCancel={handleChartPointerUp}
+        >
           <ResponsiveContainer width="100%" height={300}>
             <PieChart>
               <Pie
@@ -837,6 +850,7 @@ export const ExpenseChart: React.FC<ExpenseChartProps> = ({
               />
             </PieChart>
           </ResponsiveContainer>
+          {renderChartLens()}
         </div>
       
         {/* Mobile-only: Transaction list when category selected */}
