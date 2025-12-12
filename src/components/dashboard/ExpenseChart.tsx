@@ -89,8 +89,8 @@ export const ExpenseChart: React.FC<ExpenseChartProps> = ({
     const w = width || playgroundLensSize;
     const h = height || playgroundLensSize;
     return {
-      x: Math.min(Math.max(value.x, playgroundLensRadius), w - playgroundLensRadius),
-      y: Math.min(Math.max(value.y, playgroundLensRadius), h - playgroundLensRadius),
+      x: Math.min(Math.max(value.x, 0), w),
+      y: Math.min(Math.max(value.y, 0), h),
     };
   };
 
