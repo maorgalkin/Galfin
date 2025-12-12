@@ -434,20 +434,13 @@ export function useAutoApplyScheduledAdjustments(isAuthenticated: boolean = true
         const year = now.getFullYear();
         const month = now.getMonth() + 1; // 1-indexed
 
-        console.log(`[Budget Adjustments] Checking for pending adjustments for ${year}-${month}...`);
-        
         // Check if there are pending adjustments for this month
         const pendingAdjustments = await BudgetAdjustmentService.getPendingAdjustments(year, month);
         
         if (pendingAdjustments.length > 0) {
-          console.log(`[Budget Adjustments] Found ${pendingAdjustments.length} pending adjustment(s):`, 
-            pendingAdjustments.map(a => `${a.category_name}: ${a.current_limit} → ${a.new_limit}`));
-          
           // Apply them
-          const result = await BudgetAdjustmentService.applyScheduledAdjustments(year, month);
+          await BudgetAdjustmentService.applyScheduledAdjustments(year, month);
           hasApplied.current = true;
-          
-          console.log(`[Budget Adjustments] ✓ Applied ${result.appliedCount} adjustment(s)`);
           
           // Invalidate all budget-related queries to refresh the UI
           await queryClient.invalidateQueries({ queryKey: ['budgetAdjustments'] });
@@ -456,14 +449,11 @@ export function useAutoApplyScheduledAdjustments(isAuthenticated: boolean = true
           
           // Force refetch of active budget
           await queryClient.refetchQueries({ queryKey: ['personalBudget', 'active'] });
-          
-          console.log('[Budget Adjustments] UI refreshed');
         } else {
-          console.log('[Budget Adjustments] No pending adjustments for this month.');
           hasApplied.current = true; // Don't check again
         }
       } catch (error) {
-        console.error('[Budget Adjustments] Error:', error);
+        // Silent fail or report to error monitoring service
       }
     };
 

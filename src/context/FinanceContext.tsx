@@ -83,16 +83,11 @@ export const FinanceProvider: React.FC<{ children: React.ReactNode }> = ({ child
 
   const addTransaction = async (transaction: Omit<Transaction, 'id'>) => {
     try {
-      console.log('Adding transaction, user:', user ? 'logged in' : 'not logged in');
-      
       if (user) {
-        console.log('Calling Supabase service...');
         const newTransaction = await SupabaseService.addTransaction(transaction);
-        console.log('Transaction added successfully:', newTransaction);
         setTransactions(prev => [newTransaction, ...prev]);
       } else {
         // Fallback to localStorage if not authenticated
-        console.log('Using localStorage fallback');
         const newTransaction: Transaction = {
           ...transaction,
           id: Date.now().toString(),

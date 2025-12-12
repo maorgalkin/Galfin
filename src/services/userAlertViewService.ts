@@ -71,7 +71,6 @@ class UserAlertViewService {
     const newAlertIds = alertIds.filter(id => !alreadyViewed.has(id));
     
     if (newAlertIds.length === 0) {
-      console.log('All alerts already viewed, skipping insert');
       return true; // Nothing to insert
     }
 
