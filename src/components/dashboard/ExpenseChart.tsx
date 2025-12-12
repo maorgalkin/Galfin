@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useEffect, useRef, useState } from 'react';
 import { PieChart, Pie, Cell, ResponsiveContainer, Tooltip as RechartsTooltip } from 'recharts';
 import { motion, AnimatePresence } from 'framer-motion';
 import { getCategoryColor } from '../../utils/categoryColors';
@@ -40,9 +40,173 @@ export const ExpenseChart: React.FC<ExpenseChartProps> = ({
     amount: number;
     percentage: string;
   } | null>(null);
+  const playgroundRef = useRef<HTMLDivElement>(null);
+  const [playgroundLogs, setPlaygroundLogs] = useState<string[]>([]);
+  const [playgroundPointerState, setPlaygroundPointerState] = useState({
+    isActive: false,
+    pointerType: '',
+    x: 0,
+    y: 0,
+  });
+  const [playgroundLensState, setPlaygroundLensState] = useState({
+    isVisible: false,
+    origin: { x: 0, y: 0 },
+    current: { x: 0, y: 0 },
+  });
+  const playgroundPointerIdRef = useRef<number | null>(null);
+  const playgroundStartPositionRef = useRef<{ x: number; y: number } | null>(null);
+  const playgroundLongPressTimerRef = useRef<number | null>(null);
+
+  const logPlayground = (message: string) => {
+    setPlaygroundLogs(prev => {
+      const next = [`${new Date().toLocaleTimeString([], { minute: '2-digit', second: '2-digit' })} ${message}`, ...prev];
+      return next.slice(0, 6);
+    });
+  };
+
+  const getPlaygroundRelativePosition = (event: React.PointerEvent<HTMLDivElement>) => {
+    const rect = playgroundRef.current?.getBoundingClientRect();
+    if (!rect) {
+      return { x: event.clientX, y: event.clientY };
+    }
+    return {
+      x: event.clientX - rect.left,
+      y: event.clientY - rect.top,
+    };
+  };
+
+  const clearPlaygroundLongPressTimer = () => {
+    if (playgroundLongPressTimerRef.current !== null) {
+      window.clearTimeout(playgroundLongPressTimerRef.current);
+      playgroundLongPressTimerRef.current = null;
+      logPlayground('long-press timer cleared');
+    }
+  };
+
+  const handlePlaygroundPointerDown = (event: React.PointerEvent<HTMLDivElement>) => {
+    if (!event.isPrimary) {
+      return;
+    }
+
+    const relative = getPlaygroundRelativePosition(event);
+
+    logPlayground(`pointerdown (${event.pointerType})`);
+
+    try {
+      (event.currentTarget as Element).setPointerCapture(event.pointerId);
+      logPlayground('pointer captured');
+      playgroundPointerIdRef.current = event.pointerId;
+    } catch (error) {
+      logPlayground('pointer capture failed');
+    }
+
+    playgroundStartPositionRef.current = relative;
+
+    setPlaygroundPointerState({
+      isActive: true,
+      pointerType: event.pointerType,
+      x: relative.x,
+      y: relative.y,
+    });
+
+    if (playgroundLongPressTimerRef.current !== null) {
+      clearPlaygroundLongPressTimer();
+    }
+
+    const delay = event.pointerType === 'touch' ? 450 : 250;
+    playgroundLongPressTimerRef.current = window.setTimeout(() => {
+      logPlayground('long-press timer fired -> show lens');
+      setPlaygroundLensState({
+        isVisible: true,
+        origin: relative,
+        current: relative,
+      });
+      playgroundLongPressTimerRef.current = null;
+    }, delay);
+  };
+
+  const handlePlaygroundPointerMove = (event: React.PointerEvent<HTMLDivElement>) => {
+    if (!playgroundPointerState.isActive) {
+      return;
+    }
+
+    const relative = getPlaygroundRelativePosition(event);
+
+    if (
+      playgroundLongPressTimerRef.current !== null &&
+      playgroundStartPositionRef.current
+    ) {
+      const dx = relative.x - playgroundStartPositionRef.current.x;
+      const dy = relative.y - playgroundStartPositionRef.current.y;
+      const distance = Math.sqrt(dx * dx + dy * dy);
+      if (distance > 20) {
+        logPlayground('movement > 20px -> cancel lens timer');
+        clearPlaygroundLongPressTimer();
+      }
+    }
+
+    setPlaygroundPointerState(prev => ({
+      ...prev,
+      x: relative.x,
+      y: relative.y,
+    }));
+
+    setPlaygroundLensState(prev =>
+      prev.isVisible
+        ? {
+            ...prev,
+            current: relative,
+          }
+        : prev
+    );
+  };
+
+  const handlePlaygroundPointerUp = (event: React.PointerEvent<HTMLDivElement>) => {
+    if (!playgroundPointerState.isActive) {
+      return;
+    }
+
+    logPlayground('pointerup');
+    clearPlaygroundLongPressTimer();
+
+    try {
+      const target = event.currentTarget as Element;
+      if (target.hasPointerCapture(event.pointerId)) {
+        target.releasePointerCapture(event.pointerId);
+        logPlayground('pointer released');
+      }
+    } catch (error) {
+      logPlayground('pointer release failed');
+    }
+
+    playgroundPointerIdRef.current = null;
+    playgroundStartPositionRef.current = null;
+
+    setPlaygroundLensState(prev =>
+      prev.isVisible
+        ? {
+            ...prev,
+            isVisible: false,
+          }
+        : prev
+    );
+
+    setPlaygroundPointerState(prev => ({
+      ...prev,
+      isActive: false,
+    }));
+  };
+
+  useEffect(() => {
+    return () => {
+      if (playgroundLongPressTimerRef.current !== null) {
+        window.clearTimeout(playgroundLongPressTimerRef.current);
+      }
+    };
+  }, []);
 
   // Update selected category when prop changes
-  React.useEffect(() => {
+  useEffect(() => {
     if (selectedCategory) {
       setSelectedDesktopCategory(selectedCategory);
       
@@ -327,6 +491,68 @@ export const ExpenseChart: React.FC<ExpenseChartProps> = ({
             Tap on a category above to see all transactions
           </div>
         )}
+      </div>
+
+      {/* Magnifier playground */}
+      <div className="mt-8 border border-dashed border-purple-300 rounded-lg bg-purple-50/40 dark:bg-purple-950/20 p-4">
+        <div className="flex items-center justify-between gap-4 mb-4">
+          <div>
+            <h3 className="text-sm font-semibold text-purple-900 dark:text-purple-200">Magnifier Playground</h3>
+            <p className="text-xs text-purple-700 dark:text-purple-300">
+              Use this sandbox to prototype the hover lens. Safari-friendly behaviors only.
+            </p>
+          </div>
+          <div className="text-xs text-purple-700 dark:text-purple-300 text-right">
+            <div>Active: {playgroundPointerState.isActive ? 'YES' : 'NO'}</div>
+            <div>Pointer: {playgroundPointerState.pointerType || '-'}</div>
+            <div>Pos: {Math.round(playgroundPointerState.x)}×{Math.round(playgroundPointerState.y)}</div>
+          </div>
+        </div>
+
+        <div
+          ref={playgroundRef}
+          onPointerDown={handlePlaygroundPointerDown}
+          onPointerMove={handlePlaygroundPointerMove}
+          onPointerUp={handlePlaygroundPointerUp}
+          onPointerCancel={handlePlaygroundPointerUp}
+          className="relative h-64 rounded-lg bg-white dark:bg-gray-900 shadow-inner overflow-hidden touch-none select-none"
+        >
+          {playgroundLensState.isVisible ? (
+            <>
+              <div
+                className="absolute w-32 h-32 rounded-full border-2 border-purple-500/80 bg-white/70 dark:bg-gray-900/70 pointer-events-none shadow-lg"
+                style={{
+                  left: `${playgroundLensState.current.x}px`,
+                  top: `${playgroundLensState.current.y}px`,
+                  transform: 'translate(-50%, -50%)',
+                  transition: 'transform 40ms linear',
+                }}
+              />
+              <div
+                className="absolute w-1 h-1 rounded-full bg-purple-600 pointer-events-none"
+                style={{
+                  left: `${playgroundLensState.origin.x}px`,
+                  top: `${playgroundLensState.origin.y}px`,
+                  transform: 'translate(-50%, -50%)',
+                }}
+              />
+            </>
+          ) : (
+            <div className="absolute inset-0 flex items-center justify-center text-gray-400 text-sm">
+              <span>Long-press or hover to trigger the lens timer</span>
+            </div>
+          )}
+        </div>
+
+        <div className="mt-3 text-xs text-purple-700 dark:text-purple-300 space-y-1">
+          {playgroundLogs.length === 0 ? (
+            <div>No pointer activity yet. Try long-pressing or hovering.</div>
+          ) : (
+            playgroundLogs.map((entry, index) => (
+              <div key={index}>{entry}</div>
+            ))
+          )}
+        </div>
       </div>
     </div>
   );
