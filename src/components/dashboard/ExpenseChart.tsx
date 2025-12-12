@@ -661,6 +661,7 @@ export const ExpenseChart: React.FC<ExpenseChartProps> = ({
             onPointerUp={handleChartPointerUp}
             onPointerCancel={handleChartPointerUp}
           >
+            {/*
             <ResponsiveContainer width="100%" height={300}>
               <PieChart>
                 <Pie
@@ -711,6 +712,7 @@ export const ExpenseChart: React.FC<ExpenseChartProps> = ({
               </PieChart>
             </ResponsiveContainer>
             {renderChartLens()}
+            */}
           </motion.div>
 
           {/* Transaction List - appears when category selected */}
