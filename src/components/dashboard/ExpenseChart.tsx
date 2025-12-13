@@ -819,6 +819,7 @@ export const ExpenseChart: React.FC<ExpenseChartProps> = ({
                       key={`mobile-cell-${index}`}
                       fill={colors.hexColor}
                       cursor="pointer"
+                      data-category={entry.category}
                       onClick={() => {
                         handleCategoryClick(entry);
                       }}
