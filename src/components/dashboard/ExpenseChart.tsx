@@ -103,6 +103,7 @@ export const ExpenseChart: React.FC<ExpenseChartProps> = ({
   const playgroundLensZoom = 2.4;
   const chartLensSize = 160;
   const chartLensZoom = 2.4;
+  const showMagnifierPlayground = false;
 
   const logPlayground = (message: string) => {
     setPlaygroundLogs(prev => {
@@ -931,7 +932,8 @@ export const ExpenseChart: React.FC<ExpenseChartProps> = ({
       </div>
 
       {/* Magnifier playground */}
-      <div className="mt-8 border border-dashed border-purple-300 rounded-lg bg-purple-50/40 dark:bg-purple-950/20 p-4">
+      {showMagnifierPlayground && (
+        <div className="mt-8 border border-dashed border-purple-300 rounded-lg bg-purple-50/40 dark:bg-purple-950/20 p-4">
         <div className="flex items-center justify-between gap-4 mb-4">
           <div>
             <h3 className="text-sm font-semibold text-purple-900 dark:text-purple-200">Magnifier Playground</h3>
@@ -1013,7 +1015,8 @@ export const ExpenseChart: React.FC<ExpenseChartProps> = ({
             </div>
           )}
         </div>
-      </div>
+        </div>
+      )}
     </div>
   );
 };
