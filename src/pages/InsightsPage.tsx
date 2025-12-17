@@ -3,6 +3,7 @@ import { useFinance } from '../context/FinanceContext';
 import { useActiveBudget } from '../hooks/useBudgets';
 import { BudgetVsActual } from '../components/analytics/BudgetVsActual';
 import { CategoryAccuracyChart } from '../components/analytics/CategoryAccuracyChart';
+import { CategoryPacingInsight } from '../components/analytics/CategoryPacingInsight';
 import { HouseholdMemberExpenses } from '../components/analytics/HouseholdMemberExpenses';
 import { DateRangeFilter } from '../components/analytics/DateRangeFilter';
 import type { DateRangeType } from '../utils/dateRangeFilters';
@@ -145,6 +146,13 @@ export const InsightsPage: React.FC = () => {
             />
           </div>
         </div>
+
+        {/* Category Pacing */}
+        <CategoryPacingInsight
+          transactions={transactions}
+          personalBudget={activeBudget}
+          selectedRange={dateRange}
+        />
 
         {/* Household Member Expenses */}
         <div className="bg-white dark:bg-gray-800 rounded-xl shadow-lg border border-gray-200 dark:border-gray-700">

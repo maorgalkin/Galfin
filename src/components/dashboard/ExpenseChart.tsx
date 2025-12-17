@@ -926,7 +926,7 @@ export const ExpenseChart: React.FC<ExpenseChartProps> = ({
           </div>
         ) : (
           <div className="mt-4 p-4 bg-gray-50 dark:bg-gray-700 rounded-lg border border-gray-200 dark:border-gray-600 text-center text-sm text-gray-500 dark:text-gray-400">
-            Tap on a category above to see all transactions
+            Tap on a category above to see all transactions. Hold to activate the magnifier lens.
           </div>
         )}
       </div>
