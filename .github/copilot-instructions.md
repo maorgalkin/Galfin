@@ -27,6 +27,10 @@ For complete project information, refer to:
 - Budget configuration includes family members and active categories in globalSettings
 - Row Level Security (RLS) enabled on all database tables
 
+## Development Guidelines
+
+**CRITICAL**: Each proposed implementation change should be explained in the context of each compilation unit to be changed, including effects it will have on the API, UI, app state and testability, and await confirmation of the operator to change files.
+
 ---
 
 ## UI Navigation Hierarchy

@@ -149,11 +149,19 @@ export const ExpenseChart: React.FC<ExpenseChartProps> = ({
     point: Point,
     bounds: BoundsSnapshot | null,
     lensSize: number,
+    pointerType: string = 'mouse'
   ) => {
-    return clampLensCenter({
-      x: point.x,
-      y: point.y,
-    }, bounds, lensSize);
+    // Only offset upward on touch to avoid finger occlusion
+    const fingerOffset = pointerType === 'touch' ? 80 : 0;
+    
+    // First, clamp the pointer position (where the finger is)
+    const clampedPointer = clampLensCenter(point, bounds, lensSize);
+    
+    // Then offset the lens center upward from the finger position
+    return {
+      x: clampedPointer.x,
+      y: Math.max(0, clampedPointer.y - fingerOffset),
+    };
   };
 
   const getPlaygroundRelativePosition = (event: React.PointerEvent<HTMLDivElement>) => {
@@ -223,6 +231,7 @@ export const ExpenseChart: React.FC<ExpenseChartProps> = ({
       relative,
       playgroundBoundsRef.current,
       playgroundLensSize,
+      pointerType,
     );
     playgroundLongPressTimerRef.current = window.setTimeout(() => {
       logPlayground('long-press timer fired -> show lens');
@@ -247,6 +256,7 @@ export const ExpenseChart: React.FC<ExpenseChartProps> = ({
       relative,
       playgroundBoundsRef.current,
       playgroundLensSize,
+      pointerType,
     );
 
     if (
@@ -367,6 +377,7 @@ export const ExpenseChart: React.FC<ExpenseChartProps> = ({
       relative,
       chartBoundsRef.current,
       chartLensSize,
+      pointerType,
     );
 
     chartLongPressTimerRef.current = window.setTimeout(() => {
@@ -391,6 +402,7 @@ export const ExpenseChart: React.FC<ExpenseChartProps> = ({
       relative,
       chartBoundsRef.current,
       chartLensSize,
+      pointerType,
     );
 
     if (
@@ -445,8 +457,9 @@ export const ExpenseChart: React.FC<ExpenseChartProps> = ({
     chartPointerIdRef.current = null;
     chartStartPositionRef.current = null;
 
+    // Use pointer position (where finger is) not center (where lens is drawn)
     const selectionPoint = chartLensState.isVisible
-      ? chartLensState.center
+      ? chartLensState.pointer
       : relative;
 
     if (chartLensState.isVisible || pointerType === 'mouse' || pointerType === 'touch') {
