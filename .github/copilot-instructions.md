@@ -29,7 +29,9 @@ For complete project information, refer to:
 
 ## Development Guidelines
 
-**CRITICAL**: Each proposed implementation change should be explained in the context of each compilation unit to be changed, including effects it will have on the API, UI, app state and testability, and await confirmation of the operator to change files.
+**CRITICAL**: 
+1. **Before implementation**: Each proposed implementation change should be explained in the context of each compilation unit to be changed, including effects it will have on the API, UI, app state and testability, and await confirmation of the operator to change files.
+2. **After implementation**: Briefly explain what was changed in each affected file/context.
 
 ---
 

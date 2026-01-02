@@ -70,6 +70,7 @@ export const ExpenseChart: React.FC<ExpenseChartProps> = ({
     amount: number;
     percentage: string;
   } | null>(null);
+  const [hoveredCategory, setHoveredCategory] = useState<string | null>(null);
   const playgroundRef = useRef<HTMLDivElement>(null);
   const [playgroundLogs, setPlaygroundLogs] = useState<string[]>([]);
   const [playgroundPointerState, setPlaygroundPointerState] = useState<PointerState>({
@@ -424,6 +425,14 @@ export const ExpenseChart: React.FC<ExpenseChartProps> = ({
       y: relative.y,
     });
 
+    // Detect hovered category for visual feedback
+    const bounds = chartBoundsRef.current ?? snapshotBounds(chartContainerRef.current);
+    if (bounds) {
+      const globalPoint = { x: bounds.left + relative.x, y: bounds.top + relative.y };
+      const detectedCategory = detectCategoryAtGlobalPoint(globalPoint);
+      setHoveredCategory(detectedCategory);
+    }
+
     setChartLensState(prev =>
       prev.isVisible
         ? {
@@ -456,6 +465,9 @@ export const ExpenseChart: React.FC<ExpenseChartProps> = ({
 
     chartPointerIdRef.current = null;
     chartStartPositionRef.current = null;
+
+    // Clear hover state
+    setHoveredCategory(null);
 
     // Use pointer position (where finger is) not center (where lens is drawn)
     const selectionPoint = chartLensState.isVisible
@@ -624,12 +636,13 @@ export const ExpenseChart: React.FC<ExpenseChartProps> = ({
                 {categoryData.map((entry, index) => {
                   const colors = getCategoryColor(entry.category, 'expense', personalBudget);
                   const isFocused = selectedDesktopCategory === entry.category;
+                  const isHovered = hoveredCategory === entry.category;
                   return (
                     <Cell
                       key={`lens-cell-${index}`}
                       fill={colors.hexColor}
-                      stroke={isFocused ? '#312e81' : undefined}
-                      strokeWidth={isFocused ? 3 : undefined}
+                      stroke={isHovered ? '#fff' : (isFocused ? '#312e81' : undefined)}
+                      strokeWidth={isHovered ? 4 : (isFocused ? 3 : undefined)}
                     />
                   );
                 })}
@@ -692,12 +705,15 @@ export const ExpenseChart: React.FC<ExpenseChartProps> = ({
                 >
                   {categoryData.map((entry, index) => {
                     const colors = getCategoryColor(entry.category, 'expense', personalBudget);
+                    const isHovered = hoveredCategory === entry.category;
                     return (
                       <Cell
                         key={`cell-${index}`}
                         fill={colors.hexColor}
                         cursor="pointer"
                         data-category={entry.category}
+                        stroke={isHovered ? '#fff' : undefined}
+                        strokeWidth={isHovered ? 4 : undefined}
                       />
                     );
                   })}
@@ -828,12 +844,15 @@ export const ExpenseChart: React.FC<ExpenseChartProps> = ({
               >
                 {categoryData.map((entry, index) => {
                   const colors = getCategoryColor(entry.category, 'expense', personalBudget);
+                  const isHovered = hoveredCategory === entry.category;
                   return (
                     <Cell
                       key={`mobile-cell-${index}`}
                       fill={colors.hexColor}
                       cursor="pointer"
                       data-category={entry.category}
+                      stroke={isHovered ? '#fff' : undefined}
+                      strokeWidth={isHovered ? 4 : undefined}
                       onClick={() => {
                         handleCategoryClick(entry);
                       }}
