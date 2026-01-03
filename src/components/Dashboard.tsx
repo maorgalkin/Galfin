@@ -16,7 +16,6 @@ import { getUserFirstName } from '../utils/userHelpers';
 import { generateDummyTransactions, countDummyTransactions, isDummyTransaction } from '../utils/dummyData';
 import { useDashboardData } from '../hooks/useDashboardData';
 import { DashboardTabNavigation } from './dashboard/DashboardTabNavigation';
-import { MonthNavigator } from './dashboard/MonthNavigator';
 import { ExpenseChart } from './dashboard/ExpenseChart';
 import { MonthCarousel } from './dashboard/MonthCarousel';
 import { formatCurrencyFromSettings } from '../utils/formatCurrency';
@@ -41,8 +40,7 @@ const Dashboard: React.FC = () => {
   useAutoApplyScheduledAdjustments(!!user);
   
   const [searchParams, setSearchParams] = useSearchParams();
-  const [activeMonthTab, setActiveMonthTab] = useState(0);
-  const [direction, setDirection] = useState(0); // Track animation direction: -1 (left), 1 (right)
+  const [transactionsMonthIndex, setTransactionsMonthIndex] = useState(0); // For Transactions tab carousel only
   const [transactionTypeFilter, setTransactionTypeFilter] = useState<'all' | 'income' | 'expense'>('all');
   const [transactionMemberFilter, setTransactionMemberFilter] = useState<string>('all');
   const [transactionMonthFilter, setTransactionMonthFilter] = useState<string>('carousel-0'); // Start with current month
@@ -251,18 +249,30 @@ const Dashboard: React.FC = () => {
   }, [activeTab]);
 
   // Use custom hook for data management
+  // Dashboard tab uses null (current month only), Transactions tab uses transactionsMonthIndex
   const {
     months,
-    monthTransactions,
-    monthCategoryData,
-    selectedMonthDate,
+    monthTransactions: dashboardMonthTransactions,
+    monthCategoryData: dashboardCategoryData,
+    selectedMonthDate: dashboardMonthDate,
     getTransactionsForMonth,
     getFamilyMemberName,
   } = useDashboardData({
     transactions,
     familyMembers,
-    budgetConfig: null, // No longer needed
-    activeMonthIndex: activeMonthTab,
+    budgetConfig: null,
+    activeMonthIndex: null, // Always null for Dashboard - current month only
+  });
+
+  // Transactions tab data (separate hook call for carousel mode)
+  const {
+    months: transactionMonths,
+    monthTransactions: transactionTabMonthTransactions,
+  } = useDashboardData({
+    transactions,
+    familyMembers,
+    budgetConfig: null,
+    activeMonthIndex: transactionsMonthIndex, // Carousel mode for Transactions tab
   });
 
   const formatCurrency = (amount: number) => {
@@ -271,8 +281,9 @@ const Dashboard: React.FC = () => {
 
   // Dummy data handlers
   const handleAddDummyData = async () => {
-    const monthStart = months[activeMonthTab].start;
-    const monthEnd = months[activeMonthTab].end;
+    // Use current month for dummy data
+    const monthStart = new Date(dashboardMonthDate.getFullYear(), dashboardMonthDate.getMonth(), 1);
+    const monthEnd = new Date(dashboardMonthDate.getFullYear(), dashboardMonthDate.getMonth() + 1, 0, 23, 59, 59);
     const memberIds = familyMembers.map(m => m.id);
     const dummyTransactions = generateDummyTransactions(monthStart, monthEnd, memberIds);
     
@@ -401,18 +412,21 @@ const Dashboard: React.FC = () => {
             </div>
           </div>
 
-          {/* Budget Month Navigation - Carousel Style */}
-          <MonthNavigator
-            months={months}
-            activeMonthIndex={activeMonthTab}
-            onMonthChange={setActiveMonthTab}
-            direction={direction}
-            onDirectionChange={setDirection}
-            userName={getUserFirstName(user)}
-            themeColor="purple"
-            householdName={household?.name}
-            ownerName={householdMembers.find(m => m.role === 'owner')?.email?.split('@')[0] || householdMembers.find(m => m.role === 'owner')?.user_id}
-          />
+          {/* Current Month Header */}
+          <div className="mb-8">
+            <div className="bg-white dark:bg-gray-800 rounded-xl shadow-lg border border-purple-200 dark:border-purple-700 p-6">
+              <div className="text-center">
+                <h2 className="text-2xl font-bold text-gray-900 dark:text-gray-100 mb-1">
+                  {dashboardMonthDate.toLocaleDateString('en-US', { month: 'long', year: 'numeric' })}
+                </h2>
+                {household?.name && (
+                  <p className="text-sm text-gray-600 dark:text-gray-400">
+                    {household.name}
+                  </p>
+                )}
+              </div>
+            </div>
+          </div>
 
           {/* Family Members - Quick Access */}
           <div className="mb-8">
@@ -430,59 +444,86 @@ const Dashboard: React.FC = () => {
             />
           </div>
 
-          {/* BUDGET PERFORMANCE - Unified Widget */}
-          <div className="mb-8">
-            {/* Mobile Sticky Header */}
-            <div className="md:hidden sticky top-0 z-10 bg-purple-100 dark:bg-purple-950/30 -mx-3 px-3 py-3 mb-4 border-b-2 border-purple-300 dark:border-purple-700">
-              <h2 className="text-lg font-semibold text-purple-900 dark:text-purple-100">
-                Budget Performance{showBreakdownInHeader && ' | Breakdown'}
-              </h2>
+          {/* Empty State - Show when no transactions this month */}
+          {dashboardMonthTransactions.length === 0 ? (
+            <div className="bg-white dark:bg-gray-800 rounded-xl shadow-lg border-2 border-dashed border-purple-300 dark:border-purple-600 p-12 text-center">
+              <div className="max-w-md mx-auto">
+                <div className="w-20 h-20 bg-purple-100 dark:bg-purple-900/30 rounded-full flex items-center justify-center mx-auto mb-6">
+                  <svg className="w-10 h-10 text-purple-600 dark:text-purple-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 4v16m8-8H4" />
+                  </svg>
+                </div>
+                <h3 className="text-2xl font-bold text-gray-900 dark:text-gray-100 mb-3">
+                  Welcome to {dashboardMonthDate.toLocaleDateString('en-US', { month: 'long', year: 'numeric' })}!
+                </h3>
+                <p className="text-gray-600 dark:text-gray-400 mb-8 text-lg">
+                  Start tracking your finances by adding your first transaction.
+                </p>
+                <div className="mt-6 pt-6 border-t border-gray-200 dark:border-gray-700">
+                  <p className="text-sm text-gray-500 dark:text-gray-400 flex items-center justify-center gap-2">
+                    <span>💡</span>
+                    <span>Tip: Start by recording your salary or main income for the month</span>
+                  </p>
+                </div>
+              </div>
             </div>
-            
-            {/* Desktop version - compact grid layout */}
-            <div className="max-md:hidden">
-              <BudgetPerformanceCard 
-                selectedMonth={selectedMonthDate} 
-                isCompact={true} 
-                themeColor="purple"
-                onAlertsViewed={handleAlertsViewed}
-                onCategoryClick={handleCategoryClick}
-              />
-            </div>
-            
-            {/* Mobile/Tablet version - full layout with breakdown observer */}
-            <div className="md:hidden">
-              <BudgetPerformanceCard 
-                selectedMonth={selectedMonthDate} 
-                isCompact={false} 
-                themeColor="purple"
-                onBreakdownVisible={handleBreakdownVisible}
-                onAlertsViewed={handleAlertsViewed}
-                onCategoryClick={handleCategoryClick}
-              />
-            </div>
-          </div>
+          ) : (
+            <>
+              {/* BUDGET PERFORMANCE - Unified Widget */}
+              <div className="mb-8">
+                {/* Mobile Sticky Header */}
+                <div className="md:hidden sticky top-0 z-10 bg-purple-100 dark:bg-purple-950/30 -mx-3 px-3 py-3 mb-4 border-b-2 border-purple-300 dark:border-purple-700">
+                  <h2 className="text-lg font-semibold text-purple-900 dark:text-purple-100">
+                    Budget Performance{showBreakdownInHeader && ' | Breakdown'}
+                  </h2>
+                </div>
+                
+                {/* Desktop version - compact grid layout */}
+                <div className="max-md:hidden">
+                  <BudgetPerformanceCard 
+                    selectedMonth={dashboardMonthDate} 
+                    isCompact={true} 
+                    themeColor="purple"
+                    onAlertsViewed={handleAlertsViewed}
+                    onCategoryClick={handleCategoryClick}
+                  />
+                </div>
+                
+                {/* Mobile/Tablet version - full layout with breakdown observer */}
+                <div className="md:hidden">
+                  <BudgetPerformanceCard 
+                    selectedMonth={dashboardMonthDate} 
+                    isCompact={false} 
+                    themeColor="purple"
+                    onBreakdownVisible={handleBreakdownVisible}
+                    onAlertsViewed={handleAlertsViewed}
+                    onCategoryClick={handleCategoryClick}
+                  />
+                </div>
+              </div>
 
-          {/* 2. BUDGET CATEGORY BREAKDOWN - Second Priority */}
-          <div ref={expenseChartRef} className="mb-8">
-            {/* Mobile Sticky Header */}
-            <div className="md:hidden sticky top-0 z-10 bg-purple-100 dark:bg-purple-950/30 -mx-3 px-3 py-3 mb-4 border-b-2 border-purple-300 dark:border-purple-700">
-              <h2 className="text-lg font-semibold text-purple-900 dark:text-purple-100">Expenses by Category</h2>
-            </div>
-            
-            <ExpenseChart
-              categoryData={monthCategoryData}
-              transactions={monthTransactions}
-              personalBudget={personalBudget}
-              formatCurrency={formatCurrency}
-              selectedCategory={selectedDesktopCategory}
-              onEditTransaction={setViewingTransactionDetails}
-              onViewAllTransactions={(category) => {
-                setSelectedDesktopCategory(category);
-                setIsCategoryModalOpen(true);
-              }}
-            />
-          </div>
+              {/* 2. BUDGET CATEGORY BREAKDOWN - Second Priority */}
+              <div ref={expenseChartRef} className="mb-8">
+                {/* Mobile Sticky Header */}
+                <div className="md:hidden sticky top-0 z-10 bg-purple-100 dark:bg-purple-950/30 -mx-3 px-3 py-3 mb-4 border-b-2 border-purple-300 dark:border-purple-700">
+                  <h2 className="text-lg font-semibold text-purple-900 dark:text-purple-100">Expenses by Category</h2>
+                </div>
+                
+                <ExpenseChart
+                  categoryData={dashboardCategoryData}
+                  transactions={dashboardMonthTransactions}
+                  personalBudget={personalBudget}
+                  formatCurrency={formatCurrency}
+                  selectedCategory={selectedDesktopCategory}
+                  onEditTransaction={setViewingTransactionDetails}
+                  onViewAllTransactions={(category) => {
+                    setSelectedDesktopCategory(category);
+                    setIsCategoryModalOpen(true);
+                  }}
+                />
+              </div>
+            </>
+          )}
         </div>
       )}
 
@@ -502,10 +543,10 @@ const Dashboard: React.FC = () => {
           <div className="mb-8">
             {/* Month Carousel - New smooth carousel */}
             <MonthCarousel
-              months={months}
-              activeIndex={activeMonthTab}
+              months={transactionMonths}
+              activeIndex={transactionsMonthIndex}
               onIndexChange={(idx) => {
-                setActiveMonthTab(idx);
+                setTransactionsMonthIndex(idx);
                 setTransactionTypeFilter('all');
                 setTransactionMemberFilter('all');
                 setTransactionMonthFilter(`carousel-${idx}`);
@@ -519,16 +560,16 @@ const Dashboard: React.FC = () => {
               monthFilter={transactionMonthFilter}
               categoryFilter={transactionCategoryFilter}
               familyMembers={familyMembers}
-              categories={monthCategoryData.map(c => c.category).sort()}
-              months={months}
-              activeMonthIndex={activeMonthTab}
+              categories={dashboardCategoryData.map(c => c.category).sort()}
+              months={transactionMonths}
+              activeMonthIndex={transactionsMonthIndex}
               onTypeChange={setTransactionTypeFilter}
               onMemberChange={setTransactionMemberFilter}
               onMonthChange={(month, monthIndex) => {
                 setTransactionMonthFilter(month);
                 // If a carousel month was selected, update the active month tab
                 if (monthIndex !== undefined) {
-                  setActiveMonthTab(monthIndex);
+                  setTransactionsMonthIndex(monthIndex);
                 }
               }}
               onCategoryChange={setTransactionCategoryFilter}
@@ -546,7 +587,7 @@ const Dashboard: React.FC = () => {
                 if (transactionMonthFilter.startsWith('carousel-')) {
                   // Extract carousel index
                   const index = parseInt(transactionMonthFilter.split('-')[1]);
-                  filtered = getTransactionsForMonth(months[index].start, months[index].end);
+                  filtered = getTransactionsForMonth(transactionMonths[index].start, transactionMonths[index].end);
                 } else {
                   // Parse YYYY-MM format for older months
                   const [year, month] = transactionMonthFilter.split('-').map(Number);
@@ -615,8 +656,8 @@ const Dashboard: React.FC = () => {
       <CategoryTransactionsModal
         isOpen={isCategoryModalOpen && selectedDesktopCategory !== null}
         category={selectedDesktopCategory || ''}
-        categories={monthCategoryData.map(c => c.category).sort()}
-        transactions={monthTransactions
+        categories={dashboardCategoryData.map(c => c.category).sort()}
+        transactions={dashboardMonthTransactions
           .filter(t => t.type === 'expense' && t.category === selectedDesktopCategory)
           .sort((a, b) => new Date(b.date).getTime() - new Date(a.date).getTime())}
         formatCurrency={formatCurrency}

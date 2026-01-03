@@ -19,7 +19,7 @@ interface UseDashboardDataProps {
   transactions: Transaction[];
   familyMembers: FamilyMember[];
   budgetConfig: BudgetConfiguration | null; // Reserved for future budget-aware calculations
-  activeMonthIndex: number;
+  activeMonthIndex: number | null; // null = current month only mode (Dashboard), number = multi-month carousel mode (Transactions)
 }
 
 interface UseDashboardDataReturn {
@@ -55,10 +55,12 @@ export function useDashboardData({
     [transactions]
   );
 
-  // Get selected month data
-  const selectedMonthStart = months[activeMonthIndex].start;
-  const selectedMonthEnd = months[activeMonthIndex].end;
-  const selectedMonthDate = months[activeMonthIndex].start;
+  // Determine month data based on mode
+  // null activeMonthIndex = current month only (Dashboard)
+  // number activeMonthIndex = carousel mode (Transactions)
+  const selectedMonthStart = activeMonthIndex === null ? months[0].start : months[activeMonthIndex].start;
+  const selectedMonthEnd = activeMonthIndex === null ? months[0].end : months[activeMonthIndex].end;
+  const selectedMonthDate = activeMonthIndex === null ? months[0].start : months[activeMonthIndex].start;
 
   // Filter transactions for the selected month
   const monthTransactions = useMemo(
