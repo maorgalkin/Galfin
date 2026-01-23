@@ -7,10 +7,10 @@
 import type { Transaction } from '../types';
 
 export interface TransactionFilterState {
-  type: 'all' | 'income' | 'expense';
-  member: string; // 'all' or member ID
+  types: ('income' | 'expense')[]; // Empty array means show all
+  members: string[]; // Empty array means show all (member IDs)
   month: string; // 'carousel-N' or 'YYYY-MM' format
-  category: string; // 'all' or category name
+  categories: string[]; // Empty array means show all (category names)
 }
 
 export interface MonthData {
@@ -66,41 +66,44 @@ export function filterByMonth(
 
 /**
  * Apply transaction type filter (income/expense)
+ * Empty array means show all types
  */
 export function filterByType(
   transactions: Transaction[],
-  typeFilter: 'all' | 'income' | 'expense'
+  typeFilters: ('income' | 'expense')[]
 ): Transaction[] {
-  if (typeFilter === 'all') {
-    return transactions;
+  if (typeFilters.length === 0) {
+    return transactions; // Show all when no types selected
   }
-  return transactions.filter(t => t.type === typeFilter);
+  return transactions.filter(t => typeFilters.includes(t.type));
 }
 
 /**
  * Apply family member filter
+ * Empty array means show all members
  */
 export function filterByMember(
   transactions: Transaction[],
-  memberFilter: string
+  memberFilters: string[]
 ): Transaction[] {
-  if (memberFilter === 'all') {
-    return transactions;
+  if (memberFilters.length === 0) {
+    return transactions; // Show all when no members selected
   }
-  return transactions.filter(t => t.familyMember === memberFilter);
+  return transactions.filter(t => t.familyMember && memberFilters.includes(t.familyMember));
 }
 
 /**
  * Apply category filter
+ * Empty array means show all categories
  */
 export function filterByCategory(
   transactions: Transaction[],
-  categoryFilter: string
+  categoryFilters: string[]
 ): Transaction[] {
-  if (categoryFilter === 'all') {
-    return transactions;
+  if (categoryFilters.length === 0) {
+    return transactions; // Show all when no categories selected
   }
-  return transactions.filter(t => t.category === categoryFilter);
+  return transactions.filter(t => categoryFilters.includes(t.category));
 }
 
 /**
@@ -115,22 +118,23 @@ export function applyTransactionFilters(
 ): Transaction[] {
   // Apply filters in sequence
   let filtered = filterByMonth(transactions, filters.month, months, getTransactionsForMonth);
-  filtered = filterByType(filtered, filters.type);
-  filtered = filterByMember(filtered, filters.member);
-  filtered = filterByCategory(filtered, filters.category);
+  filtered = filterByType(filtered, filters.types);
+  filtered = filterByMember(filtered, filters.members);
+  filtered = filterByCategory(filtered, filters.categories);
   
   return filtered;
 }
 
 /**
  * Create initial filter state
+ * Empty arrays mean "show all" for that filter
  */
 export function createInitialFilterState(initialMonthIndex: number = 0): TransactionFilterState {
   return {
-    type: 'all',
-    member: 'all',
+    types: [], // Empty = show all
+    members: [], // Empty = show all
     month: `carousel-${initialMonthIndex}`,
-    category: 'all',
+    categories: [], // Empty = show all
   };
 }
 
@@ -143,9 +147,9 @@ export function resetFiltersExceptMonth(
   newMonthFilter: string
 ): TransactionFilterState {
   return {
-    type: 'all',
-    member: 'all',
+    types: [], // Empty = show all
+    members: [], // Empty = show all
     month: newMonthFilter,
-    category: 'all',
+    categories: [], // Empty = show all
   };
 }

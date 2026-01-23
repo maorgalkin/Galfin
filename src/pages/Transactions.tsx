@@ -4,6 +4,7 @@ import { useActiveBudget } from '../hooks/useBudgets';
 import { useDashboardData } from '../hooks/useDashboardData';
 import { useTransactionFilters } from '../hooks/useTransactionFilters';
 import { MonthCarousel } from '../components/transactions/MonthCarousel';
+import { TransactionFilterTree } from '../components/transactions/TransactionFilterTree';
 import { TransactionFilters } from '../components/dashboard/TransactionFilters';
 import { TransactionsList } from '../components/dashboard/TransactionsList';
 import EditTransactionModal from '../components/EditTransactionModal';
@@ -40,6 +41,9 @@ export const Transactions: React.FC = () => {
   const {
     filteredTransactions,
     filters,
+    setTypeFilters,
+    setMemberFilters,
+    setCategoryFilters,
     setTypeFilter,
     setMemberFilter,
     setMonthFilter,
@@ -82,49 +86,65 @@ export const Transactions: React.FC = () => {
         </p>
       </div>
       
-      {/* Transaction Overview Section */}
-      <div className="mb-8">
-        {/* Month Carousel */}
-        <MonthCarousel
-          months={months}
-          activeIndex={monthIndex}
-          onIndexChange={handleMonthIndexChange}
-        />
+      {/* Month Carousel */}
+      <MonthCarousel
+        months={months}
+        activeIndex={monthIndex}
+        onIndexChange={handleMonthIndexChange}
+      />
 
-        {/* Transaction Filters */}
-        <TransactionFilters
-          typeFilter={filters.type}
-          memberFilter={filters.member}
-          monthFilter={filters.month}
-          categoryFilter={filters.category}
+      {/* Desktop: Two-column layout with filter tree. Mobile: Stack vertically */}
+      <div className="lg:grid lg:grid-cols-[300px_1fr] lg:gap-6">
+        {/* Left Sidebar: Filter Tree (Desktop/Tablet only) */}
+        <TransactionFilterTree
+          selectedTypes={filters.types}
+          selectedMembers={filters.members}
+          selectedCategories={filters.categories}
           familyMembers={familyMembers}
           categories={availableCategories}
-          months={months}
-          activeMonthIndex={monthIndex}
-          onTypeChange={setTypeFilter}
-          onMemberChange={setMemberFilter}
-          onMonthChange={(month, monthIndex) => {
-            setMonthFilter(month, monthIndex);
-            // Sync carousel if month index provided
-            if (monthIndex !== undefined) {
-              setMonthIndex(monthIndex);
-            }
-          }}
-          onCategoryChange={setCategoryFilter}
-          onMoreClick={() => {
-            // Future: Open advanced filters modal
-          }}
+          onTypeChange={setTypeFilters}
+          onMemberChange={setMemberFilters}
+          onCategoryChange={setCategoryFilters}
         />
 
-        {/* Transactions List */}
-        <TransactionsList
-          transactions={filteredTransactions}
-          familyMembers={familyMembers}
-          personalBudget={personalBudget}
-          formatCurrency={formatCurrency}
-          onEditTransaction={setEditingTransaction}
-          emptyMessage="No transactions match your filters"
-        />
+        {/* Right Content: Filters + Transactions List */}
+        <div className="space-y-6">
+          {/* Transaction Filters (Mobile dropdown, hidden on desktop) */}
+          <div className="lg:hidden">
+            <TransactionFilters
+              typeFilter={filters.types.length === 0 ? 'all' : filters.types.length === 1 ? filters.types[0] : 'all'}
+              memberFilter={filters.members.length === 0 ? 'all' : filters.members.length === 1 ? filters.members[0] : 'all'}
+              monthFilter={filters.month}
+              categoryFilter={filters.categories.length === 0 ? 'all' : filters.categories.length === 1 ? filters.categories[0] : 'all'}
+              familyMembers={familyMembers}
+              categories={availableCategories}
+              months={months}
+              activeMonthIndex={monthIndex}
+              onTypeChange={setTypeFilter}
+              onMemberChange={setMemberFilter}
+              onMonthChange={(month, monthIndex) => {
+                setMonthFilter(month, monthIndex);
+                if (monthIndex !== undefined) {
+                  setMonthIndex(monthIndex);
+                }
+              }}
+              onCategoryChange={setCategoryFilter}
+              onMoreClick={() => {
+                // Future: Open advanced filters modal
+              }}
+            />
+          </div>
+
+          {/* Transactions List */}
+          <TransactionsList
+            transactions={filteredTransactions}
+            familyMembers={familyMembers}
+            personalBudget={personalBudget}
+            formatCurrency={formatCurrency}
+            onEditTransaction={setEditingTransaction}
+            emptyMessage="No transactions match your filters"
+          />
+        </div>
       </div>
 
       {/* Edit Transaction Modal */}

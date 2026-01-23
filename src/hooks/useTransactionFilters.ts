@@ -28,12 +28,17 @@ export interface UseTransactionFiltersReturn {
   filters: TransactionFilterState;
   monthIndex: number;
   
-  // Filter setters
+  // Filter setters (multi-select arrays)
+  setTypeFilters: (types: ('income' | 'expense')[]) => void;
+  setMemberFilters: (memberIds: string[]) => void;
+  setMonthFilter: (month: string, monthIndex?: number) => void;
+  setCategoryFilters: (categories: string[]) => void;
+  setMonthIndex: (index: number) => void;
+  
+  // Legacy single-select setters for backwards compatibility with dropdown UI
   setTypeFilter: (type: 'all' | 'income' | 'expense') => void;
   setMemberFilter: (member: string) => void;
-  setMonthFilter: (month: string, monthIndex?: number) => void;
   setCategoryFilter: (category: string) => void;
-  setMonthIndex: (index: number) => void;
   
   // Utilities
   resetFilters: () => void;
@@ -81,13 +86,42 @@ export function useTransactionFilters({
     );
   }, [transactions, filters, months, getTransactionsForMonth]);
   
-  // Filter setters (wrapped in useCallback to prevent unnecessary re-renders)
+  // Filter setters (multi-select arrays)
+  const setTypeFilters = useCallback((types: ('income' | 'expense')[]) => {
+    setFilters(prev => ({ ...prev, types }));
+  }, []);
+  
+  const setMemberFilters = useCallback((memberIds: string[]) => {
+    setFilters(prev => ({ ...prev, members: memberIds }));
+  }, []);
+  
+  const setCategoryFilters = useCallback((categories: string[]) => {
+    setFilters(prev => ({ ...prev, categories }));
+  }, []);
+  
+  // Legacy single-select setters (for backwards compatibility with dropdown UI)
   const setTypeFilter = useCallback((type: 'all' | 'income' | 'expense') => {
-    setFilters(prev => ({ ...prev, type }));
+    if (type === 'all') {
+      setFilters(prev => ({ ...prev, types: [] }));
+    } else {
+      setFilters(prev => ({ ...prev, types: [type] }));
+    }
   }, []);
   
   const setMemberFilter = useCallback((member: string) => {
-    setFilters(prev => ({ ...prev, member }));
+    if (member === 'all') {
+      setFilters(prev => ({ ...prev, members: [] }));
+    } else {
+      setFilters(prev => ({ ...prev, members: [member] }));
+    }
+  }, []);
+  
+  const setCategoryFilter = useCallback((category: string) => {
+    if (category === 'all') {
+      setFilters(prev => ({ ...prev, categories: [] }));
+    } else {
+      setFilters(prev => ({ ...prev, categories: [category] }));
+    }
   }, []);
   
   const setMonthFilter = useCallback((month: string, monthIndex?: number) => {
@@ -95,10 +129,6 @@ export function useTransactionFilters({
     if (monthIndex !== undefined) {
       setMonthIndexState(monthIndex);
     }
-  }, []);
-  
-  const setCategoryFilter = useCallback((category: string) => {
-    setFilters(prev => ({ ...prev, category }));
   }, []);
   
   const setMonthIndex = useCallback((index: number) => {
@@ -120,6 +150,9 @@ export function useTransactionFilters({
     filteredTransactions,
     filters,
     monthIndex,
+    setTypeFilters,
+    setMemberFilters,
+    setCategoryFilters,
     setTypeFilter,
     setMemberFilter,
     setMonthFilter,
