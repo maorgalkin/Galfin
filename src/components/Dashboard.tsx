@@ -5,25 +5,21 @@ import { useAuth } from '../contexts/AuthContext';
 import { useActiveBudget, useCurrentMonthBudget, useAutoApplyScheduledAdjustments } from '../hooks/useBudgets';
 import { budgetService } from '../services/budgetService';
 import { userAlertViewService } from '../services/userAlertViewService';
-import { motion, AnimatePresence } from 'framer-motion';
 import { BudgetPerformanceCard } from './BudgetPerformanceCard';
 import { TransactionDetailsModal } from './TransactionDetailsModal';
 import EditTransactionModal from './EditTransactionModal';
 import HouseholdSettingsModal from './HouseholdSettingsModal';
 import { BudgetManagement } from '../pages/BudgetManagement';
 import { InsightsPage } from '../pages/InsightsPage';
-import { getUserFirstName } from '../utils/userHelpers';
 import { generateDummyTransactions, countDummyTransactions, isDummyTransaction } from '../utils/dummyData';
 import { useDashboardData } from '../hooks/useDashboardData';
 import { DashboardTabNavigation } from './dashboard/DashboardTabNavigation';
 import { ExpenseChart } from './dashboard/ExpenseChart';
-import { MonthCarousel } from './dashboard/MonthCarousel';
 import { formatCurrencyFromSettings } from '../utils/formatCurrency';
 import { DummyDataControls } from './dashboard/DummyDataControls';
 import { FamilyMembersCard } from './dashboard/FamilyMembersCard';
-import { TransactionsList } from './dashboard/TransactionsList';
-import { TransactionFilters } from './dashboard/TransactionFilters';
 import { CategoryTransactionsModal } from './dashboard/CategoryTransactionsModal';
+import { Transactions } from '../pages/Transactions';
 import CustomDateRangeModal from './CustomDateRangeModal';
 import * as HouseholdService from '../services/householdService';
 import type { Transaction, BudgetConfiguration } from '../types';
@@ -40,11 +36,6 @@ const Dashboard: React.FC = () => {
   useAutoApplyScheduledAdjustments(!!user);
   
   const [searchParams, setSearchParams] = useSearchParams();
-  const [transactionsMonthIndex, setTransactionsMonthIndex] = useState(0); // For Transactions tab carousel only
-  const [transactionTypeFilter, setTransactionTypeFilter] = useState<'all' | 'income' | 'expense'>('all');
-  const [transactionMemberFilter, setTransactionMemberFilter] = useState<string>('all');
-  const [transactionMonthFilter, setTransactionMonthFilter] = useState<string>('carousel-0'); // Start with current month
-  const [transactionCategoryFilter, setTransactionCategoryFilter] = useState<string>('all');
   const [isDarkMode, setIsDarkMode] = useState(() => {
     // Check OS/browser dark mode preference
     if (typeof window !== 'undefined') {
@@ -72,7 +63,6 @@ const Dashboard: React.FC = () => {
 
   // Household data
   const [household, setHousehold] = useState<Household | null>(null);
-  const [householdMembers, setHouseholdMembers] = useState<HouseholdMember[]>([]);
 
   // Calculate budget alerts for the current month
   // Count unique categories with alerts/warnings (not individual alert IDs)
@@ -204,15 +194,13 @@ const Dashboard: React.FC = () => {
       if (!user?.id) return;
       
       try {
-        const [viewedIds, householdData, membersData] = await Promise.all([
+        const [viewedIds, householdData] = await Promise.all([
           userAlertViewService.getViewedAlertIds(user.id),
           HouseholdService.getUserHousehold(),
-          HouseholdService.getHouseholdMembers(),
         ]);
         
         setViewedAlertIds(viewedIds);
         setHousehold(householdData);
-        setHouseholdMembers(membersData);
       } catch (error) {
         console.error('Error loading data:', error);
       }
@@ -251,28 +239,15 @@ const Dashboard: React.FC = () => {
   // Use custom hook for data management
   // Dashboard tab uses null (current month only), Transactions tab uses transactionsMonthIndex
   const {
-    months,
     monthTransactions: dashboardMonthTransactions,
     monthCategoryData: dashboardCategoryData,
     selectedMonthDate: dashboardMonthDate,
-    getTransactionsForMonth,
     getFamilyMemberName,
   } = useDashboardData({
     transactions,
     familyMembers,
     budgetConfig: null,
     activeMonthIndex: null, // Always null for Dashboard - current month only
-  });
-
-  // Transactions tab data (separate hook call for carousel mode)
-  const {
-    months: transactionMonths,
-    monthTransactions: transactionTabMonthTransactions,
-  } = useDashboardData({
-    transactions,
-    familyMembers,
-    budgetConfig: null,
-    activeMonthIndex: transactionsMonthIndex, // Carousel mode for Transactions tab
   });
 
   const formatCurrency = (amount: number) => {
@@ -528,102 +503,7 @@ const Dashboard: React.FC = () => {
       )}
 
       {activeTab === 'transactions' && (
-        <div>
-          {/* Header */}
-          <div className="mb-8">
-            <h1 className={`text-3xl font-bold ${getHeadingColor('blue')} mb-2`}>
-              Transactions
-            </h1>
-            <p className={getSubheadingColor('blue')}>
-              View and manage your transaction history
-            </p>
-          </div>
-          
-          {/* Transaction Overview Section */}
-          <div className="mb-8">
-            {/* Month Carousel - New smooth carousel */}
-            <MonthCarousel
-              months={transactionMonths}
-              activeIndex={transactionsMonthIndex}
-              onIndexChange={(idx) => {
-                setTransactionsMonthIndex(idx);
-                setTransactionTypeFilter('all');
-                setTransactionMemberFilter('all');
-                setTransactionMonthFilter(`carousel-${idx}`);
-              }}
-            />
-
-            {/* Transaction Filters */}
-            <TransactionFilters
-              typeFilter={transactionTypeFilter}
-              memberFilter={transactionMemberFilter}
-              monthFilter={transactionMonthFilter}
-              categoryFilter={transactionCategoryFilter}
-              familyMembers={familyMembers}
-              categories={dashboardCategoryData.map(c => c.category).sort()}
-              months={transactionMonths}
-              activeMonthIndex={transactionsMonthIndex}
-              onTypeChange={setTransactionTypeFilter}
-              onMemberChange={setTransactionMemberFilter}
-              onMonthChange={(month, monthIndex) => {
-                setTransactionMonthFilter(month);
-                // If a carousel month was selected, update the active month tab
-                if (monthIndex !== undefined) {
-                  setTransactionsMonthIndex(monthIndex);
-                }
-              }}
-              onCategoryChange={setTransactionCategoryFilter}
-              onMoreClick={() => {
-                // Coming soon placeholder
-              }}
-            />
-
-            {/* Monthly Transaction Cards with Filters */}
-            <TransactionsList
-              transactions={(() => {
-                let filtered: Transaction[] = [];
-                
-                // Apply month filter
-                if (transactionMonthFilter.startsWith('carousel-')) {
-                  // Extract carousel index
-                  const index = parseInt(transactionMonthFilter.split('-')[1]);
-                  filtered = getTransactionsForMonth(transactionMonths[index].start, transactionMonths[index].end);
-                } else {
-                  // Parse YYYY-MM format for older months
-                  const [year, month] = transactionMonthFilter.split('-').map(Number);
-                  const start = new Date(year, month - 1, 1);
-                  const end = new Date(year, month, 0, 23, 59, 59);
-                  filtered = transactions.filter(t => {
-                    const tDate = new Date(t.date);
-                    return tDate >= start && tDate <= end;
-                  });
-                }
-                
-                // Apply type filter
-                if (transactionTypeFilter !== 'all') {
-                  filtered = filtered.filter(t => t.type === transactionTypeFilter);
-                }
-                
-                // Apply member filter
-                if (transactionMemberFilter !== 'all') {
-                  filtered = filtered.filter(t => t.familyMember === transactionMemberFilter);
-                }
-                
-                // Apply category filter
-                if (transactionCategoryFilter !== 'all') {
-                  filtered = filtered.filter(t => t.category === transactionCategoryFilter);
-                }
-                
-                return filtered;
-              })()}
-              familyMembers={familyMembers}
-              personalBudget={personalBudget}
-              formatCurrency={formatCurrency}
-              onEditTransaction={setEditingTransaction}
-              emptyMessage="No transactions for this month"
-            />
-          </div>
-        </div>
+        <Transactions />
       )}
 
       {activeTab === 'budget' && (
@@ -671,9 +551,9 @@ const Dashboard: React.FC = () => {
           setSelectedDesktopCategory(category);
         }}
         onViewInTransactions={(category) => {
-          // Navigate to Transactions tab with category filter
+          // Navigate to Transactions tab
+          // TODO: Support passing category filter to Transactions page via URL params
           setActiveTab('transactions');
-          setTransactionCategoryFilter(category);
           setSearchParams({ tab: 'transactions' });
         }}
       />
