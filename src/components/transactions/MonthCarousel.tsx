@@ -15,7 +15,9 @@ interface MonthCarouselProps {
   onIndexChange: (index: number) => void;
 }
 
-const CARD_WIDTH = 180;
+// Responsive card width based on screen size
+const MOBILE_CARD_WIDTH = 140;
+const DESKTOP_CARD_WIDTH = 180;
 
 export const MonthCarousel: React.FC<MonthCarouselProps> = ({
   months,
@@ -52,27 +54,28 @@ export const MonthCarousel: React.FC<MonthCarouselProps> = ({
   };
 
   return (
-    <div className="relative w-full py-8">
+    <div className="relative w-full py-4 sm:py-8">
       {/* Cards Container */}
-      <div className="flex justify-center items-center h-40 gap-4 mb-6">
+      <div className="flex justify-center items-center h-32 sm:h-40 gap-2 sm:gap-4 mb-4 sm:mb-6">
         {/* Left Arrow */}
         {!isDisabled && (
           <button
             onClick={handlePrevious}
-            className="p-3 rounded-full bg-blue-100 dark:bg-blue-800 border border-blue-300 dark:border-blue-600 hover:bg-blue-200 dark:hover:bg-blue-700 transition-all shadow-lg flex-shrink-0"
+            className="p-2 sm:p-3 rounded-full bg-blue-100 dark:bg-blue-800 border border-blue-300 dark:border-blue-600 hover:bg-blue-200 dark:hover:bg-blue-700 transition-all shadow-lg flex-shrink-0"
             aria-label="Previous month"
           >
-            <svg className="w-6 h-6 text-blue-700 dark:text-blue-200" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <svg className="w-4 h-4 sm:w-6 sm:h-6 text-blue-700 dark:text-blue-200" fill="none" stroke="currentColor" viewBox="0 0 24 24">
               <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 19l-7-7 7-7" />
             </svg>
           </button>
         )}
 
         {/* Three Cards */}
-        <div className="flex gap-4 items-center">
+        <div className="flex gap-2 sm:gap-4 items-center">
           <AnimatePresence mode="popLayout">
             {visibleCards.map((card) => {
               const isActive = card.position === 'center';
+              const isSideCard = card.position !== 'center';
               
               return (
                 <motion.button
@@ -90,19 +93,21 @@ export const MonthCarousel: React.FC<MonthCarouselProps> = ({
                     stiffness: 200,
                     damping: 25
                   }}
-                  style={{
-                    width: CARD_WIDTH,
-                  }}
-                  className={`flex-shrink-0 h-32 rounded-xl border-2 font-medium flex flex-col items-center justify-center transition-colors ${
+                  className={`flex-shrink-0 h-24 sm:h-32 rounded-lg sm:rounded-xl border-2 font-medium flex flex-col items-center justify-center transition-colors ${
+                    isSideCard ? 'hidden sm:flex' : ''
+                  } ${
                     isActive
                       ? 'bg-blue-600 dark:bg-blue-700 text-white border-blue-600 dark:border-blue-500 shadow-xl'
                       : 'bg-white dark:bg-blue-900/20 text-blue-600 dark:text-blue-300 border-blue-200 dark:border-blue-700 hover:border-blue-400 dark:hover:border-blue-500'
                   } ${isDisabled ? 'cursor-default' : 'cursor-pointer'}`}
+                  style={{
+                    width: isSideCard ? DESKTOP_CARD_WIDTH : `min(${MOBILE_CARD_WIDTH}px, 80vw)`,
+                  }}
                 >
-                  <div className={`text-xl ${isActive ? 'font-bold' : 'font-semibold'}`}>
+                  <div className={`text-lg sm:text-xl ${isActive ? 'font-bold' : 'font-semibold'}`}>
                     {card.monthName}
                   </div>
-                  <div className={`text-base ${isActive ? 'font-medium' : 'font-normal'} mt-1 opacity-90`}>
+                  <div className={`text-sm sm:text-base ${isActive ? 'font-medium' : 'font-normal'} mt-0.5 sm:mt-1 opacity-90`}>
                     {card.year}
                   </div>
                 </motion.button>
@@ -115,10 +120,10 @@ export const MonthCarousel: React.FC<MonthCarouselProps> = ({
         {!isDisabled && (
           <button
             onClick={handleNext}
-            className="p-3 rounded-full bg-blue-100 dark:bg-blue-800 border border-blue-300 dark:border-blue-600 hover:bg-blue-200 dark:hover:bg-blue-700 transition-all shadow-lg flex-shrink-0"
+            className="p-2 sm:p-3 rounded-full bg-blue-100 dark:bg-blue-800 border border-blue-300 dark:border-blue-600 hover:bg-blue-200 dark:hover:bg-blue-700 transition-all shadow-lg flex-shrink-0"
             aria-label="Next month"
           >
-            <svg className="w-6 h-6 text-blue-700 dark:text-blue-200" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <svg className="w-4 h-4 sm:w-6 sm:h-6 text-blue-700 dark:text-blue-200" fill="none" stroke="currentColor" viewBox="0 0 24 24">
               <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 5l7 7-7 7" />
             </svg>
           </button>
