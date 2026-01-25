@@ -61,10 +61,10 @@ describe('useTransactionFilters', () => {
     );
     
     expect(result.current.filters).toEqual({
-      type: 'all',
-      member: 'all',
+      types: [],
+      members: [],
       month: 'carousel-0',
-      category: 'all',
+      categories: [],
     });
     expect(result.current.monthIndex).toBe(0);
     expect(result.current.filteredTransactions).toHaveLength(3); // 3 transactions in Jan 2026
@@ -85,7 +85,7 @@ describe('useTransactionFilters', () => {
     expect(result.current.filteredTransactions).toHaveLength(1); // 1 transaction in Dec 2025
   });
   
-  it('should filter by type', () => {
+  it('should filter by type using legacy setter', () => {
     const { result } = renderHook(() =>
       useTransactionFilters({
         transactions,
@@ -98,12 +98,29 @@ describe('useTransactionFilters', () => {
       result.current.setTypeFilter('expense');
     });
     
-    expect(result.current.filters.type).toBe('expense');
+    expect(result.current.filters.types).toEqual(['expense']);
     expect(result.current.filteredTransactions).toHaveLength(2);
     expect(result.current.filteredTransactions.every(t => t.type === 'expense')).toBe(true);
   });
   
-  it('should filter by member', () => {
+  it('should filter by multiple types using array setter', () => {
+    const { result } = renderHook(() =>
+      useTransactionFilters({
+        transactions,
+        months,
+        getTransactionsForMonth,
+      })
+    );
+    
+    act(() => {
+      result.current.setTypeFilters(['expense', 'income']);
+    });
+    
+    expect(result.current.filters.types).toEqual(['expense', 'income']);
+    expect(result.current.filteredTransactions).toHaveLength(3);
+  });
+  
+  it('should filter by member using legacy setter', () => {
     const { result } = renderHook(() =>
       useTransactionFilters({
         transactions,
@@ -116,12 +133,12 @@ describe('useTransactionFilters', () => {
       result.current.setMemberFilter('member-1');
     });
     
-    expect(result.current.filters.member).toBe('member-1');
+    expect(result.current.filters.members).toEqual(['member-1']);
     expect(result.current.filteredTransactions).toHaveLength(2);
     expect(result.current.filteredTransactions.every(t => t.familyMember === 'member-1')).toBe(true);
   });
   
-  it('should filter by category', () => {
+  it('should filter by category using legacy setter', () => {
     const { result } = renderHook(() =>
       useTransactionFilters({
         transactions,
@@ -134,7 +151,7 @@ describe('useTransactionFilters', () => {
       result.current.setCategoryFilter('Groceries');
     });
     
-    expect(result.current.filters.category).toBe('Groceries');
+    expect(result.current.filters.categories).toEqual(['Groceries']);
     expect(result.current.filteredTransactions).toHaveLength(1);
     expect(result.current.filteredTransactions[0].category).toBe('Groceries');
   });
@@ -157,7 +174,7 @@ describe('useTransactionFilters', () => {
     expect(result.current.filteredTransactions).toHaveLength(1); // Dec 2025 transaction
   });
   
-  it('should apply multiple filters in combination', () => {
+  it('should combine multiple filters using legacy setters', () => {
     const { result } = renderHook(() =>
       useTransactionFilters({
         transactions,
@@ -172,6 +189,9 @@ describe('useTransactionFilters', () => {
       result.current.setCategoryFilter('Groceries');
     });
     
+    expect(result.current.filters.types).toEqual(['expense']);
+    expect(result.current.filters.members).toEqual(['member-1']);
+    expect(result.current.filters.categories).toEqual(['Groceries']);
     expect(result.current.filteredTransactions).toHaveLength(1);
     expect(result.current.filteredTransactions[0].id).toBe('1');
   });
@@ -198,10 +218,10 @@ describe('useTransactionFilters', () => {
     });
     
     expect(result.current.filters).toEqual({
-      type: 'all',
-      member: 'all',
+      types: [],
+      members: [],
       month: 'carousel-0',
-      category: 'all',
+      categories: [],
     });
     expect(result.current.filteredTransactions).toHaveLength(3);
   });
@@ -229,10 +249,10 @@ describe('useTransactionFilters', () => {
     });
     
     expect(result.current.filters).toEqual({
-      type: 'all',
-      member: 'all',
+      types: [],
+      members: [],
       month: 'carousel-1', // Month preserved
-      category: 'all',
+      categories: [],
     });
     expect(result.current.monthIndex).toBe(1);
   });

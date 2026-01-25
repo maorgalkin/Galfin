@@ -40,13 +40,13 @@ const createMonthData = (year: number, month: number): MonthData => {
 
 describe('transactionFilters', () => {
   describe('filterByType', () => {
-    it('should return all transactions when filter is "all"', () => {
+    it('should return all transactions when filter array is empty', () => {
       const transactions = [
         createTransaction({ type: 'expense' }),
         createTransaction({ type: 'income' }),
       ];
       
-      const result = filterByType(transactions, 'all');
+      const result = filterByType(transactions, []);
       expect(result).toHaveLength(2);
     });
     
@@ -57,7 +57,7 @@ describe('transactionFilters', () => {
         createTransaction({ id: '3', type: 'expense' }),
       ];
       
-      const result = filterByType(transactions, 'expense');
+      const result = filterByType(transactions, ['expense']);
       expect(result).toHaveLength(2);
       expect(result.every(t => t.type === 'expense')).toBe(true);
     });
@@ -69,20 +69,31 @@ describe('transactionFilters', () => {
         createTransaction({ id: '3', type: 'income' }),
       ];
       
-      const result = filterByType(transactions, 'income');
+      const result = filterByType(transactions, ['income']);
       expect(result).toHaveLength(2);
       expect(result.every(t => t.type === 'income')).toBe(true);
+    });
+    
+    it('should filter multiple types', () => {
+      const transactions = [
+        createTransaction({ id: '1', type: 'expense' }),
+        createTransaction({ id: '2', type: 'income' }),
+        createTransaction({ id: '3', type: 'expense' }),
+      ];
+      
+      const result = filterByType(transactions, ['income', 'expense']);
+      expect(result).toHaveLength(3);
     });
   });
   
   describe('filterByMember', () => {
-    it('should return all transactions when filter is "all"', () => {
+    it('should return all transactions when filter array is empty', () => {
       const transactions = [
         createTransaction({ familyMember: 'member-1' }),
         createTransaction({ familyMember: 'member-2' }),
       ];
       
-      const result = filterByMember(transactions, 'all');
+      const result = filterByMember(transactions, []);
       expect(result).toHaveLength(2);
     });
     
@@ -93,20 +104,31 @@ describe('transactionFilters', () => {
         createTransaction({ id: '3', familyMember: 'member-1' }),
       ];
       
-      const result = filterByMember(transactions, 'member-1');
+      const result = filterByMember(transactions, ['member-1']);
       expect(result).toHaveLength(2);
       expect(result.every(t => t.familyMember === 'member-1')).toBe(true);
+    });
+    
+    it('should filter multiple family members', () => {
+      const transactions = [
+        createTransaction({ id: '1', familyMember: 'member-1' }),
+        createTransaction({ id: '2', familyMember: 'member-2' }),
+        createTransaction({ id: '3', familyMember: 'member-3' }),
+      ];
+      
+      const result = filterByMember(transactions, ['member-1', 'member-2']);
+      expect(result).toHaveLength(2);
     });
   });
   
   describe('filterByCategory', () => {
-    it('should return all transactions when filter is "all"', () => {
+    it('should return all transactions when filter array is empty', () => {
       const transactions = [
         createTransaction({ category: 'Groceries' }),
         createTransaction({ category: 'Entertainment' }),
       ];
       
-      const result = filterByCategory(transactions, 'all');
+      const result = filterByCategory(transactions, []);
       expect(result).toHaveLength(2);
     });
     
@@ -117,9 +139,20 @@ describe('transactionFilters', () => {
         createTransaction({ id: '3', category: 'Groceries' }),
       ];
       
-      const result = filterByCategory(transactions, 'Groceries');
+      const result = filterByCategory(transactions, ['Groceries']);
       expect(result).toHaveLength(2);
       expect(result.every(t => t.category === 'Groceries')).toBe(true);
+    });
+    
+    it('should filter multiple categories', () => {
+      const transactions = [
+        createTransaction({ id: '1', category: 'Groceries' }),
+        createTransaction({ id: '2', category: 'Entertainment' }),
+        createTransaction({ id: '3', category: 'Transport' }),
+      ];
+      
+      const result = filterByCategory(transactions, ['Groceries', 'Entertainment']);
+      expect(result).toHaveLength(2);
     });
   });
   
@@ -191,10 +224,10 @@ describe('transactionFilters', () => {
     
     it('should apply all filters correctly', () => {
       const filters = {
-        type: 'expense' as const,
-        member: 'member-1',
+        types: ['expense' as const],
+        members: ['member-1'],
         month: 'carousel-0',
-        category: 'Groceries',
+        categories: ['Groceries'],
       };
       
       const result = applyTransactionFilters(transactions, filters, months, getTransactionsForMonth);
@@ -202,12 +235,12 @@ describe('transactionFilters', () => {
       expect(result[0].id).toBe('1');
     });
     
-    it('should return all month transactions when filters are "all"', () => {
+    it('should return all month transactions when filter arrays are empty', () => {
       const filters = {
-        type: 'all' as const,
-        member: 'all',
+        types: [],
+        members: [],
         month: 'carousel-0',
-        category: 'all',
+        categories: [],
       };
       
       const result = applyTransactionFilters(transactions, filters, months, getTransactionsForMonth);
@@ -216,10 +249,10 @@ describe('transactionFilters', () => {
     
     it('should chain filters correctly', () => {
       const filters = {
-        type: 'expense' as const,
-        member: 'all',
+        types: ['expense' as const],
+        members: [],
         month: 'carousel-0',
-        category: 'all',
+        categories: [],
       };
       
       const result = applyTransactionFilters(transactions, filters, months, getTransactionsForMonth);
@@ -232,20 +265,20 @@ describe('transactionFilters', () => {
     it('should create initial state with default month index 0', () => {
       const state = createInitialFilterState();
       expect(state).toEqual({
-        type: 'all',
-        member: 'all',
+        types: [],
+        members: [],
         month: 'carousel-0',
-        category: 'all',
+        categories: [],
       });
     });
     
     it('should create initial state with custom month index', () => {
       const state = createInitialFilterState(3);
       expect(state).toEqual({
-        type: 'all',
-        member: 'all',
+        types: [],
+        members: [],
         month: 'carousel-3',
-        category: 'all',
+        categories: [],
       });
     });
   });
@@ -253,18 +286,18 @@ describe('transactionFilters', () => {
   describe('resetFiltersExceptMonth', () => {
     it('should reset all filters except month', () => {
       const currentFilters = {
-        type: 'expense' as const,
-        member: 'member-1',
+        types: ['expense' as const],
+        members: ['member-1'],
         month: 'carousel-2',
-        category: 'Groceries',
+        categories: ['Groceries'],
       };
       
       const result = resetFiltersExceptMonth(currentFilters, 'carousel-3');
       expect(result).toEqual({
-        type: 'all',
-        member: 'all',
+        types: [],
+        members: [],
         month: 'carousel-3',
-        category: 'all',
+        categories: [],
       });
     });
   });
