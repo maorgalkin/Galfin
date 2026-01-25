@@ -6,6 +6,7 @@ import { AuthProvider, useAuth } from './contexts/AuthContext';
 import Dashboard from './components/Dashboard';
 import AddTransaction from './components/AddTransaction';
 import { BuildInfo } from './components/BuildInfo';
+import { BackToTop } from './components/BackToTop';
 import Login from './pages/auth/Login';
 import Register from './pages/auth/Register';
 import { DevTools } from './pages/DevTools';
@@ -148,7 +149,12 @@ function AppContent() {
         isOpen={isAddTransactionOpen}
         onClose={() => setIsAddTransactionOpen(false)}
       />
-      <BuildInfo />
+      {/* DEV: Floating BuildInfo with click-to-top. PROD: BackToTop button only */}
+      {import.meta.env.DEV ? (
+        <BuildInfo />
+      ) : (
+        <BackToTop />
+      )}
     </div>
   );
 }

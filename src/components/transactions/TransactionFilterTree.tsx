@@ -117,9 +117,9 @@ export const TransactionFilterTree: React.FC<TransactionFilterTreeProps> = ({
   }, [selectedTypes, selectedMembers, selectedCategories, allMemberIds.length, categories.length, allTypes.length]);
 
   const handleClearAll = () => {
-    onTypeChange([...allTypes]);
-    onMemberChange([...allMemberIds]);
-    onCategoryChange([...categories]);
+    onTypeChange([]);
+    onMemberChange([]);
+    onCategoryChange([]);
   };
 
   return (

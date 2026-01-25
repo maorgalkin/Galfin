@@ -20,6 +20,7 @@ import { DummyDataControls } from './dashboard/DummyDataControls';
 import { FamilyMembersCard } from './dashboard/FamilyMembersCard';
 import { CategoryTransactionsModal } from './dashboard/CategoryTransactionsModal';
 import { Transactions } from '../pages/Transactions';
+import { BuildInfo } from './BuildInfo';
 import CustomDateRangeModal from './CustomDateRangeModal';
 import * as HouseholdService from '../services/householdService';
 import type { Transaction, BudgetConfiguration } from '../types';
@@ -573,6 +574,9 @@ const Dashboard: React.FC = () => {
         familyMembers={familyMembers}
       />
       </div>
+      
+      {/* Production: Show inline BuildInfo at bottom of page */}
+      {!import.meta.env.DEV && <BuildInfo inline />}
     </div>
   );
 };
