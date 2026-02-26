@@ -1,5 +1,5 @@
 import React from 'react';
-import { motion, AnimatePresence } from 'framer-motion';
+import { motion } from 'framer-motion';
 
 interface MonthData {
   label: string;
@@ -72,22 +72,19 @@ export const MonthCarousel: React.FC<MonthCarouselProps> = ({
 
         {/* Three Cards */}
         <div className="flex gap-2 sm:gap-4 items-center">
-          <AnimatePresence mode="popLayout">
             {visibleCards.map((card) => {
               const isActive = card.position === 'center';
               const isSideCard = card.position !== 'center';
               
               return (
                 <motion.button
-                  key={card.index}
+                  key={card.position}
                   onClick={() => !isDisabled && onIndexChange(card.index)}
                   disabled={isDisabled}
-                  initial={{ opacity: 0, scale: 0.8 }}
                   animate={{ 
                     opacity: isActive ? 1 : 0.5,
                     scale: isActive ? 1 : 0.85,
                   }}
-                  exit={{ opacity: 0, scale: 0.8 }}
                   transition={{
                     type: 'spring',
                     stiffness: 200,
@@ -113,7 +110,6 @@ export const MonthCarousel: React.FC<MonthCarouselProps> = ({
                 </motion.button>
               );
             })}
-          </AnimatePresence>
         </div>
 
         {/* Right Arrow */}

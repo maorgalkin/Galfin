@@ -35,6 +35,15 @@ input[type="color"].color-picker-full::-moz-color-swatch {
   border-radius: 0.5rem;
 }
 
+/* Center date input text on Safari iOS */
+input[type="date"] {
+  text-align: center;
+}
+
+input[type="date"]::-webkit-date-and-time-value {
+  text-align: center;
+}
+
 /* Force responsive grid for budget categories */
 @layer components {
   .budget-category-grid {
