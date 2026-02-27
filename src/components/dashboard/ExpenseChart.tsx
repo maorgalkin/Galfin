@@ -4,6 +4,7 @@ import { motion, AnimatePresence } from 'framer-motion';
 import { getCategoryColor } from '../../utils/categoryColors';
 import type { Transaction } from '../../types';
 import type { PersonalBudget } from '../../types/budget';
+import { getUserLocale } from '../../utils/locale';
 
 interface CategoryData {
   category: string;
@@ -928,7 +929,7 @@ export const ExpenseChart: React.FC<ExpenseChartProps> = ({
                             {transaction.description}
                           </div>
                           <div className="text-xs text-gray-500 dark:text-gray-400">
-                            {new Date(transaction.date).toLocaleDateString()}
+                            {new Date(transaction.date).toLocaleDateString(getUserLocale())}
                           </div>
                         </div>
                         <div className="text-sm font-semibold text-gray-900 dark:text-gray-100 ml-3 flex-shrink-0">

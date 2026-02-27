@@ -4,6 +4,7 @@ import { useFinance } from '../context/FinanceContext';
 import { getCategoryColor } from '../utils/categoryColors';
 import { useActiveBudget } from '../hooks/useBudgets';
 import { formatCurrencyFromSettings } from '../utils/formatCurrency';
+import { getUserLocale } from '../utils/locale';
 
 interface CustomDateRangeModalProps {
   isOpen: boolean;
@@ -21,7 +22,7 @@ const CustomDateRangeModal: React.FC<CustomDateRangeModalProps> = ({ isOpen, onC
       const d = new Date(now.getFullYear(), now.getMonth() - index, 1);
       return {
         value: `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}`,
-        label: d.toLocaleString('en-US', { month: 'long', year: 'numeric' }),
+        label: d.toLocaleString(getUserLocale(), { month: 'long', year: 'numeric' }),
         date: d,
       };
     });
@@ -232,7 +233,7 @@ const CustomDateRangeModal: React.FC<CustomDateRangeModalProps> = ({ isOpen, onC
                           </p>
                         )}
                         <p className="text-xs text-gray-500 dark:text-gray-400">
-                          {new Date(t.date).toLocaleDateString('en-US', { 
+                          {new Date(t.date).toLocaleDateString(getUserLocale(), { 
                             month: 'short', 
                             day: 'numeric', 
                             year: 'numeric' 

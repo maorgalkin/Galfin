@@ -4,6 +4,7 @@
  */
 
 import type { Transaction } from '../types';
+import { getUserLocale } from './locale';
 
 export type DateRangeType = 'mtd' | 'ytd' | 'qtd' | 'lastQuarter' | 'lastYear';
 
@@ -26,7 +27,7 @@ export function getDateRange(rangeType: DateRangeType): DateRange {
       return {
         startDate: new Date(currentYear, currentMonth, 1),
         endDate: today,
-        label: `${today.toLocaleDateString('en-US', { month: 'long' })} ${currentYear}`,
+        label: `${today.toLocaleDateString(getUserLocale(), { month: 'long' })} ${currentYear}`,
         abbreviation: 'MTD'
       };
     
@@ -89,5 +90,5 @@ export function filterTransactionsByDateRange(
 
 export function formatDateRange(startDate: Date, endDate: Date): string {
   const options: Intl.DateTimeFormatOptions = { month: 'short', day: 'numeric', year: 'numeric' };
-  return `${startDate.toLocaleDateString('en-US', options)} - ${endDate.toLocaleDateString('en-US', options)}`;
+  return `${startDate.toLocaleDateString(getUserLocale(), options)} - ${endDate.toLocaleDateString(getUserLocale(), options)}`;
 }

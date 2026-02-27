@@ -1,6 +1,7 @@
 import React from 'react';
 import { X, Calendar, User, Tag, FileText, DollarSign } from 'lucide-react';
 import type { Transaction, FamilyMember } from '../types';
+import { getUserLocale } from '../utils/locale';
 
 interface TransactionDetailsModalProps {
   transaction: Transaction | null;
@@ -21,7 +22,7 @@ export const TransactionDetailsModal: React.FC<TransactionDetailsModalProps> = (
 
   const formatDate = (dateString: string) => {
     const date = new Date(dateString);
-    return date.toLocaleDateString('en-US', { 
+    return date.toLocaleDateString(getUserLocale(), { 
       year: 'numeric', 
       month: 'long', 
       day: 'numeric' 

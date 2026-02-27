@@ -5,6 +5,7 @@ import { budgetService } from '../services/budgetService';
 import { AlertTriangle, CheckCircle, Target, HelpCircle, X } from 'lucide-react';
 import type { BudgetConfiguration } from '../types';
 import { formatCurrencyFromSettings } from '../utils/formatCurrency';
+import { getUserLocale } from '../utils/locale';
 
 interface BudgetOverviewProps {
   selectedMonth?: Date;
@@ -49,7 +50,9 @@ const BudgetOverview: React.FC<BudgetOverviewProps> = ({ selectedMonth, isCompac
 
   // Get current month or use selected month
   const currentDate = selectedMonth || new Date();
+  // English month name required by budget service for date parsing
   const monthName = currentDate.toLocaleDateString('en-US', { month: 'long' });
+  const displayMonthName = currentDate.toLocaleDateString(getUserLocale(), { month: 'long' });
   const year = currentDate.getFullYear();
 
   // Calculate budget analysis for the selected month
@@ -100,7 +103,7 @@ const BudgetOverview: React.FC<BudgetOverviewProps> = ({ selectedMonth, isCompac
     <div className={`bg-white rounded-lg shadow-sm border ${isCompact ? 'p-4' : 'p-6'}`}>
       <div className="flex justify-between items-center mb-4">
         <h3 className={`font-semibold text-gray-900 ${isCompact ? 'text-base' : 'text-lg'}`}>
-          {monthName} {year} Budget Performance
+          {displayMonthName} {year} Budget Performance
         </h3>
         <button
           onClick={() => setShowDetails(!showDetails)}

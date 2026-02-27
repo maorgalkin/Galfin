@@ -367,7 +367,7 @@ const HouseholdSettingsModal: React.FC<HouseholdSettingsModalProps> = ({ isOpen,
                               </span>
                             </div>
                             <div className="text-xs text-gray-500 dark:text-gray-400">
-                              Joined {new Date(member.joined_at).toLocaleDateString()}
+                              Joined {new Date(member.joined_at).toLocaleDateString(navigator.language)}
                             </div>
                           </div>
                         </div>

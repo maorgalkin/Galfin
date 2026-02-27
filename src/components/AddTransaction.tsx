@@ -5,6 +5,7 @@ import { useActiveBudget } from '../hooks/useBudgets';
 import { X, HelpCircle, Calendar } from 'lucide-react';
 import CategorySelector from './CategorySelector';
 import * as SupabaseService from '../services/supabaseDataService';
+import { getUserLocale } from '../utils/locale';
 
 interface AddTransactionProps {
   isOpen: boolean;
@@ -59,7 +60,7 @@ const AddTransaction: React.FC<AddTransactionProps> = ({ isOpen, onClose }) => {
   // Generate default descriptions for income categories
   const getDefaultDescription = (category: string) => {
     const currentDate = new Date();
-    const monthYear = currentDate.toLocaleDateString('en-US', { month: 'long', year: 'numeric' });
+    const monthYear = currentDate.toLocaleDateString(getUserLocale(), { month: 'long', year: 'numeric' });
     
     switch (category) {
       case 'Salary':

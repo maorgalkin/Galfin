@@ -2,6 +2,7 @@ import React, { useState, useRef, useEffect } from 'react';
 import { motion } from 'framer-motion';
 import { X, User, ChevronDown, ExternalLink } from 'lucide-react';
 import type { Transaction } from '../../types';
+import { getUserLocale } from '../../utils/locale';
 
 interface CategoryTransactionsModalProps {
   isOpen: boolean;
@@ -149,7 +150,7 @@ export const CategoryTransactionsModal: React.FC<CategoryTransactionsModalProps>
                     <div className="flex-1">
                       <h4 className="font-semibold text-gray-900 dark:text-gray-100">{transaction.description}</h4>
                       <div className="flex items-center gap-3 mt-1 text-sm text-gray-500 dark:text-gray-400">
-                        <span>{new Date(transaction.date).toLocaleDateString()}</span>
+                        <span>{new Date(transaction.date).toLocaleDateString(getUserLocale())}</span>
                         {transaction.familyMember && (
                           <>
                             <span>•</span>

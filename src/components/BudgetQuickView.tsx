@@ -8,6 +8,7 @@ import {
   getPrimaryButtonBg,
   getPrimaryButtonHoverBg,
 } from '../utils/themeColors';
+import { getUserLocale } from '../utils/locale';
 
 export const BudgetQuickView: React.FC = () => {
   const navigate = useNavigate();
@@ -47,7 +48,7 @@ export const BudgetQuickView: React.FC = () => {
       <div className={`px-6 py-4 ${getHeaderGradient(themeColor)}`}>
         <h3 className="text-lg font-semibold text-white">Budget Overview</h3>
         <p className={`text-sm ${getTextColor(themeColor)} mt-1`}>
-          {new Date().toLocaleDateString('en-US', { month: 'long', year: 'numeric' })}
+          {new Date().toLocaleDateString(getUserLocale(), { month: 'long', year: 'numeric' })}
         </p>
       </div>
 

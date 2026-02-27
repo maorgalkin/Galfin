@@ -8,6 +8,7 @@ import {
   useBudgetComparison,
 } from '../hooks/useBudgets';
 import { Lock, Unlock, Edit2, Save, X, TrendingUp, TrendingDown, Minus, Loader2, AlertCircle, Sparkles } from 'lucide-react';
+import { getUserLocale } from '../utils/locale';
 import type { BudgetComparisonResult } from '../types/budget';
 
 interface MonthlyBudgetViewProps {
@@ -201,7 +202,7 @@ export const MonthlyBudgetView: React.FC<MonthlyBudgetViewProps> = ({
         <div className="flex items-center justify-between">
           <div>
             <h3 className="text-lg font-semibold text-gray-900 dark:text-gray-100">
-              {new Date(budget.year, budget.month - 1).toLocaleDateString('en-US', {
+              {new Date(budget.year, budget.month - 1).toLocaleDateString(getUserLocale(), {
                 month: 'long',
                 year: 'numeric',
               })}

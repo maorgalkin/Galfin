@@ -13,6 +13,7 @@ import { BudgetManagement } from '../pages/BudgetManagement';
 import { InsightsPage } from '../pages/InsightsPage';
 import { generateDummyTransactions, countDummyTransactions, isDummyTransaction } from '../utils/dummyData';
 import { useDashboardData } from '../hooks/useDashboardData';
+import { getUserLocale } from '../utils/locale';
 import { DashboardTabNavigation } from './dashboard/DashboardTabNavigation';
 import { ExpenseChart } from './dashboard/ExpenseChart';
 import { formatCurrencyFromSettings } from '../utils/formatCurrency';
@@ -267,7 +268,7 @@ const Dashboard: React.FC = () => {
       for (const transaction of dummyTransactions) {
         await addTransaction(transaction);
       }
-      alert(`Added ${dummyTransactions.length} dummy transactions to ${monthStart.toLocaleDateString('en-US', { month: 'long', year: 'numeric' })}`);
+      alert(`Added ${dummyTransactions.length} dummy transactions to ${monthStart.toLocaleDateString(getUserLocale(), { month: 'long', year: 'numeric' })}`);
     } catch (error) {
       console.error('Error adding dummy data:', error);
       alert('Error adding dummy data. Check console for details.');
@@ -393,7 +394,7 @@ const Dashboard: React.FC = () => {
             <div className="bg-white dark:bg-gray-800 rounded-xl shadow-lg border border-purple-200 dark:border-purple-700 p-6">
               <div className="text-center">
                 <h2 className="text-2xl font-bold text-gray-900 dark:text-gray-100 mb-1">
-                  {dashboardMonthDate.toLocaleDateString('en-US', { month: 'long', year: 'numeric' })}
+                  {dashboardMonthDate.toLocaleDateString(getUserLocale(), { month: 'long', year: 'numeric' })}
                 </h2>
                 {household?.name && (
                   <p className="text-sm text-gray-600 dark:text-gray-400">
@@ -430,7 +431,7 @@ const Dashboard: React.FC = () => {
                   </svg>
                 </div>
                 <h3 className="text-2xl font-bold text-gray-900 dark:text-gray-100 mb-3">
-                  Welcome to {dashboardMonthDate.toLocaleDateString('en-US', { month: 'long', year: 'numeric' })}!
+                  Welcome to {dashboardMonthDate.toLocaleDateString(getUserLocale(), { month: 'long', year: 'numeric' })}!
                 </h3>
                 <p className="text-gray-600 dark:text-gray-400 mb-8 text-lg">
                   Start tracking your finances by adding your first transaction.

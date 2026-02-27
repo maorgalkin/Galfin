@@ -7,6 +7,7 @@ import type { Transaction } from '../../types';
 import type { PersonalBudget } from '../../types/budget';
 import type { DateRangeType } from '../../utils/dateRangeFilters';
 import { getDateRange } from '../../utils/dateRangeFilters';
+import { getUserLocale } from '../../utils/locale';
 
 interface CategoryAccuracyChartProps {
   transactions: Transaction[];
@@ -341,9 +342,9 @@ export const CategoryAccuracyChart: React.FC<CategoryAccuracyChartProps> = ({
                 >
                   <div className="text-xs text-gray-500 dark:text-gray-400 mb-1">Range</div>
                   <div className="text-base font-bold text-gray-800 dark:text-white">
-                    {dateRangeInfo.startDate.toLocaleDateString('en-US', { month: 'short', day: 'numeric' })}
+                    {dateRangeInfo.startDate.toLocaleDateString(getUserLocale(), { month: 'short', day: 'numeric' })}
                     {' – '}
-                    {dateRangeInfo.endDate.toLocaleDateString('en-US', { month: 'short', day: 'numeric' })}
+                    {dateRangeInfo.endDate.toLocaleDateString(getUserLocale(), { month: 'short', day: 'numeric' })}
                   </div>
                 </button>
 

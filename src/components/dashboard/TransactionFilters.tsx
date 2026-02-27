@@ -1,6 +1,7 @@
 import React, { useState, useRef, useEffect } from 'react';
 import { ChevronDown } from 'lucide-react';
 import type { FamilyMember } from '../../types';
+import { getUserLocale } from '../../utils/locale';
 
 interface MonthData {
   label: string;
@@ -65,7 +66,7 @@ export const TransactionFilters: React.FC<TransactionFiltersProps> = ({
       for (let i = 1; i <= 8; i++) {
         const date = new Date(oldestDate.getFullYear(), oldestDate.getMonth() - i, 1);
         const value = `${date.getFullYear()}-${String(date.getMonth() + 1).padStart(2, '0')}`;
-        const label = date.toLocaleDateString('en-US', { month: 'long', year: 'numeric' });
+        const label = date.toLocaleDateString(getUserLocale(), { month: 'long', year: 'numeric' });
         options.push({ value, label });
       }
     }

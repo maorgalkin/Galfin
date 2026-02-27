@@ -1,4 +1,5 @@
 import React from 'react';
+import { getUserLocale } from '../utils/locale';
 
 interface BuildInfoProps {
   inline?: boolean; // If true, render inline at bottom of page instead of floating
@@ -29,7 +30,7 @@ export const BuildInfo: React.FC<BuildInfoProps> = ({ inline = false }) => {
           </div>
           <div className="flex gap-4 text-gray-500 dark:text-gray-500">
             {commit && <div>Commit: {commit}</div>}
-            {buildTime && <div>Built: {new Date(buildTime).toLocaleString()}</div>}
+            {buildTime && <div>Built: {new Date(buildTime).toLocaleString(getUserLocale())}</div>}
           </div>
         </div>
       </div>
@@ -52,7 +53,7 @@ export const BuildInfo: React.FC<BuildInfoProps> = ({ inline = false }) => {
         </div>
         <div className="text-gray-300">
           {commit && <div>Commit: {commit}</div>}
-          {buildTime && <div>Built: {new Date(buildTime).toLocaleString()}</div>}
+          {buildTime && <div>Built: {new Date(buildTime).toLocaleString(getUserLocale())}</div>}
         </div>
       </div>
     </button>

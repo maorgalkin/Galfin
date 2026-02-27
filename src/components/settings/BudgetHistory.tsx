@@ -18,6 +18,7 @@ import {
 } from '../../hooks/useBudgets';
 import type { PersonalBudget } from '../../types/budget';
 import { formatCurrencyFromSettings } from '../../utils/formatCurrency';
+import { getUserLocale } from '../../utils/locale';
 
 interface BudgetHistoryProps {
   className?: string;
@@ -157,7 +158,7 @@ export const BudgetHistory: React.FC<BudgetHistoryProps> = ({
                       )}
                       <p className="text-xs text-gray-400 dark:text-gray-500 mt-1">
                         <Clock className="inline h-3 w-3 mr-1" />
-                        {new Date(budget.updated_at).toLocaleDateString()} at {new Date(budget.updated_at).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}
+                        {new Date(budget.updated_at).toLocaleDateString(getUserLocale())} at {new Date(budget.updated_at).toLocaleTimeString(getUserLocale(), { hour: '2-digit', minute: '2-digit' })}
                       </p>
                     </div>
 

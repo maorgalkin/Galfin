@@ -8,6 +8,7 @@ import {
   useDeletePersonalBudget,
   useResetAllBudgets,
 } from '../hooks/useBudgets';
+import { getUserLocale } from '../utils/locale';
 import { useFinance } from '../context/FinanceContext';
 import { 
   Plus, 
@@ -593,7 +594,7 @@ Are you absolutely sure you want to continue?`;
                       )}
                       <p className="text-xs text-gray-400 dark:text-gray-500 mt-2">
                         <Clock className="inline h-3 w-3 mr-1" />
-                        Updated {new Date(budget.updated_at).toLocaleDateString()}
+                        Updated {new Date(budget.updated_at).toLocaleDateString(getUserLocale())}
                       </p>
                     </div>
 

@@ -3,18 +3,20 @@
  * Provides functions for date formatting and manipulation
  */
 
+import { getUserLocale } from './locale';
+
 /**
  * Get formatted month and year label (e.g., "January 2025")
  */
 export const getMonthLabel = (date: Date): string => {
-  return date.toLocaleString('en-US', { month: 'long', year: 'numeric' });
+  return date.toLocaleString(getUserLocale(), { month: 'long', year: 'numeric' });
 };
 
 /**
  * Get month name only (e.g., "January")
  */
 export const getMonthName = (date: Date): string => {
-  return date.toLocaleString('en-US', { month: 'long' });
+  return date.toLocaleString(getUserLocale(), { month: 'long' });
 };
 
 /**

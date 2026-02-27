@@ -1,5 +1,6 @@
 import { supabase } from '../lib/supabase';
 import type { Transaction, PersonalBudget, MonthlyBudget } from '../types';
+import { getUserLocale } from './locale';
 
 /**
  * Dummy Data Seeder for Analytics Testing
@@ -247,7 +248,7 @@ async function createTransactions(userId: string, year: number): Promise<void> {
       allTransactions.push(...monthTransactions);
       monthCount += monthTransactions.length;
     }
-    const monthName = new Date(year, month, 1).toLocaleString('default', { month: 'long' });
+    const monthName = new Date(year, month, 1).toLocaleString(getUserLocale(), { month: 'long' });
     console.log(`  ${monthName}: ${monthCount} transactions`);
   }
 

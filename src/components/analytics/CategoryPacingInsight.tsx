@@ -5,6 +5,7 @@ import type { PersonalBudget } from '../../types/budget';
 import type { DateRangeType } from '../../utils/dateRangeFilters';
 import { getDateRange } from '../../utils/dateRangeFilters';
 import { formatCurrencyFromSettings } from '../../utils/formatCurrency';
+import { getUserLocale } from '../../utils/locale';
 
 interface CategoryPacingInsightProps {
   transactions: Transaction[];
@@ -295,7 +296,7 @@ export const CategoryPacingInsight: React.FC<CategoryPacingInsightProps> = ({
 
   const latestBucket = monthBuckets.length > 0 ? monthBuckets[monthBuckets.length - 1] : null;
   const latestMonthLabel = latestBucket
-    ? new Intl.DateTimeFormat('en-US', { month: 'long', year: 'numeric' }).format(
+    ? new Intl.DateTimeFormat(getUserLocale(), { month: 'long', year: 'numeric' }).format(
         new Date(latestBucket.year, latestBucket.month, 1)
       )
     : null;

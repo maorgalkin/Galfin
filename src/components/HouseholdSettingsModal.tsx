@@ -8,6 +8,7 @@ import type { Household, HouseholdMember } from '../services/householdService';
 import type { FamilyMember } from '../types';
 import { JoinHouseholdModal } from './JoinHouseholdModal';
 import { LeaveHouseholdModal } from './LeaveHouseholdModal';
+import { getUserLocale } from '../utils/locale';
 
 interface HouseholdSettingsModalProps {
   isOpen: boolean;
@@ -341,7 +342,7 @@ const HouseholdSettingsModal: React.FC<HouseholdSettingsModalProps> = ({ isOpen,
                                 </span>
                               </div>
                               <div className="text-xs text-gray-500 dark:text-gray-400">
-                                Joined {new Date(member.joined_at).toLocaleDateString()}
+                                Joined {new Date(member.joined_at).toLocaleDateString(getUserLocale())}
                               </div>
                             </div>
                           </div>

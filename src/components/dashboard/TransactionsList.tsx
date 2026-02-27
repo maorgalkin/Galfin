@@ -3,6 +3,7 @@ import { Edit2 } from 'lucide-react';
 import { getCategoryColor } from '../../utils/categoryColors';
 import type { Transaction, FamilyMember } from '../../types';
 import type { PersonalBudget } from '../../types/budget';
+import { getUserLocale } from '../../utils/locale';
 
 interface TransactionsListProps {
   transactions: Transaction[];
@@ -55,7 +56,7 @@ export const TransactionsList: React.FC<TransactionsListProps> = ({
                   <div className="text-sm text-gray-700 dark:text-gray-300 mb-2">{t.description}</div>
                 )}
                 <div className="text-sm text-gray-500 dark:text-gray-400">
-                  {new Date(t.date).toLocaleDateString()} 
+                  {new Date(t.date).toLocaleDateString(getUserLocale())} 
                   {t.familyMember && ` • ${familyMembers.find(m => m.id === t.familyMember)?.name || 'Unknown'}`}
                 </div>
               </div>

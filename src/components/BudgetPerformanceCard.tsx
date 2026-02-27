@@ -3,6 +3,7 @@ import { useNavigate } from 'react-router-dom';
 import { useFinance } from '../context/FinanceContext';
 import { useActiveBudget, useMonthlyBudget, useNextMonthAdjustments } from '../hooks/useBudgets';
 import { budgetService } from '../services/budgetService';
+import { getUserLocale } from '../utils/locale';
 import { 
   AlertTriangle, 
   CheckCircle, 
@@ -158,7 +159,9 @@ export const BudgetPerformanceCard: React.FC<BudgetPerformanceCardProps> = ({
 
   // Get current month or use selected month
   const currentDate = selectedMonth || new Date();
+  // English month name required by budget service for date parsing
   const monthName = currentDate.toLocaleDateString('en-US', { month: 'long' });
+  const displayMonthName = currentDate.toLocaleDateString(getUserLocale(), { month: 'long' });
   const year = currentDate.getFullYear();
 
   // Calculate budget analysis for the selected month
@@ -234,7 +237,7 @@ export const BudgetPerformanceCard: React.FC<BudgetPerformanceCardProps> = ({
         <div className={`px-6 py-4 ${getHeaderGradient(themeColor)}`}>
           <h3 className="text-lg font-semibold text-white">Budget Performance</h3>
           <p className={`text-sm ${getTextColor(themeColor)} mt-1`}>
-            {monthName} {year}
+            {displayMonthName} {year}
           </p>
         </div>
 
@@ -271,7 +274,7 @@ export const BudgetPerformanceCard: React.FC<BudgetPerformanceCardProps> = ({
           <div>
             <h3 className="text-lg font-semibold text-white">Budget Performance</h3>
             <p className={`text-sm ${getTextColor(themeColor)} mt-1`}>
-              {monthName} {year}
+              {displayMonthName} {year}
             </p>
           </div>
           {personalBudget && (
